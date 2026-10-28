@@ -26,7 +26,7 @@ function replaceBetween(startAnchor, endAnchor, replacement, desc) {
 
 console.log('--- 1. HTML REPLACEMENTS ---');
 
-// 0. RenderMath and latexToHtml with strict: false
+// 0. RenderMath and latexToHtml with strict: 'ignore'
 replaceBetween(
   'function renderMath(el, latex, displayMode = false) {',
   'return window.katex.renderToString(latex, { throwOnError: false, displayMode });',
@@ -34,7 +34,7 @@ replaceBetween(
       if (!el) return;
       if (window.katex) {
         try {
-          window.katex.render(latex, el, { throwOnError: false, displayMode, strict: false });
+          window.katex.render(latex, el, { throwOnError: false, displayMode, strict: 'ignore' });
           return;
         } catch (err) {
           // fallback silencioso
@@ -46,8 +46,8 @@ replaceBetween(
     function latexToHtml(latex, displayMode = false) {
       if (window.katex) {
         try {
-          return window.katex.renderToString(latex, { throwOnError: false, displayMode, strict: false });`,
-  'renderMath and latexToHtml strict false'
+          return window.katex.renderToString(latex, { throwOnError: false, displayMode, strict: 'ignore' });`,
+  'renderMath and latexToHtml strict ignore'
 );
 
 // 1. Initial body theme: projector
@@ -1114,7 +1114,7 @@ const nbLinesCode = `    function buildNotebookLinesFourier(calc) {
         },
         {
           label: isEn ? '4.3 Gibbs Phenomenon and Mean Square Error:' : '4.3 Fenômeno de Gibbs e Erro Médio Quadrático (MSE):',
-          latex: \`\\\\text{MSE}_N = \\\\frac{1}{T_0}\\\\int_0^{T_0} |f(t) - S_N(t)|^2\\\\,dt \\\\approx \${calc.mse.toFixed(5)} \\\\quad (\${isEn ? 'approx 9\\% overshoot near jumps' : '~9\\% sobressinal em descontinuidades'})\`
+          latex: \`\\\\text{MSE}_N = \\\\frac{1}{T_0}\\\\int_0^{T_0} |f(t) - S_N(t)|^2\\\\,dt \\\\approx \${calc.mse.toFixed(5)} \\\\quad (\${isEn ? '\\\\text{approx } 9\\\\% \\\\text{ overshoot near jumps}' : '\\\\text{sobressinal } \\\\approx 9\\\\% \\\\text{ em descontinuidades}'})\`
         }
       ];
     }

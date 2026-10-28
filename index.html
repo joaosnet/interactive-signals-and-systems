@@ -799,7 +799,7 @@
       if (!el) return;
       if (window.katex) {
         try {
-          window.katex.render(latex, el, { throwOnError: false, displayMode, strict: false });
+          window.katex.render(latex, el, { throwOnError: false, displayMode, strict: 'ignore' });
           return;
         } catch (err) {
           // fallback silencioso
@@ -811,7 +811,7 @@
     function latexToHtml(latex, displayMode = false) {
       if (window.katex) {
         try {
-          return window.katex.renderToString(latex, { throwOnError: false, displayMode, strict: false });
+          return window.katex.renderToString(latex, { throwOnError: false, displayMode, strict: 'ignore' });
         } catch (err) {
           return latex;
         }
@@ -1754,7 +1754,7 @@
         },
         {
           label: isEn ? '4.3 Gibbs Phenomenon and Mean Square Error:' : '4.3 Fenômeno de Gibbs e Erro Médio Quadrático (MSE):',
-          latex: `\\text{MSE}_N = \\frac{1}{T_0}\\int_0^{T_0} |f(t) - S_N(t)|^2\\,dt \\approx ${calc.mse.toFixed(5)} \\quad (${isEn ? 'approx 9\% overshoot near jumps' : '~9\% sobressinal em descontinuidades'})`
+          latex: `\\text{MSE}_N = \\frac{1}{T_0}\\int_0^{T_0} |f(t) - S_N(t)|^2\\,dt \\approx ${calc.mse.toFixed(5)} \\quad (${isEn ? '\\text{approx } 9\\% \\text{ overshoot near jumps}' : '\\text{sobressinal } \\approx 9\\% \\text{ em descontinuidades}'})`
         }
       ];
     }
