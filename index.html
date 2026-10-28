@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Convolução 3D — Análise no Domínio do Tempo</title>
+  <title>3D Signals & Systems — Interactive Convolution & Fourier Analysis</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Fontes Técnicas: Inter & JetBrains Mono -->
@@ -486,15 +486,15 @@
         <div class="ui-surface backdrop-blur-md px-2.5 py-1 rounded-lg border flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] pointer-events-auto shadow-sm">
           <span class="inline-flex items-center gap-1 font-medium">
             <span class="w-2.5 h-1 rounded-full" style="background: var(--c-x1)"></span>
-            <span id="leg-fixed">Fixo</span>
+            <span id="leg-fixed">Fixed</span>
           </span>
           <span class="inline-flex items-center gap-1 font-medium">
             <span class="w-2.5 h-1 rounded-full" style="background: var(--c-x2)"></span>
-            <span id="leg-moving">Móvel</span>
+            <span id="leg-moving">Moving</span>
           </span>
           <span class="inline-flex items-center gap-1 font-medium">
             <span class="w-2.5 h-2 rounded-sm opacity-80" style="background: var(--c-prod)"></span>
-            <span>Produto</span>
+            <span id="leg-prod">Product</span>
           </span>
           <span class="inline-flex items-center gap-1 font-semibold">
             <span class="w-2.5 h-1 rounded-full" style="background: var(--c-conv)"></span>
@@ -503,10 +503,13 @@
         </div>
 
         <div class="flex items-center gap-1 pointer-events-auto">
-          <button id="btn-waterfall" type="button" title="Alternar Fatias 3D em Cascata" class="ui-surface backdrop-blur-md px-2 py-1 rounded-lg border text-[10px] font-semibold flex items-center gap-1 shadow-sm" style="border-color: var(--c-prod)">
-            <span>Cascata 3D</span>
+          <button id="btn-waterfall" type="button" class="ui-surface backdrop-blur-md px-2 py-1 rounded-lg border text-[10px] font-semibold flex items-center gap-1 shadow-sm hover:opacity-90" title="Toggle 3D Surface / Waterfall">
+            <span id="lbl-waterfall">3D Waterfall</span>
           </button>
-          <button id="btn-expand-stage" type="button" title="Expandir/Reduzir Palco 3D no Mobile" class="md:hidden ui-surface backdrop-blur-md px-2 py-1 rounded-lg border text-[10px] font-semibold flex items-center gap-1 shadow-sm">
+          <button id="btn-waterfall-period" type="button" class="ui-surface backdrop-blur-md px-1.5 py-1 rounded-lg border text-[10px] font-mono-code font-semibold hidden" title="Waterfall Window Duration (1 to 8 T0)">
+            <span id="lbl-wf-period">2 T₀</span>
+          </button>
+          <button id="btn-expand-stage" type="button" title="Expand / Collapse 3D Stage on Mobile" class="md:hidden ui-surface backdrop-blur-md px-2 py-1 rounded-lg border text-[10px] font-semibold flex items-center gap-1 shadow-sm">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="15 3 21 3 21 9"></polyline>
               <polyline points="9 21 3 21 3 15"></polyline>
@@ -515,12 +518,12 @@
             </svg>
             <span id="expand-stage-lbl">3D+</span>
           </button>
-          <button id="btn-reset-cam" type="button" title="Centralizar Câmera 3D" class="ui-surface backdrop-blur-md px-2 py-1 rounded-lg border text-[10px] font-semibold flex items-center gap-1 shadow-sm hover:opacity-90">
+          <button id="btn-reset-cam" type="button" title="Center 3D Camera" class="ui-surface backdrop-blur-md px-2 py-1 rounded-lg border text-[10px] font-semibold flex items-center gap-1 shadow-sm hover:opacity-90">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
               <path d="M3 3v5h5"></path>
             </svg>
-            <span>Enquadrar</span>
+            <span id="lbl-reset-cam">Center</span>
           </button>
         </div>
       </div>
@@ -528,8 +531,8 @@
       <!-- Badge Instantâneo Inferior no Palco 3D -->
       <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between pointer-events-none z-20">
         <div id="stage-live-pill" class="ui-surface backdrop-blur-md px-2.5 py-1 rounded-lg border text-[11px] font-medium shadow-sm pointer-events-auto truncate max-w-[72%]"></div>
-        <div class="ui-surface backdrop-blur-md px-2 py-0.5 rounded-md border text-[10px] text-mut hidden sm:block">
-          Arraste: Orbitar • Pinça/Scroll: Zoom
+        <div id="stage-drag-tip" class="ui-surface backdrop-blur-md px-2 py-0.5 rounded-md border text-[10px] text-mut hidden sm:block">
+          Drag: Orbit • Pinch/Scroll: Zoom
         </div>
       </div>
     </main>
@@ -542,9 +545,9 @@
         <div class="flex items-center gap-2 min-w-0">
           <div id="header-accent-pip" class="w-2 h-5 rounded-full flex-shrink-0" style="background: var(--c-conv)"></div>
           <div class="truncate flex items-center gap-1.5">
-            <button id="btn-tab-conv" type="button" class="text-xs sm:text-sm font-bold tracking-tight truncate cursor-pointer hover:opacity-80 transition-all">Convolução 3D</button>
+            <button id="btn-tab-conv" type="button" class="text-xs sm:text-sm font-bold tracking-tight truncate cursor-pointer hover:opacity-80 transition-all">3D Convolution</button>
             <span class="text-mut text-xs">/</span>
-            <button id="btn-tab-fourier" type="button" class="text-xs sm:text-sm font-bold tracking-tight truncate text-mut cursor-pointer hover:text-primary transition-all">Fourier 3D</button>
+            <button id="btn-tab-fourier" type="button" class="text-xs sm:text-sm font-bold tracking-tight truncate text-mut cursor-pointer hover:text-primary transition-all">3D Fourier</button>
           </div>
         </div>
 
@@ -553,16 +556,16 @@
             <span id="lang-btn-text">PT-BR</span>
           </button>
           <div class="ui-card p-0.5 rounded-lg border flex items-center text-[10px]">
-            <button type="button" data-theme="projector" class="theme-btn seg-btn active px-1.5 py-0.5 rounded-md" title="Alto Contraste para Projetores em Salas Iluminadas">Projetor</button>
-            <button type="button" data-theme="dark" class="theme-btn seg-btn px-1.5 py-0.5 rounded-md">Escuro</button>
-            <button type="button" data-theme="light" class="theme-btn seg-btn px-1.5 py-0.5 rounded-md">Claro</button>
+            <button type="button" data-theme="projector" id="btn-th-projector" class="theme-btn seg-btn active px-1.5 py-0.5 rounded-md" title="High Contrast for Classroom Projectors">Projector</button>
+            <button type="button" data-theme="dark" id="btn-th-dark" class="theme-btn seg-btn px-1.5 py-0.5 rounded-md" title="Dark Theme">Dark</button>
+            <button type="button" data-theme="light" id="btn-th-light" class="theme-btn seg-btn px-1.5 py-0.5 rounded-md" title="Light Theme">Light</button>
           </div>
 
-          <button id="btn-thick" type="button" title="Alternar Espessura Forte para Projetor" class="ui-control px-1.5 py-1 rounded-lg border text-[10px] font-semibold">
+          <button id="btn-thick" type="button" title="High Contrast Stroke for Projectors" class="ui-control px-1.5 py-1 rounded-lg border text-[10px] font-semibold">
             2x
           </button>
 
-          <button id="btn-fullscreen" type="button" title="Tela Cheia" class="ui-control p-1 rounded-lg border">
+          <button id="btn-fullscreen" type="button" title="Fullscreen (F)" class="ui-control p-1 rounded-lg border">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
             </svg>
@@ -575,60 +578,57 @@
         <!-- 4 Passos do Método Gráfico -->
         <div class="grid grid-cols-4 gap-1">
           <button type="button" data-step="1" class="step-card rounded-lg px-1.5 py-1 text-left">
-            <div class="text-[9px] uppercase font-bold tracking-wider opacity-75">1º Passo</div>
+            <div id="step-tag-1" class="text-[9px] uppercase font-bold tracking-wider opacity-75">1st Step</div>
             <div id="step-lbl-1" class="text-[11px] font-semibold truncate">t → τ</div>
           </button>
           <button type="button" data-step="2" class="step-card rounded-lg px-1.5 py-1 text-left">
-            <div class="text-[9px] uppercase font-bold tracking-wider opacity-75">2º Passo</div>
-            <div id="step-lbl-2" class="text-[11px] font-semibold truncate">Reflexão</div>
+            <div id="step-tag-2" class="text-[9px] uppercase font-bold tracking-wider opacity-75">2nd Step</div>
+            <div id="step-lbl-2" class="text-[11px] font-semibold truncate">Reflection</div>
           </button>
           <button type="button" data-step="3" class="step-card rounded-lg px-1.5 py-1 text-left">
-            <div class="text-[9px] uppercase font-bold tracking-wider opacity-75">3º Passo</div>
-            <div id="step-lbl-3" class="text-[11px] font-semibold truncate">Deslocar</div>
+            <div id="step-tag-3" class="text-[9px] uppercase font-bold tracking-wider opacity-75">3rd Step</div>
+            <div id="step-lbl-3" class="text-[11px] font-semibold truncate">Shift</div>
           </button>
           <button type="button" data-step="4" class="step-card active rounded-lg px-1.5 py-1 text-left">
-            <div class="text-[9px] uppercase font-bold tracking-wider opacity-75">4º Passo</div>
+            <div id="step-tag-4" class="text-[9px] uppercase font-bold tracking-wider opacity-75">4th Step</div>
             <div id="step-lbl-4" class="text-[11px] font-semibold truncate">Integral</div>
           </button>
         </div>
 
         <!-- Linha do Slider t + Botão Play/Pause + Modo Sequência 1->4 + Comutar -->
-        <div class="flex items-center gap-1.5">
-          <button id="btn-play" type="button" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1 flex-shrink-0 text-white shadow-sm" style="background: var(--c-conv)">
+        <div id="conv-slider-row" class="flex items-center gap-1.5">
+          <button id="btn-play" type="button" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1 flex-shrink-0 text-white shadow-sm" style="background: var(--c-conv)" title="Play / Pause (Space)">
             <svg id="icon-play" class="w-3 h-3 hidden" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             <svg id="icon-pause" class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-            <span id="lbl-play">Pausar</span>
+            <span id="lbl-play">Pause</span>
           </button>
 
-          <div id="conv-slider-group" class="flex-1 flex flex-col gap-0.5 min-w-0">
+          <div class="flex-1 flex flex-col gap-0.5 min-w-0">
             <div class="flex items-center justify-between text-[10px]">
-              <span id="slider-param-title" class="text-sec font-medium truncate">Deslocamento t</span>
+              <span id="slider-param-title" class="text-sec font-medium truncate">Time Shift t</span>
               <span id="t-readout-badge" class="font-mono-code font-semibold">t = 1.50</span>
             </div>
             <input id="t-slider" type="range" min="-2.5" max="6.0" step="0.02" value="1.50" class="w-full" />
           </div>
-          <div id="fourier-slider-group" class="hidden flex-1 flex flex-col gap-0.5 min-w-0">
-            <div class="flex items-center justify-between text-[10px]">
-              <span id="fourier-slider-title" class="text-sec font-medium truncate">Harmônicos N</span>
-              <span id="fourier-readout-badge" class="font-mono-code font-semibold">N = 10 (T₀=2.0)</span>
-            </div>
-            <input id="fourier-n-slider" type="range" min="1" max="30" step="1" value="10" class="w-full" />
-          </div>
-          <button id="btn-fourier-period" type="button" title="Alterar Período Fundamental T₀" class="hidden ui-control px-2 py-1 rounded-lg border text-[10px] font-semibold flex-shrink-0">
-            T₀: 2.0
+
+          <button id="btn-seq-mode" type="button" title="Sequential Presentation: 1st to 4th Step" class="ui-control px-2 py-1 rounded-lg border text-[10px] font-semibold flex-shrink-0">
+            <span id="lbl-seq-mode">1st→4th</span>
           </button>
 
-          <button id="btn-seq-mode" type="button" title="Encadear Animação Completa do 1º ao 4º Passo" class="ui-control px-2 py-1 rounded-lg border text-[10px] font-semibold flex-shrink-0">
-            1º→4º
-          </button>
-
-          <button id="btn-commute" type="button" title="Propriedade Comutativa: Alternar quem fica fixo e quem reflete" class="ui-control px-2 py-1 rounded-lg border text-[10px] font-semibold flex-shrink-0">
+          <button id="btn-commute" type="button" title="Commutative Property: Swap x(t) and h(t)" class="ui-control px-2 py-1 rounded-lg border text-[10px] font-semibold flex-shrink-0">
             x∗h ⇄ h∗x
           </button>
         </div>
-      </section>
 
-      <!-- Área Rolável Principal: Caderno Analítico Manual + Exemplos + Editor com Teclado Matemático -->
+        <div id="fourier-harmonics-row" class="hidden flex items-center gap-1.5">
+          <div class="flex-1 flex flex-col gap-0.5 min-w-0">
+            <div class="flex items-center justify-between text-[10px]">
+              <span id="lbl-fourier-slider-title" class="text-sec font-medium truncate">Harmonics N</span>
+              <span id="fourier-n-badge" class="font-mono-code font-semibold">N = 7</span>
+            </div>
+            <input id="fourier-n-slider" type="range" min="1" max="25" step="1" value="7" class="w-full" />
+          </div>
+        </div>: Caderno Analítico Manual + Exemplos + Editor com Teclado Matemático -->
       <div id="panel-scroll" class="flex-1 overflow-y-auto custom-scroll p-3 space-y-3">
 
         <!-- 1. CADERNO DE RESOLUÇÃO ANALÍTICA MANUAL (Escrita Progressiva + Valores Reais) -->
@@ -640,10 +640,10 @@
                 <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
                 <path d="M2 2l7.586 7.586"></path>
               </svg>
-              <h2 class="text-[11px] font-bold uppercase tracking-wider">Resolução Analítica Manual</h2>
+              <h2 id="notebook-title" class="text-[11px] font-bold uppercase tracking-wider">Step-by-Step Analytical Resolution</h2>
             </div>
-            <button id="btn-rewatch-write" type="button" class="ui-control px-2 py-0.5 rounded text-[10px] font-medium flex items-center gap-1">
-              <span>Reescrever Passo</span>
+            <button id="btn-rewatch-write" type="button" class="ui-control px-2 py-0.5 rounded text-[10px] font-medium flex items-center gap-1" title="Rewatch Step Animation">
+              <span id="lbl-rewatch">Rewatch Step</span>
             </button>
           </div>
 
@@ -656,7 +656,7 @@
           <!-- Tabela Interativa de Regiões / Intervalos de t -->
           <div class="pt-1 border-t border-[var(--border-subtle)]">
             <div class="text-[10px] font-semibold uppercase tracking-wider text-mut mb-1">
-              Síntese por Intervalos de t (Clique para inspecionar):
+              <span id="regions-title">Synthesis by t Intervals (Click to inspect):</span>
             </div>
             <div id="regions-table" class="space-y-1 text-[11px]"></div>
           </div>
@@ -665,8 +665,8 @@
         <!-- 2. GALERIA DE EXEMPLOS DAS NOTAS DE AULA (Sem Dropdowns) -->
         <section class="ui-card rounded-xl border p-2.5 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-sec">Exemplos das Notas de Aula & Salvos</span>
-            <span class="text-[10px] text-mut">Toque para carregar</span>
+            <span id="gallery-title" class="text-[10px] font-bold uppercase tracking-wider text-sec">Lecture Notes Presets & Saved</span>
+            <span id="gallery-subtitle" class="text-[10px] text-mut">Tap to load</span>
           </div>
           <div id="preset-gallery" class="grid grid-cols-2 gap-1.5"></div>
         </section>
@@ -674,14 +674,14 @@
         <!-- 3. DEFINIÇÃO DE SINAIS & TECLADO MATEMÁTICO DEDICADO (Estilo MathLive) -->
         <section class="ui-card rounded-xl border p-2.5 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-sec">Sinais de Entrada (Toque para Editar)</span>
+            <span id="inputs-title" class="text-[10px] font-bold uppercase tracking-wider text-sec">Input Signals (Tap to Edit)</span>
             <button id="btn-save-custom" type="button" class="ui-control px-2 py-0.5 rounded-md border text-[10px] font-semibold" style="color: var(--c-x1)">
-              + Fixar na Galeria
+              <span id="lbl-save-custom">+ Pin to Gallery</span>
             </button>
           </div>
 
           <!-- Caixas MathField Interativas para x(t) e h(t) -->
-          <div id="conv-inputs-group" class="grid grid-cols-1 gap-1.5">
+          <div id="conv-inputs-block" class="grid grid-cols-1 gap-1.5">
             <div id="mf-box-x" class="mathfield-box rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2">
               <div class="flex items-center gap-1.5 min-w-0 flex-1 overflow-x-auto custom-scroll">
                 <span class="text-xs font-bold flex-shrink-0" style="color: var(--c-x1)">x(t) =</span>
@@ -700,26 +700,34 @@
               <span class="text-[10px] font-mono-code text-mut flex-shrink-0" id="mf-raw-h"></span>
             </div>
           </div>
-          <div id="fourier-inputs-group" class="hidden grid grid-cols-1 gap-1.5">
+
+          <div id="fourier-inputs-block" class="hidden grid grid-cols-1 gap-1.5">
             <div id="mf-box-fourier" class="mathfield-box rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2">
               <div class="flex items-center gap-1.5 min-w-0 flex-1 overflow-x-auto custom-scroll">
-                <span class="text-xs font-bold flex-shrink-0" style="color: var(--c-x1)">f(t) =</span>
+                <span class="text-xs font-bold flex-shrink-0" style="color: var(--c-fourier-orig)">f(t) =</span>
                 <div id="mf-render-fourier" class="text-xs truncate"></div>
                 <span id="mf-caret-fourier" class="mathfield-caret hidden"></span>
               </div>
               <span class="text-[10px] font-mono-code text-mut flex-shrink-0" id="mf-raw-fourier"></span>
             </div>
+            <div class="flex items-center justify-between px-1 text-[11px] font-mono-code">
+              <div class="flex items-center gap-1">
+                <span class="text-sec font-semibold" id="lbl-fourier-t0">T₀ =</span>
+                <input id="fourier-t0-input" type="number" step="0.5" min="0.5" max="10" value="3.0" class="w-16 bg-[var(--bg-card)] border rounded px-1.5 py-0.5 text-xs font-mono-code">
+              </div>
+              <span class="text-accent" id="fourier-w0-preview">ω₀ = 2.09 rad/s</span>
+            </div>
           </div>
 
-          <!-- Teclado Matemático Dedicado (Abre ao focar x(t) ou h(t)) -->
+          
           <div id="math-keyboard" class="hidden pt-1.5 border-t border-[var(--border-subtle)] space-y-1.5">
             <div class="flex items-center justify-between gap-1">
               <div class="flex items-center gap-1">
-                <button type="button" data-mkb-tab="signals" class="mkb-tab seg-btn active px-2 py-0.5 rounded text-[10px]">Sinais & Funções</button>
-                <button type="button" data-mkb-tab="algebra" class="mkb-tab seg-btn px-2 py-0.5 rounded text-[10px]">Álgebra & Números</button>
+                <button type="button" data-mkb-tab="signals" id="mkb-tab-signals-btn" class="mkb-tab seg-btn active px-2 py-0.5 rounded text-[10px]">Signals & Functions</button>
+                <button type="button" data-mkb-tab="algebra" id="mkb-tab-algebra-btn" class="mkb-tab seg-btn px-2 py-0.5 rounded text-[10px]">Algebra & Numbers</button>
               </div>
               <button id="btn-close-mkb" type="button" class="ui-control px-2 py-0.5 rounded text-[10px] font-semibold">
-                Concluir
+                <span id="mkb-btn-done">Done</span>
               </button>
             </div>
 
@@ -737,8 +745,8 @@
 
               <button type="button" data-insert="sin(pi*t)" class="mkb-key" data-katex="\sin(\pi t)"></button>
               <button type="button" data-insert="cos(pi*t)" class="mkb-key" data-katex="\cos(\pi t)"></button>
-              <button type="button" data-insert="sign(sin(pi*t))" class="mkb-key mkb-fn" data-katex="\mathrm{sgn}"></button>
-              <button type="button" data-insert="abs(t)" class="mkb-key mkb-fn" data-katex="|t|"></button>
+              <button type="button" data-insert="sign(t)" class="mkb-key" data-katex="\text{sgn}(t)"></button>
+              <button type="button" data-insert="sinc(t)" class="mkb-key" data-katex="\text{sinc}(t)"></button>
               <button type="button" data-insert="cos(t)*u(t)" class="mkb-key" data-katex="\cos(t)u(t)"></button>
               <button type="button" data-insert="sinc(t)" class="mkb-key" data-katex="\mathrm{sinc}(t)"></button>
               <button type="button" data-insert="r(t)" class="mkb-key" data-katex="r(t)"></button>
@@ -839,26 +847,27 @@
       const rect = (v) => (Math.abs(v) <= 0.5 ? 1.0 : 0.0);
       const tri = (v) => (Math.abs(v) <= 1.0 ? 1.0 - Math.abs(v) : 0.0);
       const sinc = (v) => (Math.abs(v) < 1e-6 ? 1.0 : Math.sin(Math.PI * v) / (Math.PI * v));
-      const sign = (v) => (v > 0 ? 1.0 : (v < 0 ? -1.0 : 0.0));
+      const sign = (v) => Math.sign(v);
+      const sgn = sign;
 
       let jsExpr = clean
         .replace(/\^/g, '**')
         .replace(/\bpi\b/gi, 'Math.PI')
         .replace(/\be\b/g, 'Math.E')
-        .replace(/\bsign\s*\(/g, 'sign(')
-        .replace(/\bsgn\s*\(/g, 'sign(')
         .replace(/\bsin\s*\(/g, 'Math.sin(')
         .replace(/\bcos\s*\(/g, 'Math.cos(')
         .replace(/\bexp\s*\(/g, 'Math.exp(')
         .replace(/\bsqrt\s*\(/g, 'Math.sqrt(')
-        .replace(/\babs\s*\(/g, 'Math.abs(');
+        .replace(/\babs\s*\(/g, 'Math.abs(')
+        .replace(/\bsign\s*\(/g, 'sign(')
+        .replace(/\bsgn\s*\(/g, 'sgn(');
 
       try {
-        const fn = new Function('t', 'u', 'r', 'rect', 'tri', 'sinc', 'sign', `"use strict"; return Number(${jsExpr}) || 0;`);
-        fn(0.5, u, r, rect, tri, sinc, sign);
+        const fn = new Function('t', 'u', 'r', 'rect', 'tri', 'sinc', 'sign', 'sgn', `"use strict"; return Number(${jsExpr}) || 0;`);
+        fn(0.5, u, r, rect, tri, sinc, sign, sgn);
         return (tVal) => {
           try {
-            const val = fn(tVal, u, r, rect, tri, sinc, sign);
+            const val = fn(tVal, u, r, rect, tri, sinc);
             return Number.isFinite(val) ? val : 0;
           } catch (e) {
             return 0;
@@ -884,237 +893,13 @@
     // ============================================================================
     // 2. BANCO DE EXEMPLOS DAS NOTAS DE AULA E DO LATHI
     // ============================================================================
-    
-    // ============================================================================
-    // I18N DICTIONARY & INITIAL DETECTOR
-    // ============================================================================
-    const I18N = {
-      en: {
-        convTab: "3D Convolution",
-        fourierTab: "3D Fourier Series",
-        step1Label: "1st Step",
-        step1Title: "t → τ",
-        step2Label: "2nd Step",
-        step2Title: "Reflection",
-        step3Label: "3rd Step",
-        step3Title: "Shift",
-        step4Label: "4th Step",
-        step4Title: "Integral",
-        fStep1Label: "1st Step",
-        fStep1Title: "Period & Symmetry",
-        fStep2Label: "2nd Step",
-        fStep2Title: "DC Level a₀",
-        fStep3Label: "3rd Step",
-        fStep3Title: "Coefficients",
-        fStep4Label: "4th Step",
-        fStep4Title: "Synthesis & Spec",
-        shiftT: "Time Shift t",
-        harmonicsN: "Harmonics N",
-        galleryConv: "Textbook Examples & Saved",
-        galleryFourier: "Standard Periodic Waveforms",
-        tableConv: "Summary by Time Intervals t:",
-        tableFourier: "Harmonic Coefficients Table (n = 1..N):",
-        langBtn: "PT-BR"
-      },
-      pt: {
-        convTab: "Convolução 3D",
-        fourierTab: "Fourier 3D",
-        step1Label: "1º Passo",
-        step1Title: "t → τ",
-        step2Label: "2º Passo",
-        step2Title: "Reflexão",
-        step3Label: "3º Passo",
-        step3Title: "Deslocamento",
-        step4Label: "4º Passo",
-        step4Title: "Integral",
-        fStep1Label: "1º Passo",
-        fStep1Title: "Período e Simetria",
-        fStep2Label: "2º Passo",
-        fStep2Title: "Nível DC a₀",
-        fStep3Label: "3º Passo",
-        fStep3Title: "Coeficientes",
-        fStep4Label: "4º Passo",
-        fStep4Title: "Síntese e Espectro",
-        shiftT: "Deslocamento t",
-        harmonicsN: "Harmônicos N",
-        galleryConv: "Exemplos das Notas de Aula & Salvos",
-        galleryFourier: "Sinais Periódicos Padrão",
-        tableConv: "Síntese por Intervalos de t (Clique para inspecionar):",
-        tableFourier: "Tabela de Coeficientes Harmônicos (n = 1..N):",
-        langBtn: "EN"
-      }
-    };
-
-    function resolveInitialLanguage() {
-      try {
-        const stored = localStorage.getItem('conv3d_lang_pref');
-        if (stored === 'en' || stored === 'pt') return stored;
-        const nav = (navigator.languages && navigator.languages[0]) || navigator.language || '';
-        if (nav.toLowerCase().startsWith('pt')) return 'pt';
-      } catch (e) {}
-      return 'en';
-    }
-
-    function resolveInitialTheme() {
-      try {
-        const stored = localStorage.getItem('conv3d_theme');
-        if (stored && ['projector', 'dark', 'light'].includes(stored)) return stored;
-      } catch (e) {}
-      return 'projector';
-    }
-
-    const FOURIER_PRESETS = {
-      square: {
-        id: 'square',
-        shortTitle: 'Onda Quadrada',
-        shortTitleEn: 'Square Wave',
-        subtitle: 'Simetria Ímpar, bₙ = 4/(nπ)',
-        subtitleEn: 'Odd Symmetry, bₙ = 4/(nπ)',
-        expr: 'sign(sin(pi*t))',
-        T0: 2.0,
-        defaultN: 11
-      },
-      triangle: {
-        id: 'triangle',
-        shortTitle: 'Onda Triangular',
-        shortTitleEn: 'Triangle Wave',
-        subtitle: 'Simetria Par, decaimento 1/n²',
-        subtitleEn: 'Even Symmetry, 1/n² falloff',
-        expr: '1 - 2*abs(t - 1)',
-        T0: 2.0,
-        defaultN: 9
-      },
-      sawtooth: {
-        id: 'sawtooth',
-        shortTitle: 'Dente de Serra',
-        shortTitleEn: 'Sawtooth Wave',
-        subtitle: 'Rampa Linear, todos harmônicos',
-        subtitleEn: 'Linear Ramp, all harmonics',
-        expr: 't - 1',
-        T0: 2.0,
-        defaultN: 15
-      },
-      halfwave: {
-        id: 'halfwave',
-        shortTitle: 'Retificador Meia Onda',
-        shortTitleEn: 'Half-Wave Rectifier',
-        subtitle: 'Senoide Truncada [0, T₀/2]',
-        subtitleEn: 'Truncated Sine [0, T₀/2]',
-        expr: 'sin(pi*t)*u(sin(pi*t))',
-        T0: 2.0,
-        defaultN: 10
-      },
-      fullwave: {
-        id: 'fullwave',
-        shortTitle: 'Retificador Onda Completa',
-        shortTitleEn: 'Full-Wave Rectifier',
-        subtitle: 'Módulo do Seno |sen(πt)|',
-        subtitleEn: 'Absolute Sine |sin(πt)|',
-        expr: 'abs(sin(pi*t))',
-        T0: 1.0,
-        defaultN: 8
-      },
-      pulseTrain: {
-        id: 'pulseTrain',
-        shortTitle: 'Trem de Pulsos',
-        shortTitleEn: 'Pulse Train',
-        subtitle: 'Pulso Estreito, envelope Sinc',
-        subtitleEn: 'Narrow Pulse, Sinc envelope',
-        expr: 'u(t) - u(t - 0.5)',
-        T0: 2.5,
-        defaultN: 14
-      }
-    };
-
-    function integrate1D(fn, a, b, n = 320) {
-      const h = (b - a) / n;
-      let sum = fn(a) + fn(b);
-      for (let i = 1; i < n; i++) {
-        const x = a + i * h;
-        sum += (i % 2 === 0 ? 2 : 4) * fn(x);
-      }
-      return (h / 3) * sum;
-    }
-
-    function calculateFourierData() {
-      const T0 = Math.max(0.2, state.fourierT0);
-      const w0 = (2 * Math.PI) / T0;
-      const f0 = 1 / T0;
-      const N = Math.max(1, Math.min(30, state.fourierHarmonics));
-      const fnBase = compileSignalExpr(state.fourierExpr);
-
-      const fPeriodic = (t) => {
-        let rem = ((t % T0) + T0) % T0;
-        return fnBase(rem);
-      };
-
-      let isEven = true;
-      let isOdd = true;
-      let isHalfWave = true;
-      const testSteps = 32;
-      for (let i = 0; i < testSteps; i++) {
-        const tVal = ((i + 0.5) / testSteps) * T0;
-        const vPos = fPeriodic(tVal);
-        const vNeg = fPeriodic(-tVal);
-        const vHalf = fPeriodic(tVal + T0 / 2);
-        if (Math.abs(vPos - vNeg) > 1e-3) isEven = false;
-        if (Math.abs(vPos + vNeg) > 1e-3) isOdd = false;
-        if (Math.abs(vHalf + vPos) > 1e-3) isHalfWave = false;
-      }
-
-      let a0 = 0;
-      if (isOdd) {
-        a0 = 0;
-      } else {
-        a0 = (1 / T0) * integrate1D((t) => fPeriodic(t), 0, T0, 320);
-        if (Math.abs(a0) < 1e-5) a0 = 0;
-      }
-
-      const a = [a0];
-      const b = [0];
-      const C = [Math.abs(a0)];
-      const theta = [0];
-      let harmonicPower = a0 * a0;
-
-      for (let n = 1; n <= N; n++) {
-        let an = 0;
-        let bn = 0;
-        if (isHalfWave && n % 2 === 0) {
-          an = 0;
-          bn = 0;
-        } else {
-          if (!isOdd) {
-            an = (2 / T0) * integrate1D((t) => fPeriodic(t) * Math.cos(n * w0 * t), 0, T0, 320);
-            if (Math.abs(an) < 1e-5) an = 0;
-          }
-          if (!isEven) {
-            bn = (2 / T0) * integrate1D((t) => fPeriodic(t) * Math.sin(n * w0 * t), 0, T0, 320);
-            if (Math.abs(bn) < 1e-5) bn = 0;
-          }
-        }
-        a[n] = an;
-        b[n] = bn;
-        const cn = Math.sqrt(an * an + bn * bn);
-        C[n] = cn;
-        theta[n] = Math.abs(cn) > 1e-5 ? -Math.atan2(bn, an) : 0;
-        harmonicPower += 0.5 * cn * cn;
-      }
-
-      const totalPower = Math.max(1e-6, (1 / T0) * integrate1D((t) => Math.pow(fPeriodic(t), 2), 0, T0, 400));
-      const efficiency = Math.min(100, Math.max(0, (harmonicPower / totalPower) * 100));
-
-      state.fourierCalculated = {
-        T0, w0, f0, N, fPeriodic, isEven, isOdd, isHalfWave,
-        a0, a, b, C, theta, totalPower, harmonicPower, efficiency
-      };
-      return state.fourierCalculated;
-    }
-
     const BUILTIN_PRESETS = {
       ex8: {
         id: 'ex8',
         shortTitle: 'Exemplo #8',
+        shortTitleEn: 'Example #8',
         subtitle: 'Exponencial e Pulso [0, 3]',
+        subtitleEn: 'Exponential & Pulse [0, 3]',
         exprX: 'e^(-t)*u(t)',
         exprH: 'u(t)-u(t-3)',
         latexX: 'e^{-t}u(t)',
@@ -1137,7 +922,9 @@
       ex1: {
         id: 'ex1',
         shortTitle: 'Exemplo #1 / #2',
+        shortTitleEn: 'Example #1 / #2',
         subtitle: 'Exponencial e Degrau u(t)',
+        subtitleEn: 'Exponential & Step u(t)',
         exprX: 'e^(-t)*u(t)',
         exprH: 'u(t)',
         latexX: 'e^{-t}u(t)',
@@ -1155,7 +942,9 @@
       lathi25: {
         id: 'lathi25',
         shortTitle: 'Lathi Ex. 2.5',
+        shortTitleEn: 'Lathi Ex. 2.5',
         subtitle: 'Duas Exponenciais Causais',
+        subtitleEn: 'Two Causal Exponentials',
         exprX: 'e^(-t)*u(t)',
         exprH: 'e^(-2*t)*u(t)',
         latexX: 'e^{-t}u(t)',
@@ -1173,7 +962,9 @@
       ex5: {
         id: 'ex5',
         shortTitle: 'Exemplo #5',
+        shortTitleEn: 'Example #5',
         subtitle: 'Pulso [-1,1] e Rampa t/3',
+        subtitleEn: 'Pulse [-1,1] & Ramp t/3',
         exprX: 'u(t+1)-u(t-1)',
         exprH: '(t/3)*(u(t)-u(t-3))',
         latexX: 'u(t+1)-u(t-1)',
@@ -1199,7 +990,9 @@
       ex7: {
         id: 'ex7',
         shortTitle: 'Exemplo #7',
+        shortTitleEn: 'Example #7',
         subtitle: 'Pulso Dipolo e Rampa t/2',
+        subtitleEn: 'Dipole Pulse & Ramp t/2',
         exprX: '2*(u(t+1)-u(t)) - 2*(u(t)-u(t-1))',
         exprH: '(t/2)*(u(t)-u(t-2))',
         latexX: '2p_{[-1,0]}(t) - 2p_{[0,1]}(t)',
@@ -1233,10 +1026,517 @@
     };
 
     // ============================================================================
-    // 3. ESTADO GLOBAL DA APLICAÇÃO
+    // 3. ESTADO GLOBAL DA APLICAÇÃO & I18N
     // ============================================================================
+    const I18N = {
+      en: {
+        langBtn: 'PT-BR',
+        tabConv: '3D Convolution',
+        tabFourier: '3D Fourier',
+        thProjector: 'Projector',
+        thDark: 'Dark',
+        thLight: 'Light',
+        thProjectorTitle: 'High Contrast for Classroom Projectors',
+        thDarkTitle: 'Dark Theme',
+        thLightTitle: 'Light Theme',
+        btnThickTitle: 'High Contrast Stroke for Projectors',
+        btnFullscreenTitle: 'Fullscreen (F)',
+        legFixed: 'Fixed',
+        legMoving: 'Moving',
+        legProd: 'Product',
+        legFourierOrig: 'f(t) Periodic',
+        legFourierHarm: 'Harmonics',
+        legFourierRecon: 'Reconstruction SN(t)',
+        waterfall: '3D Waterfall',
+        waterfallTitle: 'Toggle 3D Surface / Waterfall',
+        resetCam: 'Center',
+        resetCamTitle: 'Reset 3D Camera',
+        dragTip: 'Drag: Orbit • Pinch/Scroll: Zoom',
+        stepTag1: '1st Step',
+        stepTag2: '2nd Step',
+        stepTag3: '3rd Step',
+        stepTag4: '4th Step',
+        stepConv1: 't → τ',
+        stepConv2: 'Reflection',
+        stepConv3: 'Shift',
+        stepConv4: 'Integral',
+        stepFourier1: 'Signal & Definition',
+        stepFourier2: 'Symmetry & Parity',
+        stepFourier3: 'Harmonics Table',
+        stepFourier4: 'Reconstruction',
+        btnPlayPlay: 'Play',
+        btnPlayPause: 'Pause',
+        btnPlayTitle: 'Play / Pause (Space)',
+        sliderTime: 'Time Shift t',
+        sliderHarmonics: 'Harmonics N',
+        sliderEvalPoint: 'Evaluation Point t',
+        btnSeqTitle: 'Sequential Presentation: 1st to 4th Step',
+        btnSeqMode: '1st→4th',
+        btnCommuteTitle: 'Commutative Property: Swap x(t) and h(t)',
+        notebookTitle: 'Step-by-Step Analytical Resolution',
+        btnRewatch: 'Rewatch Step',
+        btnRewatchTitle: 'Rewatch Step Animation',
+        regionsTitle: 'Synthesis by t Intervals (Click to inspect):',
+        regionsFourierTitle: 'Fourier Harmonic Spectrum (First N Terms):',
+        galleryTitle: 'Lecture Notes Presets & Saved',
+        gallerySubtitle: 'Tap to load',
+        inputsTitle: 'Input Signals (Tap to Edit)',
+        btnPin: '+ Pin to Gallery',
+        mkbSignals: 'Signals & Functions',
+        mkbAlgebra: 'Algebra & Numbers',
+        mkbDone: 'Done',
+        lblInputX: 'x(t) [Fixed]',
+        lblInputH: 'h(t) [Moving]',
+        lblInputF: 'f(t) [Periodic]',
+        lblPeriodT0: 'Period T₀ =',
+        sampleTau: 'Sample at τ:',
+        reflection: 'Spatial Reflection:',
+        currentParam: 'Current Parameter:',
+        fundFreq: 'Fundamental Frequency:',
+        symmClass: 'Symmetry Classification:',
+        activeHarm: 'Active Harmonics:',
+        approxAtT: 'Approximation at t:',
+        noOverlap: 'No overlap',
+        fullOverlap: 'Active overlap',
+        docTitle: '3D Signals & Systems — Interactive Convolution & Fourier Analysis',
+        sliderSweep: 'Tau Sweep τ (Step 1)',
+        sliderFlip: 'Reflection Rotation θ (Step 2)',
+        sliderShift3: 'Time Shift t (Step 3)',
+        sliderShift4: 'Time Shift t (Step 4)',
+        btnExpandStage: 'Expand / Collapse 3D Stage on Mobile',
+        delPreset: 'Remove',
+        customSignal: 'Custom Signal',
+        savedPreset: 'Saved #'
+      },
+      pt: {
+        langBtn: 'EN',
+        tabConv: 'Convolução 3D',
+        tabFourier: 'Fourier 3D',
+        thProjector: 'Projetor',
+        thDark: 'Escuro',
+        thLight: 'Claro',
+        thProjectorTitle: 'Alto Contraste para Projetores em Salas Iluminadas',
+        thDarkTitle: 'Tema Escuro',
+        thLightTitle: 'Tema Claro',
+        btnThickTitle: 'Alternar Espessura Forte para Projetor',
+        btnFullscreenTitle: 'Tela Cheia (F)',
+        legFixed: 'Fixo',
+        legMoving: 'Móvel',
+        legProd: 'Produto',
+        legFourierOrig: 'f(t) Periódica',
+        legFourierHarm: 'Harmônicas',
+        legFourierRecon: 'Reconstrução SN(t)',
+        waterfall: 'Cascata 3D',
+        waterfallTitle: 'Alternar Cascata 3D (Superfície Contínua)',
+        resetCam: 'Enquadrar',
+        resetCamTitle: 'Centralizar Câmera 3D',
+        dragTip: 'Arraste: Orbitar • Pinça/Scroll: Zoom',
+        stepTag1: '1º Passo',
+        stepTag2: '2º Passo',
+        stepTag3: '3º Passo',
+        stepTag4: '4º Passo',
+        stepConv1: 't → τ',
+        stepConv2: 'Reflexão',
+        stepConv3: 'Deslocar',
+        stepConv4: 'Integral',
+        stepFourier1: 'Sinal & Definição',
+        stepFourier2: 'Simetria & Paridade',
+        stepFourier3: 'Tabela Harmônica',
+        stepFourier4: 'Reconstrução',
+        btnPlayPlay: 'Reproduzir',
+        btnPlayPause: 'Pausar',
+        btnPlayTitle: 'Reproduzir / Pausar (Espaço)',
+        sliderTime: 'Deslocamento t',
+        sliderHarmonics: 'Harmônicas N',
+        sliderEvalPoint: 'Ponto de Avaliação t',
+        btnSeqTitle: 'Encadear Animação Completa do 1º ao 4º Passo',
+        btnSeqMode: '1º→4º',
+        btnCommuteTitle: 'Propriedade Comutativa: Alternar quem fica fixo e quem reflete',
+        notebookTitle: 'Resolução Analítica Manual',
+        btnRewatch: 'Reescrever Passo',
+        btnRewatchTitle: 'Reescrever Passo da Animação',
+        regionsTitle: 'Síntese por Intervalos de t (Clique para inspecionar):',
+        regionsFourierTitle: 'Espectro Harmônico de Fourier (Primeiros N Termos):',
+        galleryTitle: 'Exemplos das Notas de Aula & Salvos',
+        gallerySubtitle: 'Toque para carregar',
+        inputsTitle: 'Sinais de Entrada (Toque para Editar)',
+        btnPin: '+ Fixar na Galeria',
+        mkbSignals: 'Sinais & Funções',
+        mkbAlgebra: 'Álgebra & Números',
+        mkbDone: 'Concluir',
+        lblInputX: 'x(t) [Fixo]',
+        lblInputH: 'h(t) [Móvel]',
+        lblInputF: 'f(t) [Periódica]',
+        lblPeriodT0: 'Período T₀ =',
+        sampleTau: 'Amostra em τ:',
+        reflection: 'Reflexão Espacial:',
+        currentParam: 'Parâmetro Atual:',
+        fundFreq: 'Frequência Fundamental:',
+        symmClass: 'Classificação de Simetria:',
+        activeHarm: 'Harmônicas Ativas:',
+        approxAtT: 'Aproximação em t:',
+        noOverlap: 'Sem sobreposição',
+        fullOverlap: 'Sobreposição ativa',
+        docTitle: 'Sinais & Sistemas 3D — Convolução e Fourier Interativos',
+        sliderSweep: 'Varredura τ (Passo 1)',
+        sliderFlip: 'Giro de Reflexão θ (Passo 2)',
+        sliderShift3: 'Deslocamento t (Passo 3)',
+        sliderShift4: 'Deslocamento t (Passo 4)',
+        btnExpandStage: 'Expandir / Reduzir Palco 3D no Mobile',
+        delPreset: 'Remover',
+        customSignal: 'Sinal Personalizado',
+        savedPreset: 'Salvo #'
+      }
+    };
+
+    const initialLang = (navigator.language || '').toLowerCase().startsWith('pt') ? 'pt' : 'en';
+
+    const FOURIER_PRESETS = {
+      square: {
+        id: 'square',
+        title: 'Onda Quadrada',
+        titleEn: 'Square Wave',
+        subtitle: 'Simetria Ímpar, harmônicas ímpares 1/n',
+        subtitleEn: 'Odd Symmetry, 1/n odd harmonics',
+        expr: '(u(t) - u(t-1.5)) - (u(t-1.5) - u(t-3))',
+        T0: 3.0,
+        N: 7
+      },
+      sawtooth: {
+        id: 'sawtooth',
+        title: 'Dente de Serra',
+        titleEn: 'Sawtooth Wave',
+        subtitle: 'Rampa periódica contínua por partes',
+        subtitleEn: 'Piecewise linear periodic ramp',
+        expr: '(2*t/2.0 - 1) * (u(t) - u(t-2.0))',
+        T0: 2.0,
+        N: 9
+      },
+      triangular: {
+        id: 'triangular',
+        title: 'Onda Triangular',
+        titleEn: 'Triangular Wave',
+        subtitle: 'Simetria Par, decaimento rápido 1/n²',
+        subtitleEn: 'Even Symmetry, rapid 1/n² decay',
+        expr: 'tri((t - 1.5) / 1.5) * (u(t) - u(t-3))',
+        T0: 3.0,
+        N: 5
+      },
+      half_wave: {
+        id: 'half_wave',
+        title: 'Retificada Meia Onda',
+        titleEn: 'Half-Wave Rectified',
+        subtitle: 'Seno retificado no semiciclo positivo',
+        subtitleEn: 'Rectified sine on positive half-cycle',
+        expr: 'sin(pi*t) * (u(t) - u(t-1.0))',
+        T0: 2.0,
+        N: 8
+      },
+      full_wave: {
+        id: 'full_wave',
+        title: 'Retificada Onda Completa',
+        titleEn: 'Full-Wave Rectified',
+        subtitle: '|sin(πt)| com período duplicado T0=1',
+        subtitleEn: '|sin(πt)| with doubled period T0=1',
+        expr: 'abs(sin(pi*t)) * (u(t) - u(t-1.0))',
+        T0: 1.0,
+        N: 6
+      },
+      sinc_train: {
+        id: 'sinc_train',
+        title: 'Trem de Pulsos Sinc',
+        titleEn: 'Sinc Pulse Train',
+        subtitle: 'Pulsos limitados em banda periódicos',
+        subtitleEn: 'Periodic bandlimited sinc pulses',
+        expr: 'sinc(2*t - 2) * (u(t) - u(t-2))',
+        T0: 2.0,
+        N: 11
+      }
+    };
+
+    function calculateFourierData() {
+      const T0 = Math.max(0.2, Number(state.fourierT0) || 3.0);
+      const w0 = (2 * Math.PI) / T0;
+      const fn = compileSignalExpr(state.fourierExpr);
+      const N = Math.min(25, Math.max(1, Math.round(state.fourierN) || 7));
+
+      const numSamples = 240;
+      const dt = T0 / numSamples;
+      let a0Sum = 0;
+      for (let i = 0; i < numSamples; i++) {
+        const tSample = (i + 0.5) * dt;
+        a0Sum += fn(tSample);
+      }
+      const a0 = (a0Sum * dt) / T0;
+
+      const harmonics = [];
+      let parsevalPower = a0 * a0;
+
+      for (let n = 1; n <= N; n++) {
+        let anSum = 0;
+        let bnSum = 0;
+        for (let i = 0; i < numSamples; i++) {
+          const tSample = (i + 0.5) * dt;
+          const val = fn(tSample);
+          anSum += val * Math.cos(n * w0 * tSample);
+          bnSum += val * Math.sin(n * w0 * tSample);
+        }
+        let an = (2 / T0) * anSum * dt;
+        let bn = (2 / T0) * bnSum * dt;
+        if (Math.abs(an) < 1e-4) an = 0;
+        if (Math.abs(bn) < 1e-4) bn = 0;
+        const cn = Math.sqrt(an * an + bn * bn);
+        const theta = cn > 1e-4 ? Math.atan2(-bn, an) : 0;
+        harmonics.push({ n, nw0: n * w0, an, bn, cn, theta });
+        parsevalPower += 0.5 * (an * an + bn * bn);
+      }
+
+      let evenDiff = 0;
+      let oddDiff = 0;
+      let totalEnergy = 0;
+      const testSteps = 40;
+      for (let i = 0; i < testSteps; i++) {
+        const tVal = ((i + 0.5) / testSteps) * T0;
+        const fPlus = fn(tVal);
+        const fMinus = fn(T0 - tVal);
+        evenDiff += Math.abs(fPlus - fMinus);
+        oddDiff += Math.abs(fPlus + fMinus);
+        totalEnergy += Math.abs(fPlus);
+      }
+      const norm = totalEnergy || 1.0;
+      const isEven = (evenDiff / norm) < 0.05;
+      const isOdd = !isEven && (oddDiff / norm) < 0.05;
+      const symmetryType = isEven ? 'even' : isOdd ? 'odd' : 'none';
+
+      const reconstruct = (t) => {
+        let sum = a0;
+        for (let i = 0; i < harmonics.length; i++) {
+          const h = harmonics[i];
+          sum += h.an * Math.cos(h.nw0 * t) + h.bn * Math.sin(h.nw0 * t);
+        }
+        return sum;
+      };
+
+      let mseSum = 0;
+      for (let i = 0; i < numSamples; i++) {
+        const tSample = (i + 0.5) * dt;
+        const orig = fn(tSample);
+        const rec = reconstruct(tSample);
+        const diff = orig - rec;
+        mseSum += diff * diff;
+      }
+      const mse = (mseSum * dt) / T0;
+
+      state.fourierCalculated = {
+        T0,
+        w0,
+        f0: 1.0 / T0,
+        a0,
+        harmonics,
+        symmetryType,
+        reconstruct,
+        fn,
+        parsevalPower,
+        mse
+      };
+      return state.fourierCalculated;
+    }
+
+    function setLanguage(lang) {
+      state.lang = lang;
+      const dict = I18N[lang] || I18N.en;
+
+      const langBtnText = document.getElementById('lang-btn-text');
+      if (langBtnText) langBtnText.textContent = dict.langBtn;
+
+      const btnConv = document.getElementById('btn-tab-conv');
+      const btnFourier = document.getElementById('btn-tab-fourier');
+      if (btnConv) btnConv.textContent = dict.tabConv;
+      if (btnFourier) btnFourier.textContent = dict.tabFourier;
+
+      const thProj = document.getElementById('btn-th-projector');
+      const thDark = document.getElementById('btn-th-dark');
+      const thLight = document.getElementById('btn-th-light');
+      if (thProj) { thProj.textContent = dict.thProjector; thProj.title = dict.thProjectorTitle; }
+      if (thDark) { thDark.textContent = dict.thDark; thDark.title = dict.thDarkTitle; }
+      if (thLight) { thLight.textContent = dict.thLight; thLight.title = dict.thLightTitle; }
+
+      const btnThick = document.getElementById('btn-thick');
+      if (btnThick) btnThick.title = dict.btnThickTitle;
+      const btnFs = document.getElementById('btn-fullscreen');
+      if (btnFs) btnFs.title = dict.btnFullscreenTitle;
+
+      const legProd = document.getElementById('leg-prod');
+      if (legProd) legProd.textContent = state.activeModule === 'fourier' ? dict.legFourierHarm : dict.legProd;
+      const lblWaterfall = document.getElementById('lbl-waterfall');
+      if (lblWaterfall) lblWaterfall.textContent = dict.waterfall;
+      const btnWaterfall = document.getElementById('btn-waterfall');
+      if (btnWaterfall) btnWaterfall.title = dict.waterfallTitle;
+
+      const lblResetCam = document.getElementById('lbl-reset-cam');
+      if (lblResetCam) lblResetCam.textContent = dict.resetCam;
+      const btnResetCam = document.getElementById('btn-reset-cam');
+      if (btnResetCam) btnResetCam.title = dict.resetCamTitle;
+
+      const dragTip = document.getElementById('stage-drag-tip');
+      if (dragTip) dragTip.textContent = dict.dragTip;
+
+      for (let s = 1; s <= 4; s++) {
+        const tagEl = document.getElementById('step-tag-' + s);
+        if (tagEl) tagEl.textContent = dict['stepTag' + s];
+        const lblEl = document.getElementById('step-lbl-' + s);
+        if (lblEl) {
+          lblEl.textContent = state.activeModule === 'fourier' ? dict['stepFourier' + s] : dict['stepConv' + s];
+        }
+      }
+
+      const lblPlay = document.getElementById('lbl-play');
+      if (lblPlay) lblPlay.textContent = state.isPlaying ? dict.btnPlayPause : dict.btnPlayPlay;
+      const btnPlay = document.getElementById('btn-play');
+      if (btnPlay) btnPlay.title = dict.btnPlayTitle;
+
+      const sliderTitle = document.getElementById('slider-param-title');
+      if (sliderTitle) sliderTitle.textContent = state.activeModule === 'fourier' ? dict.sliderEvalPoint : dict.sliderTime;
+      const fourierSliderTitle = document.getElementById('lbl-fourier-slider-title');
+      if (fourierSliderTitle) fourierSliderTitle.textContent = dict.sliderHarmonics;
+
+      const btnSeq = document.getElementById('btn-seq-mode');
+      if (btnSeq) {
+        btnSeq.title = dict.btnSeqTitle;
+        const lblSeq = document.getElementById('lbl-seq-mode');
+        if (lblSeq) lblSeq.textContent = dict.btnSeqMode;
+      }
+      const btnCommute = document.getElementById('btn-commute');
+      if (btnCommute) btnCommute.title = dict.btnCommuteTitle;
+
+      const notebookTitle = document.getElementById('notebook-title');
+      if (notebookTitle) notebookTitle.textContent = dict.notebookTitle;
+      const lblRewatch = document.getElementById('lbl-rewatch');
+      if (lblRewatch) lblRewatch.textContent = dict.btnRewatch;
+      const btnRewatch = document.getElementById('btn-rewatch-write');
+      if (btnRewatch) btnRewatch.title = dict.btnRewatchTitle;
+
+      const regionsTitle = document.getElementById('regions-title');
+      if (regionsTitle) {
+        regionsTitle.textContent = state.activeModule === 'fourier' ? dict.regionsFourierTitle : dict.regionsTitle;
+      }
+
+      const galTitle = document.getElementById('gallery-title');
+      if (galTitle) galTitle.textContent = dict.galleryTitle;
+      const galSub = document.getElementById('gallery-subtitle');
+      if (galSub) galSub.textContent = dict.gallerySubtitle;
+
+      const inputsTitle = document.getElementById('inputs-title');
+      if (inputsTitle) inputsTitle.textContent = dict.inputsTitle;
+      const lblSave = document.getElementById('lbl-save-custom');
+      if (lblSave) lblSave.textContent = dict.btnPin;
+
+      const mkbSig = document.getElementById('mkb-tab-signals-btn');
+      if (mkbSig) mkbSig.textContent = dict.mkbSignals;
+      const mkbAlg = document.getElementById('mkb-tab-algebra-btn');
+      if (mkbAlg) mkbAlg.textContent = dict.mkbAlgebra;
+      const mkbDone = document.getElementById('mkb-btn-done');
+      if (mkbDone) mkbDone.textContent = dict.mkbDone;
+
+      document.title = dict.docTitle;
+      const btnExp = document.getElementById('btn-expand-stage');
+      if (btnExp) btnExp.title = dict.btnExpandStage;
+
+      if (sliderTitle) {
+        if (state.activeModule === 'fourier') {
+          sliderTitle.textContent = dict.sliderEvalPoint;
+        } else {
+          if (state.step === 1) sliderTitle.textContent = dict.sliderSweep;
+          else if (state.step === 2) sliderTitle.textContent = dict.sliderFlip;
+          else if (state.step === 3) sliderTitle.textContent = dict.sliderShift3;
+          else sliderTitle.textContent = dict.sliderShift4;
+        }
+      }
+
+      renderPresetGallery();
+      updateNotebookUI(false);
+      updateScene3D();
+    }
+
+    function switchModule(moduleName) {
+      state.activeModule = moduleName;
+      const isFourier = moduleName === 'fourier';
+      const dict = I18N[state.lang] || I18N.en;
+
+      const btnConv = document.getElementById('btn-tab-conv');
+      const btnFourier = document.getElementById('btn-tab-fourier');
+      const pip = document.getElementById('header-accent-pip');
+      if (btnConv && btnFourier) {
+        if (isFourier) {
+          btnConv.classList.remove('text-primary');
+          btnConv.classList.add('text-mut');
+          btnFourier.classList.remove('text-mut');
+          btnFourier.classList.add('text-primary');
+          if (pip) pip.style.background = 'var(--c-fourier-orig)';
+        } else {
+          btnFourier.classList.remove('text-primary');
+          btnFourier.classList.add('text-mut');
+          btnConv.classList.remove('text-mut');
+          btnConv.classList.add('text-primary');
+          if (pip) pip.style.background = 'var(--c-conv)';
+        }
+      }
+
+      const convSlider = document.getElementById('conv-slider-row');
+      const fourierSlider = document.getElementById('fourier-harmonics-row');
+      if (convSlider && fourierSlider) {
+        convSlider.classList.toggle('hidden', isFourier);
+        fourierSlider.classList.toggle('hidden', !isFourier);
+      }
+
+      if (!isFourier) {
+        const sliderTitle = document.getElementById('slider-param-title');
+        if (sliderTitle) {
+          if (state.step === 1) sliderTitle.textContent = dict.sliderSweep;
+          else if (state.step === 2) sliderTitle.textContent = dict.sliderFlip;
+          else if (state.step === 3) sliderTitle.textContent = dict.sliderShift3;
+          else sliderTitle.textContent = dict.sliderShift4;
+        }
+      }
+
+      const convInputs = document.getElementById('conv-inputs-block');
+      const fourierInputs = document.getElementById('fourier-inputs-block');
+      if (convInputs && fourierInputs) {
+        convInputs.classList.toggle('hidden', isFourier);
+        fourierInputs.classList.toggle('hidden', !isFourier);
+      }
+
+      const wfPeriodBtn = document.getElementById('btn-waterfall-period');
+      if (wfPeriodBtn) wfPeriodBtn.classList.toggle('hidden', !isFourier || !state.isWaterfall);
+
+      const btnCommute = document.getElementById('btn-commute');
+      if (btnCommute) btnCommute.classList.toggle('hidden', isFourier);
+
+      for (let s = 1; s <= 4; s++) {
+        const lblEl = document.getElementById('step-lbl-' + s);
+        if (lblEl) lblEl.textContent = isFourier ? dict['stepFourier' + s] : dict['stepConv' + s];
+      }
+
+      const legProd = document.getElementById('leg-prod');
+      if (legProd) legProd.textContent = isFourier ? dict.legFourierHarm : dict.legProd;
+
+      const regionsTitle = document.getElementById('regions-title');
+      if (regionsTitle) regionsTitle.textContent = isFourier ? dict.regionsFourierTitle : dict.regionsTitle;
+
+      if (isFourier) {
+        calculateFourierData();
+        setActiveMathField('fourier');
+      } else {
+        setActiveMathField('x');
+      }
+
+      syncInputsWithPreset();
+      renderPresetGallery();
+      updateNotebookUI(false);
+      updateScene3D();
+    }
+
     const state = {
-      activeModule: 'convolution', // 'convolution' ou 'fourier'
       presetKey: 'ex8',
       customPresets: [],
       step: 4,
@@ -1247,18 +1547,17 @@
       seqMode: false,
       isCommuted: false,
       showWaterfall: true,
-      theme: resolveInitialTheme(),
-      thickLines: true,
+      theme: 'projector',
+      thickLines: false,
       activeMathField: null,
       exprX: BUILTIN_PRESETS.ex8.exprX,
       exprH: BUILTIN_PRESETS.ex8.exprH,
-      lang: resolveInitialLanguage(),
-      // Fourier
+      lang: initialLang,
+      activeModule: 'convolution',
+      fourierN: 7,
+      fourierT0: 3.0,
+      fourierExpr: '(u(t) - u(t-1.5)) - (u(t-1.5) - u(t-3))',
       fourierPresetKey: 'square',
-      fourierStep: 4,
-      fourierExpr: 'sign(sin(pi*t))',
-      fourierT0: 2.0,
-      fourierHarmonics: 10,
       fourierCalculated: null
     };
 
@@ -1359,10 +1658,112 @@
     let handwritingTimer = null;
     const PEN_SVG = `<span class="pen-nib"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg></span>`;
 
+        function buildNotebookLinesFourier(calc) {
+      const isEn = state.lang === 'en';
+      const tNow = state.t;
+      const recVal = calc.reconstruct(tNow);
+      const origVal = calc.fn(tNow);
+      const T0Str = calc.T0.toFixed(2);
+      const w0Str = calc.w0.toFixed(3);
+      const f0Str = calc.f0.toFixed(3);
+      const a0Str = calc.a0.toFixed(4);
+
+      if (state.step === 1) {
+        return [
+          {
+            label: isEn ? '1.1 Fourier Series Representation:' : '1.1 Representação em Série de Fourier:',
+            latex: `f(t) = a_0 + \\sum_{n=1}^{\\infty} \\left[ a_n \\cos(n\\omega_0 t) + b_n \\sin(n\\omega_0 t) \\right] = C_0 + \\sum_{n=1}^{\\infty} C_n \\cos(n\\omega_0 t + \\theta_n)`
+          },
+          {
+            label: isEn ? '1.2 Fundamental Period and Angular Frequency:' : '1.2 Período Fundamental e Frequência Angular:',
+            latex: `T_0 = ${T0Str}\\text{ s}, \\quad \\omega_0 = \\frac{2\\pi}{T_0} = ${w0Str}\\text{ rad/s}, \\quad f_0 = ${f0Str}\\text{ Hz}`
+          },
+          {
+            label: isEn ? '1.3 Average Value (DC Component a₀):' : '1.3 Valor Médio (Componente DC a₀):',
+            latex: `a_0 = \\frac{1}{T_0} \\int_{0}^{T_0} f(t)\\,dt = ${a0Str}`
+          }
+        ];
+      }
+
+      if (state.step === 2) {
+        let symLatex = '';
+        let symExpl = '';
+        if (calc.symmetryType === 'even') {
+          symLatex = isEn
+            ? 'f(-t) = f(t) \\implies \\text{Even Symmetry: } b_n = 0, \\; a_n = \\frac{4}{T_0} \\int_0^{T_0/2} f(t)\\cos(n\\omega_0 t)\\,dt'
+            : 'f(-t) = f(t) \\implies \\text{Simetria Par: } b_n = 0, \\; a_n = \\frac{4}{T_0} \\int_0^{T_0/2} f(t)\\cos(n\\omega_0 t)\\,dt';
+          symExpl = isEn ? 'Only cosine harmonics are present.' : 'Somente harmônicas em cosseno estão presentes.';
+        } else if (calc.symmetryType === 'odd') {
+          symLatex = isEn
+            ? 'f(-t) = -f(t) \\implies \\text{Odd Symmetry: } a_0 = 0, \\; a_n = 0, \\; b_n = \\frac{4}{T_0} \\int_0^{T_0/2} f(t)\\sin(n\\omega_0 t)\\,dt'
+            : 'f(-t) = -f(t) \\implies \\text{Simetria Ímpar: } a_0 = 0, \\; a_n = 0, \\; b_n = \\frac{4}{T_0} \\int_0^{T_0/2} f(t)\\sin(n\\omega_0 t)\\,dt';
+          symExpl = isEn ? 'DC value is zero; only sine harmonics exist.' : 'Valor DC é nulo; apenas harmônicas em seno existem.';
+        } else {
+          symLatex = isEn
+            ? 'f(-t) \\ne \\pm f(t) \\implies \\text{General Asymmetry: Both } a_n \\text{ and } b_n \\text{ are present}'
+            : 'f(-t) \\ne \\pm f(t) \\implies \\text{Sem Simetria Pura: Coeficientes } a_n \\text{ e } b_n \\text{ ativos}';
+          symExpl = isEn ? 'Both trigonometric terms required.' : 'Ambos os termos trigonométricos são necessários.';
+        }
+
+        return [
+          {
+            label: isEn ? '2.1 Even / Odd Parity Verification:' : '2.1 Análise de Paridade (Simetria Par / Ímpar):',
+            latex: symLatex
+          },
+          {
+            label: isEn ? '2.2 Symmetry-Induced Simplifications:' : '2.2 Simplificações de Simetria nos Coeficientes:',
+            latex: `\\text{${symExpl}}`
+          },
+          {
+            label: isEn ? '2.3 Dirichlet Conditions Verification:' : '2.3 Verificação das Condições de Dirichlet:',
+            latex: isEn
+              ? '\\int_0^{T_0} |f(t)|\\,dt < \\infty \\quad \\text{(Absolutely Integrable, finite extrema and discontinuities per period)}'
+              : '\\int_0^{T_0} |f(t)|\\,dt < \\infty \\quad \\text{(Absolutamente integrável, extremos e descontinuidades finitas)}'
+          }
+        ];
+      }
+
+      if (state.step === 3) {
+        const topH = calc.harmonics.slice(0, 4);
+        const rows = topH.map(h => `n=${h.n}: \\; a_${h.n}=${h.an.toFixed(3)}, \\; b_${h.n}=${h.bn.toFixed(3)}, \\; C_${h.n}=${h.cn.toFixed(3)}, \\; \\theta_${h.n}=${(h.theta/Math.PI).toFixed(2)}\\pi`).join(' \\\\ ');
+        return [
+          {
+            label: isEn ? '3.1 Harmonic Spectrum Synthesis Table (n = 1..N):' : '3.1 Tabela de Síntese Harmônica (n = 1..N):',
+            latex: `\\begin{aligned} ${rows} \\end{aligned}`
+          },
+          {
+            label: isEn ? '3.2 Trigonometric to Compact Polar Form:' : '3.2 Conversão Trigonométrica → Polar Compacta:',
+            latex: 'C_n = \\sqrt{a_n^2 + b_n^2}, \\quad \\theta_n = \\operatorname{atan2}(-b_n, a_n), \\quad C_0 = a_0'
+          },
+          {
+            label: isEn ? '3.3 Parseval\'s Power Distribution:' : '3.3 Potência Média Total e Teorema de Parseval:',
+            latex: `P_{\\text{total}} = C_0^2 + \\frac{1}{2}\\sum_{n=1}^{${calc.harmonics.length}} C_n^2 \\approx ${calc.parsevalPower.toFixed(4)}\\text{ W}`
+          }
+        ];
+      }
+
+      return [
+        {
+          label: isEn ? '4.1 Truncated Fourier Reconstruction Formula:' : '4.1 Fórmula de Reconstrução com N Harmônicas:',
+          latex: `S_N(t) = a_0 + \\sum_{n=1}^{${calc.harmonics.length}} \\left[ a_n \\cos(n\\omega_0 t) + b_n \\sin(n\\omega_0 t) \\right]`
+        },
+        {
+          label: isEn ? '4.2 Active Harmonic Evaluation at Current t:' : '4.2 Avaliação Instantânea no Ponto t:',
+          latex: `t = ${tNow.toFixed(2)} \\implies S_{${calc.harmonics.length}}(${tNow.toFixed(2)}) = ${recVal.toFixed(4)}, \\quad f(${tNow.toFixed(2)}) = ${origVal.toFixed(4)}`
+        },
+        {
+          label: isEn ? '4.3 Gibbs Phenomenon and Mean Square Error:' : '4.3 Fenômeno de Gibbs e Erro Médio Quadrático (MSE):',
+          latex: `\\text{MSE}_N = \\frac{1}{T_0}\\int_0^{T_0} |f(t) - S_N(t)|^2\\,dt \\approx ${calc.mse.toFixed(5)} \\quad (${isEn ? 'approx 9% overshoot near jumps' : '~9% sobressinal em descontinuidades'})`
+        }
+      ];
+    }
+
     function buildNotebookLinesForStep(sig) {
       if (state.activeModule === 'fourier') {
         return buildNotebookLinesFourier(state.fourierCalculated || calculateFourierData());
       }
+
+      const isEn = state.lang === 'en';
       const fSym = sig.fixedSym;
       const mSym = sig.movingSym;
       const tNow = state.t;
@@ -1382,19 +1783,19 @@
         const valM = sig.fnMoving(tauNow);
         return [
           {
-            label: '1.1 Definição da Integral de Convolução:',
+            label: isEn ? '1.1 Definition of Convolution Integral:' : '1.1 Definição da Integral de Convolução:',
             latex: `y(t) = ${fSym}(t) \\ast ${mSym}(t) = \\int_{-\\infty}^{+\\infty} ${fSym}(\\tau)\\,${mSym}(t-\\tau)\\,d\\tau`
           },
           {
-            label: '1.2 Mudança de Variável Independente (t → τ):',
+            label: isEn ? '1.2 Change of Independent Variable (t → τ):' : '1.2 Mudança de Variável Independente (t → τ):',
             latex: `${fSym}(\\tau) = ${sig.fixedLatexTau}, \\quad \\tau \\in [${fAStr},\\, ${fBStr}]`
           },
           {
-            label: '1.3 Segundo Sinal no Domínio Auxiliar τ:',
+            label: isEn ? '1.3 Moving Kernel Preparation in τ:' : '1.3 Segundo Sinal no Domínio Auxiliar τ:',
             latex: `${mSym}(\\tau) = ${sig.movingLatexTau}, \\quad \\tau \\in [${mAStr},\\, ${mBStr}]`
           },
           {
-            label: `1.4 Amostragem Instantânea em τ = ${tauNow.toFixed(2)}:`,
+            label: isEn ? `1.4 Instantaneous Sweep Point at τ = ${tauNow.toFixed(2)}:` : `1.4 Amostragem Instantânea em τ = ${tauNow.toFixed(2)}:`,
             latex: `${fSym}(${tauNow.toFixed(2)}) = ${valF.toFixed(3)}, \\quad ${mSym}(${tauNow.toFixed(2)}) = ${valM.toFixed(3)}`
           }
         ];
@@ -1405,19 +1806,21 @@
         const negB = Number.isFinite(mA) ? String(-mA) : '+\\infty';
         return [
           {
-            label: '2.1 Escolha do Sinal que Sofre Reflexão Temporal:',
-            latex: `\\text{Mantemos } ${fSym}(\\tau) \\text{ fixo e espelhamos } ${mSym}(\\tau) \\to ${mSym}(-\\tau)`
+            label: isEn ? '2.1 Time-Inversion Choice for Moving Signal:' : '2.1 Escolha do Sinal que Sofre Reflexão Temporal:',
+            latex: isEn
+              ? `\\text{Keep } ${fSym}(\\tau) \\text{ fixed and mirror } ${mSym}(\\tau) \\to ${mSym}(-\\tau)`
+              : `\\text{Mantemos } ${fSym}(\\tau) \\text{ fixo e espelhamos } ${mSym}(\\tau) \\to ${mSym}(-\\tau)`
           },
           {
-            label: '2.2 Substituição Algébrica (τ → -τ):',
+            label: isEn ? '2.2 Algebraic Substitution (τ → -τ):' : '2.2 Substituição Algébrica (τ → -τ):',
             latex: `${mSym}(-\\tau) = ${sig.movingLatexNegTau}`
           },
           {
-            label: '2.3 Inversão dos Limites da Desigualdade:',
+            label: isEn ? '2.3 Inversion of Boundary Inequality:' : '2.3 Inversão dos Limites da Desigualdade:',
             latex: `${mAStr} \\le -\\tau \\le ${mBStr} \\iff ${negA} \\le \\tau \\le ${negB}`
           },
           {
-            label: '2.4 Rotação Espacial no Eixo Vertical (τ = 0):',
+            label: isEn ? '2.4 3D Spatial Rotation Phase (τ = 0):' : '2.4 Rotação Espacial no Eixo Vertical (τ = 0):',
             latex: `\\theta_{\\text{giro}} = ${degNow}^\\circ \\; (${(state.flipAngle / Math.PI).toFixed(2)}\\pi\\text{ rad})`
           }
         ];
@@ -1430,26 +1833,26 @@
         const symRight = Number.isFinite(mA) ? (mA === 0 ? 't' : `${-mA}+t`) : '+\\infty';
         return [
           {
-            label: '3.1 Deslocamento Temporal por t segundos:',
-            latex: `${mSym}(-\\tau) \\xrightarrow{\\text{desloca } t} ${mSym}(t-\\tau) = ${sig.movingLatexShifted}`
+            label: isEn ? '3.1 Time-Shift by Parameter t:' : '3.1 Deslocamento Temporal por t segundos:',
+            latex: `${mSym}(-\\tau) \\xrightarrow{\\text{${isEn ? 'shift ' : 'desloca '}} t} ${mSym}(t-\\tau) = ${sig.movingLatexShifted}`
           },
           {
-            label: '3.2 Dedução dos Limites Móveis em Função de t:',
+            label: isEn ? '3.2 Mobile Parameterized Boundaries in τ:' : '3.2 Dedução dos Limites Móveis em Função de t:',
             latex: `${mAStr} \\le t - \\tau \\le ${mBStr} \\iff ${symLeft} \\le \\tau \\le ${symRight}`
           },
           {
-            label: `3.3 Posição Numérica Atual das Bordas (para t = ${tNow.toFixed(2)}):`,
+            label: isEn ? `3.3 Current Numerical Edge Positions (for t = ${tNow.toFixed(2)}):` : `3.3 Posição Numérica Atual das Bordas (para t = ${tNow.toFixed(2)}):`,
             latex: `\\tau_{\\text{inf}} = ${symLeft} = ${bLeft}, \\quad \\tau_{\\text{sup}} = ${symRight} = ${bRight}`
           }
         ];
       }
 
-      // 4º Passo: Integração Analítica Manual e Substituição dos Limites
+      // Step 4
       const lowNum = Math.max(Number.isFinite(fA) ? fA : -99, Number.isFinite(mB) ? tNow - mB : -99);
       const highNum = Math.min(Number.isFinite(fB) ? fB : 99, Number.isFinite(mA) ? tNow - mA : 99);
       const hasOverlap = highNum > lowNum;
 
-      const lowStr = hasOverlap ? lowNum.toFixed(2) : '\\text{sem sobreposição}';
+      const lowStr = hasOverlap ? lowNum.toFixed(2) : (isEn ? '\\text{no overlap}' : '\\text{sem sobreposição}');
       const highStr = hasOverlap ? highNum.toFixed(2) : '-';
 
       const activeRegion =
@@ -1458,231 +1861,79 @@
 
       return [
         {
-          label: `4.1 Intervalo Ativo para t = ${tNow.toFixed(2)}:`,
-          latex: `\\text{Região atual: } ${activeRegion.range}`
+          label: isEn ? `4.1 Active Interval for t = ${tNow.toFixed(2)}:` : `4.1 Intervalo Ativo para t = ${tNow.toFixed(2)}:`,
+          latex: `\\text{${isEn ? 'Current region: ' : 'Região atual: '}} ${activeRegion.range}`
         },
         {
-          label: '4.2 Limites de Integração da Interseção em τ:',
+          label: isEn ? '4.2 Integration Limits of Non-Zero Product in τ:' : '4.2 Limites de Integração da Interseção em τ:',
           latex: hasOverlap
             ? `y(${tNow.toFixed(2)}) = \\int_{${lowStr}}^{${highStr}} ${fSym}(\\tau)\\,${mSym}(${tNow.toFixed(2)}-\\tau)\\,d\\tau`
-            : `\\text{Interseção vazia } (\\emptyset) \\implies y(${tNow.toFixed(2)}) = 0`
+            : (isEn ? `\\text{Empty intersection } (\\emptyset) \\implies y(${tNow.toFixed(2)}) = 0` : `\\text{Interseção vazia } (\\emptyset) \\implies y(${tNow.toFixed(2)}) = 0`)
         },
         {
-          label: '4.3 Expressão Analítica Resolvida no Intervalo:',
+          label: isEn ? '4.3 Analytical Closed-Form Expression in Interval:' : '4.3 Expressão Analítica Resolvida no Intervalo:',
           latex: `${activeRegion.latex}`
         },
         {
-          label: '4.4 Avaliação Numérica da Área Sombreada:',
+          label: isEn ? '4.4 Numerical Evaluation of Shaded Area:' : '4.4 Avaliação Numérica da Área Sombreada:',
           latex: `\\implies y(${tNow.toFixed(2)}) = ${yNow.toFixed(4)}`
         }
       ];
     }
 
-    
-    function buildNotebookLinesFourier(data) {
-      const isEn = state.lang === 'en';
-      const T0 = data.T0;
-      const w0 = data.w0;
-      const N = data.N;
-      const a0 = data.a0;
-
-      let symDesc = isEn ? 'No elementary symmetry' : 'Sem simetria elementar detectada';
-      if (data.isEven) symDesc = isEn ? 'Even Symmetry f(t)=f(-t) => b_n = 0' : 'Simetria Par f(t)=f(-t) => b_n = 0';
-      else if (data.isOdd) symDesc = isEn ? 'Odd Symmetry f(t)=-f(-t) => a_0=0, a_n=0' : 'Simetria Ímpar f(t)=-f(-t) => a_0=0, a_n=0';
-      else if (data.isHalfWave) symDesc = isEn ? 'Half-Wave Symmetry => only odd harmonics' : 'Simetria de Meia-Onda => apenas harmônicos ímpares';
-
-      if (state.fourierStep === 1) {
-        return [
-          {
-            label: isEn ? '1.1 Fundamental Period and Frequency:' : '1.1 Período Fundamental e Frequência:',
-            latex: `T_0 = ${T0.toFixed(2)}\\text{ s}, \\quad \\omega_0 = \\frac{2\\pi}{T_0} = ${w0.toFixed(3)}\\text{ rad/s}, \\quad f_0 = ${(1/T0).toFixed(3)}\\text{ Hz}`
-          },
-          {
-            label: isEn ? '1.2 Parity and Symmetry Deduction:' : '1.2 Dedução de Paridade e Simetrias:',
-            latex: `\\text{Classificação: } \\mathbf{${symDesc}}`
-          },
-          {
-            label: isEn ? '1.3 Symmetry Consequence on Series:' : '1.3 Impacto Direto nas Integrais da Série:',
-            latex: data.isOdd ? `a_0 = 0, \\quad a_n = 0 \\;(\\forall n) \\implies \\text{Série exclusivamente em senos}` : (data.isEven ? `b_n = 0 \\;(\\forall n) \\implies \\text{Série exclusivamente em cossenos}` : `a_0 \\neq 0, \\; a_n \\neq 0, \\; b_n \\neq 0 \\implies \\text{Harmônicos completos}`)
-          }
-        ];
-      } else if (state.fourierStep === 2) {
-        return [
-          {
-            label: isEn ? '2.1 Continuous Average / DC Level Formula:' : '2.1 Fórmula da Componente DC (Valor Médio):',
-            latex: `a_0 = \\frac{1}{T_0} \\int_{0}^{T_0} f(t)\\,dt`
-          },
-          {
-            label: isEn ? '2.2 Definite Integration in Period [0, T0]:' : '2.2 Integração Definida no Período [0, T₀]:',
-            latex: `a_0 = \\frac{1}{${T0.toFixed(2)}} \\int_{0}^{${T0.toFixed(2)}} f(t)\\,dt`
-          },
-          {
-            label: isEn ? '2.3 Computed Net DC Level:' : '2.3 Nível DC Concluído:',
-            latex: `a_0 = \\mathbf{${a0.toFixed(4)}} \\quad (\\text{Linha média horizontal no espaço 3D})`
-          }
-        ];
-      } else if (state.fourierStep === 3) {
-        let sampleTerms = [];
-        const topH = Math.min(N, 4);
-        for (let n = 1; n <= topH; n++) {
-          sampleTerms.push(`C_${n} = ${data.C[n].toFixed(3)} \\;(\\theta_${n}=${((data.theta[n]*180)/Math.PI).toFixed(0)}^\\circ)`);
-        }
-        return [
-          {
-            label: isEn ? '3.1 Trigonometric Integral Formulas:' : '3.1 Fórmulas dos Coeficientes Trigonométricos:',
-            latex: `a_n = \\frac{2}{T_0}\\int_{0}^{T_0} f(t)\\cos(n\\omega_0 t)dt, \\quad b_n = \\frac{2}{T_0}\\int_{0}^{T_0} f(t)\\sin(n\\omega_0 t)dt`
-          },
-          {
-            label: isEn ? '3.2 Compact Polar Amplitude and Phase:' : '3.2 Amplitude Compacta e Fase Polar:',
-            latex: `C_n = \\sqrt{a_n^2 + b_n^2}, \\quad \\theta_n = -\\mathrm{atan2}(b_n, a_n)`
-          },
-          {
-            label: isEn ? '3.3 Dominant Harmonics Sample:' : '3.3 Amostra dos Primeiros Harmônicos Calculados:',
-            latex: sampleTerms.join(',\\; ')
-          }
-        ];
-      } else {
-        let reconFormula = `f(t) \\approx ${Math.abs(a0) > 1e-4 ? a0.toFixed(3) : '0'}`;
-        const topH = Math.min(N, 3);
-        for (let n = 1; n <= topH; n++) {
-          if (data.C[n] > 0.01) {
-            reconFormula += ` + ${data.C[n].toFixed(2)}\\cos(${n === 1 ? '' : n}\\omega_0 t ${data.theta[n] >= 0 ? '+' : ''}${data.theta[n].toFixed(2)})`;
-          }
-        }
-        if (N > 3) reconFormula += ` + \\dots + C_{${N}}\\cos(${N}\\omega_0 t + \\theta_{${N}})`;
-
-        return [
-          {
-            label: isEn ? '4.1 Compact Trigonometric Fourier Series Synthesis:' : '4.1 Síntese da Série Trigonométrica Compacta:',
-            latex: `f(t) \\approx a_0 + \\sum_{n=1}^{N} C_n \\cos(n\\omega_0 t + \\theta_n)`
-          },
-          {
-            label: isEn ? `4.2 Evaluated Sum for N = ${N} Harmonics:` : `4.2 Série Expandida para N = ${N} Harmônicos:`,
-            latex: reconFormula
-          },
-          {
-            label: isEn ? '4.3 Parseval Power Distribution and Efficiency:' : '4.3 Teorema de Parseval e Taxa de Energia Capturada:',
-            latex: `P_{\\text{total}} = ${data.totalPower.toFixed(3)}\\text{ W}, \\quad P_{${N}} = ${data.harmonicPower.toFixed(3)}\\text{ W} \\implies \\eta = \\mathbf{${data.efficiency.toFixed(1)}\\%}`
-          }
-        ];
-      }
-    }
-
     function updateNotebookUI(animateHandwriting = false) {
-      if (state.activeModule === 'fourier') {
-        const data = state.fourierCalculated || calculateFourierData();
-        const liveMetrics = document.getElementById('live-step-metrics');
-        if (liveMetrics) {
-          liveMetrics.innerHTML = `
-            <div class="flex items-center gap-1.5"><span class="text-mut font-semibold">T₀:</span><span class="font-mono-code font-bold">${data.T0.toFixed(2)}s</span></div>
-            <div class="flex items-center gap-1.5"><span class="text-mut font-semibold">ω₀:</span><span class="font-mono-code font-bold">${data.w0.toFixed(2)} rad/s</span></div>
-            <div class="flex items-center gap-1.5"><span class="text-mut font-semibold">N:</span><span class="font-mono-code font-bold text-[var(--c-x1)]">${data.N}</span></div>
-            <div class="flex items-center gap-1.5"><span class="text-mut font-semibold">η:</span><span class="font-mono-code font-bold text-[var(--c-conv)]">${data.efficiency.toFixed(1)}%</span></div>
-          `;
-        }
-
-        const lines = buildNotebookLinesForStep(null);
-        const container = document.getElementById('notebook-lines');
-        if (container) {
-          const needsFullRebuild = animateHandwriting || container.children.length !== lines.length;
-          if (!needsFullRebuild) {
-            lines.forEach((item, idx) => {
-              const row = container.children[idx];
-              const labelEl = row ? row.querySelector('.hw-lbl') : null;
-              const mathEl = row ? row.querySelector('.hw-clip') : null;
-              if (labelEl) labelEl.textContent = item.label;
-              if (mathEl) renderMath(mathEl, item.latex, false);
-            });
-          } else {
-            if (handwritingTimer) {
-              clearInterval(handwritingTimer);
-              handwritingTimer = null;
-            }
-            container.innerHTML = '';
-            lines.forEach((item) => {
-              const div = document.createElement('div');
-              div.className = 'handwriting-line py-1';
-              div.innerHTML = `
-                <div class="hw-lbl text-[10px] font-medium text-mut mb-0.5">${item.label}</div>
-                <div class="flex items-center flex-wrap">
-                  <span class="hw-clip"></span>
-                  <span class="hw-pen-slot"></span>
-                </div>
-              `;
-              renderMath(div.querySelector('.hw-clip'), item.latex, false);
-              container.appendChild(div);
-            });
-
-            let currentIdx = 0;
-            const allRows = Array.from(container.children);
-            const stepReveal = () => {
-              allRows.forEach((r, i) => {
-                const penSlot = r.querySelector('.hw-pen-slot');
-                if (i < currentIdx) {
-                  r.classList.remove('writing-now');
-                  r.classList.add('written');
-                  if (penSlot) penSlot.innerHTML = '';
-                } else if (i === currentIdx) {
-                  r.classList.add('writing-now');
-                  if (penSlot) penSlot.innerHTML = PEN_SVG;
-                }
-              });
-              currentIdx++;
-              if (currentIdx > allRows.length) {
-                clearInterval(handwritingTimer);
-                handwritingTimer = null;
-              }
-            };
-            stepReveal();
-            handwritingTimer = setInterval(stepReveal, 260);
-          }
-        }
-
-        const regionsContainer = document.getElementById('regions-table');
-        if (regionsContainer) {
-          regionsContainer.innerHTML = `
-            <div class="grid grid-cols-5 text-[9px] font-bold text-mut pb-1 border-b border-[var(--border-subtle)] uppercase">
-              <span>n</span><span>aₙ</span><span>bₙ</span><span>Cₙ</span><span>θₙ</span>
-            </div>
-          `;
-          const listDiv = document.createElement('div');
-          listDiv.className = 'max-h-28 overflow-y-auto custom-scroll space-y-0.5 pt-1';
-          for (let n = 1; n <= data.N; n++) {
-            const row = document.createElement('div');
-            const isDom = data.C[n] > 0.1;
-            row.className = `grid grid-cols-5 text-[10px] font-mono-code py-0.5 px-1 rounded ${isDom ? 'bg-[var(--accent-bg)] font-bold' : 'text-sec'}`;
-            row.innerHTML = `<span>#${n}</span><span>${data.a[n].toFixed(3)}</span><span>${data.b[n].toFixed(3)}</span><span class="text-[var(--c-conv)]">${data.C[n].toFixed(3)}</span><span>${((data.theta[n]*180)/Math.PI).toFixed(0)}°</span>`;
-            listDiv.appendChild(row);
-          }
-          regionsContainer.appendChild(listDiv);
-        }
-        return;
-      }
-
       const sig = getEffectiveSignals();
       const tNow = state.t;
       const yNow = sig.conv(tNow);
 
-      // 1. Barra de Métricas Instantâneas
+            // 1. Barra de Métricas Instantâneas
       const metricsEl = document.getElementById('live-step-metrics');
+      const isEn = state.lang === 'en';
+      const dict = I18N[state.lang] || I18N.en;
+
       if (metricsEl) {
-        if (state.step === 1) {
-          const tauNow = state.tauSweep;
-          metricsEl.innerHTML = `
-            <span class="font-semibold text-sec">Amostra em τ:</span>
-            <span>${latexToHtml(`\\tau = ${tauNow.toFixed(2)} \\implies ${sig.fixedSym}(\\tau)=${sig.fnFixed(tauNow).toFixed(2)},\\; ${sig.movingSym}(\\tau)=${sig.fnMoving(tauNow).toFixed(2)}`)}</span>
-          `;
-        } else if (state.step === 2) {
-          const deg = Math.round((state.flipAngle / Math.PI) * 180);
-          metricsEl.innerHTML = `
-            <span class="font-semibold text-sec">Reflexão Espacial:</span>
-            <span>${latexToHtml(`\\theta = ${deg}^\\circ \\implies ${sig.movingSym}(\\tau) \\to ${sig.movingSym}(-\\tau)`)}</span>
-          `;
+        if (state.activeModule === 'fourier') {
+          const calc = state.fourierCalculated || calculateFourierData();
+          if (state.step === 1) {
+            metricsEl.innerHTML = `
+              <span class="font-semibold text-sec">${dict.fundFreq}</span>
+              <span>${latexToHtml(`\\omega_0 = ${calc.w0.toFixed(3)}\\text{ rad/s}, \\; f_0 = ${calc.f0.toFixed(2)}\\text{ Hz}, \\; a_0 = ${calc.a0.toFixed(3)}`)}</span>
+            `;
+          } else if (state.step === 2) {
+            metricsEl.innerHTML = `
+              <span class="font-semibold text-sec">${dict.symmClass}</span>
+              <span>${latexToHtml(calc.symmetryType === 'even' ? '\\text{Par (Even)}: b_n=0' : calc.symmetryType === 'odd' ? '\\text{Ímpar (Odd)}: a_n=0, a_0=0' : '\\text{Geral (General)}') }</span>
+            `;
+          } else if (state.step === 3) {
+            metricsEl.innerHTML = `
+              <span class="font-semibold text-sec">${dict.activeHarm}</span>
+              <span>${latexToHtml(`N = ${calc.harmonics.length}, \\; P_{\\text{total}} = ${calc.parsevalPower.toFixed(3)}\\text{ W}`)}</span>
+            `;
+          } else {
+            metricsEl.innerHTML = `
+              <span class="font-semibold text-sec">${dict.approxAtT}</span>
+              <span>${latexToHtml(`t = ${tNow.toFixed(2)} \\implies S_N(${tNow.toFixed(2)}) = ${calc.reconstruct(tNow).toFixed(4)}, \\; \\text{MSE} = ${calc.mse.toFixed(4)}`)}</span>
+            `;
+          }
         } else {
-          metricsEl.innerHTML = `
-            <span class="font-semibold text-sec">Parâmetro Atual:</span>
-            <span>${latexToHtml(`t = ${tNow.toFixed(2)} \\implies y(${tNow.toFixed(2)}) = ${yNow.toFixed(4)}`)}</span>
-          `;
+          if (state.step === 1) {
+            const tauNow = state.tauSweep;
+            metricsEl.innerHTML = `
+              <span class="font-semibold text-sec">${dict.sampleTau}</span>
+              <span>${latexToHtml(`\\tau = ${tauNow.toFixed(2)} \\implies ${sig.fixedSym}(\\tau)=${sig.fnFixed(tauNow).toFixed(2)},\\; ${sig.movingSym}(\\tau)=${sig.fnMoving(tauNow).toFixed(2)}`)}</span>
+            `;
+          } else if (state.step === 2) {
+            const deg = Math.round((state.flipAngle / Math.PI) * 180);
+            metricsEl.innerHTML = `
+              <span class="font-semibold text-sec">${dict.reflection}</span>
+              <span>${latexToHtml(`\\theta = ${deg}^\\circ \\implies ${sig.movingSym}(\\tau) \\to ${sig.movingSym}(-\\tau)`)}</span>
+            `;
+          } else {
+            metricsEl.innerHTML = `
+              <span class="font-semibold text-sec">${dict.currentParam}</span>
+              <span>${latexToHtml(`t = ${tNow.toFixed(2)} \\implies y(${tNow.toFixed(2)}) = ${yNow.toFixed(4)}`)}</span>
+            `;
+          }
         }
       }
 
@@ -1744,71 +1995,98 @@
         handwritingTimer = setInterval(stepReveal, 260);
       }
 
-      // 3. Tabela de Intervalos Analíticos de t
+      // 3. Tabela de Intervalos Analíticos de t ou Espectro Harmônico Fourier
       const regContainer = document.getElementById('regions-table');
       if (regContainer) {
         regContainer.innerHTML = '';
-        (sig.regions || []).forEach((reg) => {
-          const isCurrent = state.step >= 3 && reg.test(tNow);
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = `region-row w-full text-left px-2 py-1 rounded flex items-center justify-between gap-2 ui-control ${
-            isCurrent ? 'active font-semibold' : ''
-          }`;
-          btn.innerHTML = `
-            <span class="reg-range"></span>
-            <span class="reg-expr"></span>
-          `;
-          renderMath(btn.querySelector('.reg-range'), reg.range, false);
-          renderMath(btn.querySelector('.reg-expr'), reg.latex, false);
-          btn.addEventListener('click', () => {
-            state.isPlaying = false;
-            updatePlayButtonUI();
-            state.t = reg.sampleT;
-            if (state.step < 3) setStep(4, false);
-            document.getElementById('t-slider').value = state.t;
-            updateSliderBadge();
-            updateNotebookUI(false);
+        if (state.activeModule === 'fourier') {
+          const calc = state.fourierCalculated || calculateFourierData();
+          calc.harmonics.slice(0, 8).forEach((h) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `region-row w-full text-left px-2 py-1 rounded flex items-center justify-between gap-2 ui-control`;
+            btn.innerHTML = `
+              <span class="reg-range text-[10px] font-mono-code">n = ${h.n}</span>
+              <span class="reg-expr text-[10px]"></span>
+            `;
+            const thetaStr = (h.theta / Math.PI).toFixed(2);
+            renderMath(btn.querySelector('.reg-expr'), `C_{${h.n}} = ${h.cn.toFixed(3)}, \\; \\theta_{${h.n}} = ${thetaStr}\\pi`, false);
+            btn.addEventListener('click', () => {
+              state.fourierN = h.n;
+              const fSlider = document.getElementById('fourier-n-slider');
+              if (fSlider) fSlider.value = h.n;
+              const badge = document.getElementById('fourier-n-badge');
+              if (badge) badge.textContent = `N = ${h.n}`;
+              calculateFourierData();
+              updateNotebookUI(false);
+              updateScene3D();
+            });
+            regContainer.appendChild(btn);
           });
-          regContainer.appendChild(btn);
-        });
+        } else {
+          (sig.regions || []).forEach((reg) => {
+            const isCurrent = state.step >= 3 && reg.test(tNow);
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `region-row w-full text-left px-2 py-1 rounded flex items-center justify-between gap-2 ui-control ${
+              isCurrent ? 'active font-semibold' : ''
+            }`;
+            btn.innerHTML = `
+              <span class="reg-range"></span>
+              <span class="reg-expr"></span>
+            `;
+            renderMath(btn.querySelector('.reg-range'), reg.range, false);
+            renderMath(btn.querySelector('.reg-expr'), reg.latex, false);
+            btn.addEventListener('click', () => {
+              state.isPlaying = false;
+              updatePlayButtonUI();
+              state.t = reg.sampleT;
+              if (state.step < 3) setStep(4, false);
+              document.getElementById('t-slider').value = state.t;
+              updateSliderBadge();
+              updateNotebookUI(false);
+            });
+            regContainer.appendChild(btn);
+          });
+        }
       }
     }
 
     // ============================================================================
     // 5. GALERIA DE EXEMPLOS E TECLADO MATEMÁTICO VIRTUAL (ESTILO MATHLIVE)
     // ============================================================================
-    function renderPresetGallery() {
+        function renderPresetGallery() {
       const gallery = document.getElementById('preset-gallery');
       if (!gallery) return;
       gallery.innerHTML = '';
+      const isEn = state.lang === 'en';
 
       if (state.activeModule === 'fourier') {
-        Object.values(FOURIER_PRESETS).forEach((p) => {
+        Object.keys(FOURIER_PRESETS).forEach((k) => {
+          const p = FOURIER_PRESETS[k];
+          const isActive = state.fourierPresetKey === k;
           const card = document.createElement('div');
-          const isActive = state.fourierPresetKey === p.id;
-          const isEn = state.lang === 'en';
-          card.className = `preset-pill rounded-lg p-2 cursor-pointer flex flex-col justify-between gap-1 ${isActive ? 'active' : ''}`;
+          card.className = `preset-pill rounded-lg p-2 cursor-pointer flex flex-col justify-between gap-1 relative ${
+            isActive ? 'active' : ''
+          }`;
           card.innerHTML = `
             <div class="flex items-center justify-between gap-1">
-              <span class="text-[11px] font-bold truncate">${isEn ? p.shortTitleEn : p.shortTitle}</span>
-              <span class="font-mono-code text-[9px] text-[var(--c-x1)]">T₀=${p.T0}</span>
+              <span class="text-[11px] font-bold truncate text-primary">${isEn ? p.titleEn : p.title}</span>
+              <span class="text-[9px] font-mono-code text-accent font-semibold">T₀ = ${p.T0}</span>
             </div>
             <div class="text-[10px] text-mut truncate">${isEn ? p.subtitleEn : p.subtitle}</div>
           `;
-          card.addEventListener('click', () => {
-            state.fourierPresetKey = p.id;
+          card.onclick = () => {
+            state.fourierPresetKey = k;
             state.fourierExpr = p.expr;
             state.fourierT0 = p.T0;
-            state.fourierHarmonics = p.defaultN;
-            document.getElementById('fourier-n-slider').value = p.defaultN;
-            document.getElementById('btn-fourier-period').textContent = `T₀: ${p.T0.toFixed(1)}`;
-            renderPresetGallery();
-            syncInputsWithPreset();
+            state.fourierN = p.N;
             calculateFourierData();
+            syncInputsWithPreset();
+            renderPresetGallery();
             updateNotebookUI(true);
             updateScene3D();
-          });
+          };
           gallery.appendChild(card);
         });
         return;
@@ -1826,16 +2104,19 @@
           isActive ? 'active' : ''
         }`;
 
+        const bTitle = isEn ? (p.shortTitleEn || p.shortTitle) : p.shortTitle;
+        const bSub = isEn ? (p.subtitleEn || p.subtitle) : (p.subtitle || '');
+
         card.innerHTML = `
           <div class="flex items-center justify-between gap-1">
-            <span class="text-[11px] font-bold truncate">${p.shortTitle}</span>
+            <span class="text-[11px] font-bold truncate">${bTitle}</span>
             ${
               p.isCustom
-                ? `<button type="button" class="del-preset text-[10px] px-1 rounded hover:bg-red-500/20 text-rose-400" title="Remover">✕</button>`
+                ? `<button type="button" class="del-preset text-[10px] px-1 rounded hover:bg-red-500/20 text-rose-400" title="${isEn ? 'Remove' : 'Remover'}">✕</button>`
                 : ''
             }
           </div>
-          <div class="text-[10px] text-mut truncate">${p.subtitle || ''}</div>
+          <div class="text-[10px] text-mut truncate">${bSub}</div>
           <div class="preset-math text-[10px] pt-0.5 truncate"></div>
         `;
 
@@ -1867,7 +2148,6 @@
               syncInputsWithPreset();
             }
             renderPresetGallery();
-            updateNotebookUI(true);
           });
         }
 
@@ -1876,18 +2156,25 @@
     }
 
     function syncInputsWithPreset() {
-      if (state.activeModule === 'convolution') {
-        renderMath(document.getElementById('mf-render-x'), exprToLatex(state.exprX, 't'), false);
-        renderMath(document.getElementById('mf-render-h'), exprToLatex(state.exprH, 't'), false);
-        const rawX = document.getElementById('mf-raw-x');
-        const rawH = document.getElementById('mf-raw-h');
-        if (rawX) rawX.textContent = state.exprX;
-        if (rawH) rawH.textContent = state.exprH;
-      } else {
-        renderMath(document.getElementById('mf-render-fourier'), exprToLatex(state.fourierExpr, 't'), false);
+      const isFourier = state.activeModule === 'fourier';
+      if (isFourier) {
+        const renderF = document.getElementById('mf-render-fourier');
         const rawF = document.getElementById('mf-raw-fourier');
+        const t0Input = document.getElementById('fourier-t0-input');
+        const w0Prev = document.getElementById('fourier-w0-preview');
+        const calc = state.fourierCalculated || calculateFourierData();
+        if (renderF) renderMath(renderF, exprToLatex(state.fourierExpr, 't'), false);
         if (rawF) rawF.textContent = state.fourierExpr;
+        if (t0Input) t0Input.value = state.fourierT0;
+        if (w0Prev) w0Prev.textContent = `ω₀ = ${calc.w0.toFixed(2)} rad/s`;
+        return;
       }
+      renderMath(document.getElementById('mf-render-x'), exprToLatex(state.exprX, 't'), false);
+      renderMath(document.getElementById('mf-render-h'), exprToLatex(state.exprH, 't'), false);
+      const rawX = document.getElementById('mf-raw-x');
+      const rawH = document.getElementById('mf-raw-h');
+      if (rawX) rawX.textContent = state.exprX;
+      if (rawH) rawH.textContent = state.exprH;
     }
 
     function setActiveMathField(field) {
@@ -1900,19 +2187,21 @@
       const caretF = document.getElementById('mf-caret-fourier');
       const mkb = document.getElementById('math-keyboard');
 
-      boxX.classList.toggle('focused', field === 'x');
-      boxH.classList.toggle('focused-h', field === 'h');
+      if (boxX) boxX.classList.toggle('focused', field === 'x');
+      if (boxH) boxH.classList.toggle('focused-h', field === 'h');
       if (boxF) boxF.classList.toggle('focused', field === 'fourier');
-      caretX.classList.toggle('hidden', field !== 'x');
-      caretH.classList.toggle('hidden', field !== 'h');
+      if (caretX) caretX.classList.toggle('hidden', field !== 'x');
+      if (caretH) caretH.classList.toggle('hidden', field !== 'h');
       if (caretF) caretF.classList.toggle('hidden', field !== 'fourier');
-      mkb.classList.toggle('hidden', !field);
+      if (mkb) mkb.classList.toggle('hidden', !field);
       document.body.classList.toggle('mkb-open', Boolean(field));
       setTimeout(handleResize, 220);
     }
 
     function mutateActiveExpr(mutatorFn) {
-      if (!state.activeMathField) setActiveMathField(state.activeModule === 'fourier' ? 'fourier' : 'x');
+      if (!state.activeMathField) {
+        setActiveMathField(state.activeModule === 'fourier' ? 'fourier' : 'x');
+      }
       if (state.activeMathField === 'fourier') {
         state.fourierExpr = mutatorFn(state.fourierExpr || '');
         state.fourierPresetKey = 'custom';
@@ -1997,10 +2286,13 @@
       document.getElementById('btn-save-custom').addEventListener('click', () => {
         const id = 'custom_' + Date.now();
         const count = state.customPresets.length + 1;
+        const dict = I18N[state.lang] || I18N.en;
         const newPreset = {
           id,
-          shortTitle: `Salvo #${count}`,
-          subtitle: 'Sinal Personalizado',
+          shortTitle: `${I18N.pt.savedPreset}${count}`,
+          shortTitleEn: `${I18N.en.savedPreset}${count}`,
+          subtitle: I18N.pt.customSignal,
+          subtitleEn: I18N.en.customSignal,
           exprX: state.exprX,
           exprH: state.exprH,
           latexX: exprToLatex(state.exprX, 't'),
@@ -2104,136 +2396,6 @@
         activePlaneFill: 'rgba(56, 189, 248, 0.05)',
         activePlaneBorder: 'rgba(148, 163, 184, 0.24)'
       };
-    }
-
-    
-    function renderFourierScene3D(w, h, pal, strokeScale, dpr) {
-      ctx3d.save();
-      ctx3d.scale(dpr, dpr);
-      ctx3d.fillStyle = pal.bgCss;
-      ctx3d.fillRect(0, 0, w, h);
-
-      const data = state.fourierCalculated || calculateFourierData();
-      const T0 = data.T0;
-      const N = data.N;
-      const T_MAX = 2.5 * T0;
-      const SAMPLES = 180;
-      const dt = T_MAX / SAMPLES;
-
-      // 1. Box Floor & Spectrum Wall
-      draw3DPolygon([
-        { x: 0, y: -1.4, z: -1.5 },
-        { x: T_MAX, y: -1.4, z: -1.5 },
-        { x: T_MAX, y: -1.4, z: N + 1 },
-        { x: 0, y: -1.4, z: N + 1 }
-      ], pal.wallFill, pal.wallStroke, 1 * strokeScale);
-
-      draw3DPolygon([
-        { x: T_MAX, y: -1.4, z: -1.5 },
-        { x: T_MAX, y: 1.5, z: -1.5 },
-        { x: T_MAX, y: 1.5, z: N + 1 },
-        { x: T_MAX, y: -1.4, z: N + 1 }
-      ], pal.wallFill, pal.wallStroke, 1 * strokeScale);
-
-      // Floor Grid Lines
-      for (let nTick = 0; nTick <= N; nTick += Math.max(1, Math.round(N / 5))) {
-        draw3DLine({ x: 0, y: -1.4, z: nTick }, { x: T_MAX, y: -1.4, z: nTick }, pal.grid, 0.8 * strokeScale);
-      }
-      for (let tStep = 0; tStep <= T_MAX; tStep += T0 / 2) {
-        draw3DLine({ x: tStep, y: -1.4, z: -1.5 }, { x: tStep, y: -1.4, z: N + 1 }, pal.grid, 0.8 * strokeScale);
-      }
-
-      // 2. Original Signal Curve at z = -1 (Front Plane)
-      const origPts = [];
-      for (let i = 0; i <= SAMPLES; i++) {
-        const tVal = i * dt;
-        origPts.push({ x: tVal, y: data.fPeriodic(tVal), z: -1.0 });
-      }
-      draw3DPolyline(origPts, pal.x1, 2.8 * strokeScale, [], true);
-
-      // 3. DC Baseline at z = 0
-      draw3DLine({ x: 0, y: data.a0, z: 0 }, { x: T_MAX, y: data.a0, z: 0 }, pal.prod, 1.8 * strokeScale, [4, 3]);
-
-      // 4. Individual Harmonic Waves at z = n (Depth Axis)
-      const w0 = data.w0;
-      for (let n = 1; n <= N; n++) {
-        const an = data.a[n];
-        const bn = data.b[n];
-        if (Math.abs(an) < 1e-4 && Math.abs(bn) < 1e-4) continue;
-
-        const hPts = [];
-        for (let i = 0; i <= SAMPLES; i += 2) {
-          const tVal = i * dt;
-          const yH = an * Math.cos(n * w0 * tVal) + bn * Math.sin(n * w0 * tVal);
-          hPts.push({ x: tVal, y: yH, z: n });
-        }
-        const hue = 205 + Math.round((55 * n) / N);
-        const harmColor = state.theme === 'projector' ? `hsl(${hue}, 80%, 42%)` : `hsl(${hue}, 80%, 62%)`;
-        draw3DPolyline(hPts, harmColor, 1.6 * strokeScale);
-
-        // Discrete Spectrum Stems at x = T_MAX
-        const stemTop = { x: T_MAX, y: data.C[n], z: n };
-        draw3DLine({ x: T_MAX, y: 0, z: n }, stemTop, pal.conv, 2.4 * strokeScale);
-
-        const dotProj = projectPoint3D(stemTop.x, stemTop.y, stemTop.z);
-        if (dotProj) {
-          ctx3d.beginPath();
-          ctx3d.arc(dotProj.x, dotProj.y, 3.5 * strokeScale, 0, Math.PI * 2);
-          ctx3d.fillStyle = pal.conv;
-          ctx3d.fill();
-        }
-      }
-
-      // DC Spectrum Stem at x = T_MAX, z = 0
-      draw3DLine({ x: T_MAX, y: 0, z: 0 }, { x: T_MAX, y: data.C[0], z: 0 }, pal.conv, 2.4 * strokeScale);
-
-      // 5. Reconstructed Signal Sum Curve at z = -0.5
-      const reconPts = [];
-      for (let i = 0; i <= SAMPLES; i++) {
-        const tVal = i * dt;
-        let sum = data.a0;
-        for (let n = 1; n <= N; n++) {
-          sum += data.a[n] * Math.cos(n * w0 * tVal) + data.b[n] * Math.sin(n * w0 * tVal);
-        }
-        reconPts.push({ x: tVal, y: sum, z: -0.5 });
-      }
-      const reconColor = state.theme === 'projector' ? '#be123c' : '#ffffff';
-      draw3DPolyline(reconPts, reconColor, 2.4 * strokeScale, [3, 2], true);
-
-      ctx3d.restore();
-
-      // Floating labels update
-      const placeLbl = (id, x, y, z, vis, txt) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (!vis) { el.style.opacity = '0'; return; }
-        const pt = projectPoint3D(x, y, z);
-        if (!pt) { el.style.opacity = '0'; return; }
-        el.style.opacity = '1';
-        el.style.left = `${pt.x}px`;
-        el.style.top = `${pt.y}px`;
-        if (txt) el.innerHTML = txt;
-      };
-
-      placeLbl('lbl-tau', T_MAX, -1.3, 0, true, '<b>t (Tempo)</b>');
-      placeLbl('lbl-t', T_MAX, -1.3, N, true, '<b>n (Freq)</b>');
-      placeLbl('lbl-z', 0, 1.4, -1, true, '<b>f(t)</b>');
-      placeLbl('lbl-x1', 0.5 * T0, data.fPeriodic(0.5 * T0) + 0.15, -1, true, '<b>f(t) original</b>');
-      placeLbl('lbl-conv', T_MAX, data.C[1] + 0.15, 1, true, '<b>|Cₙ| Espectro</b>');
-      placeLbl('lbl-x2', 0, 0, 0, false);
-      placeLbl('lbl-b1', 0, 0, 0, false);
-      placeLbl('lbl-b2', 0, 0, 0, false);
-
-      const livePill = document.getElementById('stage-live-pill');
-      if (livePill) {
-        livePill.innerHTML = `
-          <span class="text-mut">${state.lang === 'en' ? 'Fourier Series' : 'Série de Fourier'}</span>
-          <b class="font-mono-code text-[var(--c-x1)]">N = ${N}</b>
-          <span class="mx-1 text-mut">•</span>
-          <span class="text-mut">${state.lang === 'en' ? 'Energy' : 'Energia'}:</span>
-          <b class="font-mono-code text-[var(--c-conv)]">${data.efficiency.toFixed(1)}%</b>
-        `;
-      }
     }
 
     function init3DStage() {
@@ -2420,6 +2582,11 @@
 
     function updateScene3D() {
       if (!ctx3d || !stageCanvas) return;
+      if (state.activeModule === 'fourier') {
+        renderFourierScene3D();
+        return;
+      }
+      const sig = getEffectiveSignals();
       const pal = getThemePalette();
 
       const w = canvasContainer.clientWidth || 384;
@@ -2431,14 +2598,6 @@
       }
 
       updateCameraFromOrbit();
-
-      if (state.activeModule === 'fourier') {
-        const strokeScale = state.thickLines || state.theme === 'projector' ? 1.55 : 1.0;
-        renderFourierScene3D(w, h, pal, strokeScale, dpr);
-        return;
-      }
-
-      const sig = getEffectiveSignals();
 
       ctx3d.save();
       ctx3d.scale(dpr, dpr);
@@ -2833,21 +2992,24 @@
 
     // Posiciona Rótulos 3D e Marcadores de Limites Móveis sem sair da tela
     let lastLabelSignature = '';
+    let lastLangSig = '';
     function updateFloatingLabels3D(sig, effectiveT, yNow, WALL_X) {
       const fSym = sig.fixedSym;
       const mSym = sig.movingSym;
       const movArg = state.step === 1 ? '\\tau' : state.step === 2 ? '-\\tau' : 't-\\tau';
       const sigKey = `${fSym}_${mSym}_${movArg}_${state.step}`;
 
-      if (sigKey !== lastLabelSignature) {
+      if (sigKey !== lastLabelSignature || state.lang !== lastLangSig) {
         lastLabelSignature = sigKey;
-        renderMath(document.getElementById('lbl-tau'), '\\text{Eixo } \\tau', false);
-        renderMath(document.getElementById('lbl-t'), '\\text{Tempo } t', false);
+        lastLangSig = state.lang;
+        const isEn = state.lang === 'en';
+        renderMath(document.getElementById('lbl-tau'), isEn ? '\\text{Axis } \\tau' : '\\text{Eixo } \\tau', false);
+        renderMath(document.getElementById('lbl-t'), isEn ? '\\text{Time } t' : '\\text{Tempo } t', false);
         renderMath(document.getElementById('lbl-z'), '\\text{Amplitude}', false);
         renderMath(document.getElementById('lbl-x1'), `${fSym}(\\tau)`, false);
         renderMath(document.getElementById('lbl-x2'), `${mSym}(${movArg})`, false);
         renderMath(document.getElementById('lbl-conv'), `y(t) = (${fSym}\\ast ${mSym})(t)`, false);
-        document.getElementById('leg-fixed').textContent = `${fSym}(τ) Fixo`;
+        document.getElementById('leg-fixed').textContent = `${fSym}(τ) ${isEn ? 'Fixed' : 'Fixo'}`;
         document.getElementById('leg-moving').textContent = `${mSym}(${state.step === 1 ? 'τ' : state.step === 2 ? '-τ' : 't-τ'})`;
       }
 
@@ -2899,13 +3061,14 @@
 
       // Atualiza Pílula Instantânea no Palco 3D
       const livePill = document.getElementById('stage-live-pill');
+      const isEn = state.lang === 'en';
       if (state.step === 1) {
-        renderMath(livePill, `\\text{1º Passo } (t \\to \\tau): \\quad \\tau = ${state.tauSweep.toFixed(2)}`, false);
+        renderMath(livePill, `${isEn ? '\\text{Step 1 } (t \\to \\tau)' : '\\text{Passo 1 } (t \\to \\tau)'}: \\quad \\tau = ${state.tauSweep.toFixed(2)}`, false);
       } else if (state.step === 2) {
         const deg = Math.round((state.flipAngle / Math.PI) * 180);
-        renderMath(livePill, `\\text{2º Passo (Reflexão)}: \\quad \\theta = ${deg}^\\circ`, false);
+        renderMath(livePill, `${isEn ? '\\text{Step 2 (Reflection)}' : '\\text{Passo 2 (Reflexão)}'}: \\quad \\theta = ${deg}^\\circ`, false);
       } else if (state.step === 3) {
-        renderMath(livePill, `\\text{3º Passo (Deslocamento)}: \\quad t = ${effectiveT.toFixed(2)}`, false);
+        renderMath(livePill, `${isEn ? '\\text{Step 3 (Shift)}' : '\\text{Passo 3 (Deslocamento)}'}: \\quad t = ${effectiveT.toFixed(2)}`, false);
       } else {
         renderMath(livePill, `y(${effectiveT.toFixed(2)}) = ${yNow.toFixed(4)}`, false);
       }
@@ -2914,6 +3077,166 @@
     // ============================================================================
     // 7. CONTROLES DE ÓRBITA 3D MULTITOQUE E REDIMENSIONAMENTO RESPONSIVO
     // ============================================================================
+
+    function renderFourierScene3D() {
+      if (!ctx3d || !stageCanvas) return;
+      const isEn = state.lang === 'en';
+      const calc = state.fourierCalculated || calculateFourierData();
+      const pal = getThemePalette();
+
+      const w = canvasContainer.clientWidth || 384;
+      const h = canvasContainer.clientHeight || 260;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      if (stageCanvas.width !== Math.floor(w * dpr) || stageCanvas.height !== Math.floor(h * dpr)) {
+        stageCanvas.width = Math.floor(w * dpr);
+        stageCanvas.height = Math.floor(h * dpr);
+      }
+
+      updateCameraFromOrbit();
+
+      ctx3d.save();
+      ctx3d.scale(dpr, dpr);
+      ctx3d.fillStyle = pal.bgCss;
+      ctx3d.fillRect(0, 0, w, h);
+
+      const T0 = calc.T0;
+      const tNow = state.t;
+      const strokeScale = state.thickLines || state.theme === 'projector' ? 1.55 : 1.0;
+
+      const T_MIN = -T0 * 1.5;
+      const T_MAX = T0 * 1.5;
+      const AMP_MAX = 1.35;
+      const N_HARM = calc.harmonics.length;
+      const Z_MAX = Math.max(4.0, N_HARM * 0.5);
+
+      draw3DPolygon(
+        [
+          { x: T_MIN, y: 0, z: Z_MAX },
+          { x: T_MAX, y: 0, z: Z_MAX },
+          { x: T_MAX, y: AMP_MAX, z: Z_MAX },
+          { x: T_MIN, y: AMP_MAX, z: Z_MAX }
+        ],
+        pal.wallFill,
+        pal.wallBorder,
+        1
+      );
+
+      for (let tv = Math.ceil(T_MIN); tv <= Math.floor(T_MAX); tv += 1) {
+        draw3DLine(
+          { x: tv, y: 0, z: 0 },
+          { x: tv, y: 0, z: Z_MAX },
+          tv === 0 ? pal.axis : pal.gridMain,
+          tv === 0 ? 1.6 * strokeScale : 0.75
+        );
+      }
+
+      const origPts = [];
+      const steps = 180;
+      for (let i = 0; i <= steps; i++) {
+        const tv = T_MIN + (i / steps) * (T_MAX - T_MIN);
+        const yVal = calc.fn(((tv % T0) + T0) % T0);
+        origPts.push({ x: tv, y: yVal, z: 0 });
+      }
+      draw3DPolyline(origPts, pal.x1, 2.5 * strokeScale);
+
+      const recPts = [];
+      for (let i = 0; i <= steps; i++) {
+        const tv = T_MIN + (i / steps) * (T_MAX - T_MIN);
+        const yVal = calc.reconstruct(tv);
+        recPts.push({ x: tv, y: yVal, z: 0.1 });
+      }
+      draw3DPolyline(recPts, pal.conv, 2.8 * strokeScale);
+
+      calc.harmonics.forEach((hItem, idx) => {
+        const zPos = (idx + 1) * 0.45;
+        const harmPts = [];
+        for (let i = 0; i <= steps; i++) {
+          const tv = T_MIN + (i / steps) * (T_MAX - T_MIN);
+          const yVal = hItem.an * Math.cos(hItem.nw0 * tv) + hItem.bn * Math.sin(hItem.nw0 * tv);
+          harmPts.push({ x: tv, y: yVal, z: zPos });
+        }
+        draw3DPolyline(harmPts, pal.prod, 1.4 * strokeScale, [], false);
+      });
+
+      if (state.showWaterfall) {
+        for (let idx = 0; idx < calc.harmonics.length - 1; idx++) {
+          const z1 = (idx + 1) * 0.45;
+          const z2 = (idx + 2) * 0.45;
+          const h1 = calc.harmonics[idx];
+          const h2 = calc.harmonics[idx + 1];
+          for (let i = 0; i < steps; i += 6) {
+            const t1 = T_MIN + (i / steps) * (T_MAX - T_MIN);
+            const t2 = T_MIN + ((i + 6) / steps) * (T_MAX - T_MIN);
+            const y11 = h1.an * Math.cos(h1.nw0 * t1) + h1.bn * Math.sin(h1.nw0 * t1);
+            const y12 = h1.an * Math.cos(h1.nw0 * t2) + h1.bn * Math.sin(h1.nw0 * t2);
+            const y21 = h2.an * Math.cos(h2.nw0 * t1) + h2.bn * Math.sin(h2.nw0 * t1);
+            const y22 = h2.an * Math.cos(h2.nw0 * t2) + h2.bn * Math.sin(h2.nw0 * t2);
+            draw3DPolygon(
+              [
+                { x: t1, y: y11, z: z1 },
+                { x: t2, y: y12, z: z1 },
+                { x: t2, y: y22, z: z2 },
+                { x: t1, y: y21, z: z2 }
+              ],
+              pal.waterfallFill || 'rgba(56, 189, 248, 0.12)',
+              null
+            );
+          }
+        }
+      }
+
+      ctx3d.restore();
+
+      const placeLabel = (id, x, y, z, visible = true) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (!visible) {
+          el.style.opacity = '0';
+          return;
+        }
+        const pt = projectPoint3D(x, y, z);
+        const wBox = canvasContainer.clientWidth || 384;
+        const hBox = canvasContainer.clientHeight || 260;
+        if (!pt || pt.x < 15 || pt.x > wBox - 15 || pt.y < 15 || pt.y > hBox - 15) {
+          el.style.opacity = '0';
+          return;
+        }
+        el.style.opacity = '1';
+        el.style.left = `${pt.x}px`;
+        el.style.top = `${pt.y}px`;
+      };
+
+      renderMath(document.getElementById('lbl-tau'), isEn ? '\\text{Time } t' : '\\text{Tempo } t', false);
+      renderMath(document.getElementById('lbl-t'), isEn ? '\\text{Harmonics } (n\\omega_0)' : '\\text{Harmônicas } (n\\omega_0)', false);
+      renderMath(document.getElementById('lbl-z'), '\\text{Amplitude}', false);
+      renderMath(document.getElementById('lbl-x1'), 'f(t)', false);
+      renderMath(document.getElementById('lbl-x2'), `S_{${calc.harmonics.length}}(t)`, false);
+      renderMath(document.getElementById('lbl-conv'), `S_N(t) \\approx f(t)`, false);
+
+      document.getElementById('leg-fixed').textContent = isEn ? 'f(t) Periodic' : 'f(t) Periódica';
+      document.getElementById('leg-moving').textContent = `S_{${calc.harmonics.length}}(t) ${isEn ? 'Reconstruction' : 'Reconstrução'}`;
+
+      placeLabel('lbl-tau', 1.8, -0.22, 0, true);
+      placeLabel('lbl-t', 0.0, -0.2, Z_MAX * 0.7, true);
+      placeLabel('lbl-z', -2.5, 1.45, 0, true);
+      placeLabel('lbl-x1', 0.5, calc.fn(0.5) + 0.25, 0, true);
+      placeLabel('lbl-x2', tNow, calc.reconstruct(tNow) + 0.25, 0.1, true);
+      placeLabel('lbl-conv', -1.2, calc.reconstruct(-1.2) + 0.25, 0.1, true);
+
+      const livePill = document.getElementById('stage-live-pill');
+      if (livePill) {
+        if (state.step === 1) {
+          renderMath(livePill, `${isEn ? '\\text{Step 1: } T_0' : '\\text{Passo 1: } T_0'} = ${T0.toFixed(2)}\\text{ s}, \\; \\omega_0 = ${calc.w0.toFixed(2)}\\text{ rad/s}`, false);
+        } else if (state.step === 2) {
+          renderMath(livePill, `${isEn ? '\\text{Step 2: }' : '\\text{Passo 2: }'} ${calc.symmetryType === 'even' ? (isEn ? 'Even Parity' : 'Simetria Par') : calc.symmetryType === 'odd' ? (isEn ? 'Odd Parity' : 'Simetria Ímpar') : (isEn ? 'No Parity' : 'Sem Simetria')}`, false);
+        } else if (state.step === 3) {
+          renderMath(livePill, `${isEn ? '\\text{Step 3: } N' : '\\text{Passo 3: } N'} = ${calc.harmonics.length}\\text{ harmonics}`, false);
+        } else {
+          renderMath(livePill, `S_N(${tNow.toFixed(2)}) = ${calc.reconstruct(tNow).toFixed(4)}, \\; \\text{MSE}=${calc.mse.toFixed(4)}`, false);
+        }
+      }
+    }
+
     function initPointerOrbitControls() {
       let isDragging = false;
       let prevX = 0;
@@ -3019,6 +3342,7 @@
 
     function setStep(stepNum, restartAnim = true) {
       state.step = stepNum;
+      const dict = I18N[state.lang] || I18N.en;
       document.querySelectorAll('.step-card').forEach((btn) => {
         btn.classList.toggle('active', Number(btn.getAttribute('data-step')) === stepNum);
       });
@@ -3026,47 +3350,53 @@
       const slider = document.getElementById('t-slider');
       const titleEl = document.getElementById('slider-param-title');
 
-      // Ajuste suave de perspectiva 3D ideal para cada passo
       camOrbit.autoOrient = true;
-      if (stepNum === 1) {
-        camOrbit.targetTheta = -0.48;
-        camOrbit.targetPhi = 1.10;
-        camOrbit.targetRadius = 12.6;
-        titleEl.textContent = 'Varredura τ (1º Passo)';
-        slider.min = '-3.5';
-        slider.max = '5.5';
-        if (restartAnim) state.tauSweep = -3.0;
-        slider.value = state.tauSweep;
-      } else if (stepNum === 2) {
-        camOrbit.targetTheta = -0.38;
-        camOrbit.targetPhi = 0.96;
-        camOrbit.targetRadius = 12.6;
-        titleEl.textContent = 'Giro de Reflexão θ (2º Passo)';
-        slider.min = '0';
-        slider.max = '3.1416';
-        if (restartAnim) {
-          state.flipAngle = 0;
-          step2PauseFrames = 0;
-        }
-        slider.value = state.flipAngle;
-      } else if (stepNum === 3) {
-        camOrbit.targetTheta = -0.56;
-        camOrbit.targetPhi = 1.06;
-        camOrbit.targetRadius = 13.0;
-        titleEl.textContent = 'Deslocamento t (3º Passo)';
-        slider.min = '-2.0';
-        slider.max = '5.8';
-        state.flipAngle = Math.PI;
+      if (state.activeModule === 'fourier') {
+        if (titleEl) titleEl.textContent = dict.sliderEvalPoint;
+        slider.min = '-4.0';
+        slider.max = '4.0';
         slider.value = state.t;
       } else {
-        camOrbit.targetTheta = -0.62;
-        camOrbit.targetPhi = 1.05;
-        camOrbit.targetRadius = 13.2;
-        titleEl.textContent = 'Deslocamento t (4º Passo)';
-        slider.min = '-2.0';
-        slider.max = '5.8';
-        state.flipAngle = Math.PI;
-        slider.value = state.t;
+        if (stepNum === 1) {
+          camOrbit.targetTheta = -0.48;
+          camOrbit.targetPhi = 1.10;
+          camOrbit.targetRadius = 12.6;
+          if (titleEl) titleEl.textContent = dict.sliderSweep;
+          slider.min = '-3.5';
+          slider.max = '5.5';
+          if (restartAnim) state.tauSweep = -3.0;
+          slider.value = state.tauSweep;
+        } else if (stepNum === 2) {
+          camOrbit.targetTheta = -0.38;
+          camOrbit.targetPhi = 0.96;
+          camOrbit.targetRadius = 12.6;
+          if (titleEl) titleEl.textContent = dict.sliderFlip;
+          slider.min = '0';
+          slider.max = '3.1416';
+          if (restartAnim) {
+            state.flipAngle = 0;
+            step2PauseFrames = 0;
+          }
+          slider.value = state.flipAngle;
+        } else if (stepNum === 3) {
+          camOrbit.targetTheta = -0.56;
+          camOrbit.targetPhi = 1.06;
+          camOrbit.targetRadius = 13.0;
+          if (titleEl) titleEl.textContent = dict.sliderShift3;
+          slider.min = '-2.0';
+          slider.max = '5.8';
+          state.flipAngle = Math.PI;
+          slider.value = state.t;
+        } else {
+          camOrbit.targetTheta = -0.62;
+          camOrbit.targetPhi = 1.05;
+          camOrbit.targetRadius = 13.2;
+          if (titleEl) titleEl.textContent = dict.sliderShift4;
+          slider.min = '-2.0';
+          slider.max = '5.8';
+          state.flipAngle = Math.PI;
+          slider.value = state.t;
+        }
       }
 
       updateSliderBadge();
@@ -3086,137 +3416,36 @@
     }
 
     function updatePlayButtonUI() {
+      const dict = I18N[state.lang] || I18N.en;
       document.getElementById('icon-play').classList.toggle('hidden', state.isPlaying);
       document.getElementById('icon-pause').classList.toggle('hidden', !state.isPlaying);
-      document.getElementById('lbl-play').textContent = state.isPlaying ? 'Pausar' : 'Animar';
-    }
-
-    function switchModule(modName) {
-      state.activeModule = modName;
-      window.location.hash = modName;
-
-      document.getElementById('btn-tab-conv').classList.toggle('active-tab-text', modName === 'convolution');
-      document.getElementById('btn-tab-conv').classList.toggle('text-mut', modName !== 'convolution');
-      document.getElementById('btn-tab-fourier').classList.toggle('active-tab-text', modName === 'fourier');
-      document.getElementById('btn-tab-fourier').classList.toggle('text-mut', modName !== 'fourier');
-
-      document.getElementById('header-accent-pip').style.background = modName === 'convolution' ? 'var(--c-conv)' : 'var(--c-x1)';
-
-      document.getElementById('conv-slider-group').classList.toggle('hidden', modName !== 'convolution');
-      document.getElementById('fourier-slider-group').classList.toggle('hidden', modName !== 'fourier');
-      document.getElementById('btn-fourier-period').classList.toggle('hidden', modName !== 'fourier');
-      document.getElementById('btn-seq-mode').classList.toggle('hidden', modName !== 'convolution');
-      document.getElementById('btn-commute').classList.toggle('hidden', modName !== 'convolution');
-
-      document.getElementById('conv-inputs-group').classList.toggle('hidden', modName !== 'convolution');
-      document.getElementById('fourier-inputs-group').classList.toggle('hidden', modName !== 'fourier');
-
-      // Update Step buttons labels
-      const s1 = document.getElementById('step-lbl-1');
-      const s2 = document.getElementById('step-lbl-2');
-      const s3 = document.getElementById('step-lbl-3');
-      const s4 = document.getElementById('step-lbl-4');
-
-      if (modName === 'convolution') {
-        s1.textContent = 't → τ';
-        s2.textContent = 'Reflexão';
-        s3.textContent = 'Deslocar';
-        s4.textContent = 'Integral';
-        document.getElementById('leg-fixed').textContent = 'Fixo';
-        document.getElementById('leg-moving').textContent = 'Móvel';
-        document.getElementById('leg-out').textContent = 'y(t)';
-      } else {
-        s1.textContent = 'Período';
-        s2.textContent = 'Nível DC';
-        s3.textContent = 'Coeficientes';
-        s4.textContent = 'Síntese';
-        document.getElementById('leg-fixed').textContent = 'Original';
-        document.getElementById('leg-moving').textContent = 'Harmônicos';
-        document.getElementById('leg-out').textContent = '|Cₙ|';
-      }
-
-      camOrbit.autoOrient = true;
-      if (modName === 'convolution') {
-        camOrbit.targetTheta = -0.62;
-        camOrbit.targetPhi = 1.05;
-        camOrbit.targetRadius = 13.2;
-        camOrbit.target = { x: 1.25, y: 0.15, z: 2.0 };
-      } else {
-        const data = state.fourierCalculated || calculateFourierData();
-        camOrbit.targetTheta = -0.72;
-        camOrbit.targetPhi = 1.08;
-        camOrbit.targetRadius = 15.5;
-        camOrbit.target = { x: 1.25 * data.T0, y: 0.0, z: data.N * 0.4 };
-      }
-
-      renderPresetGallery();
-      syncInputsWithPreset();
-      updateNotebookUI(true);
-      updateScene3D();
+      document.getElementById('lbl-play').textContent = state.isPlaying ? dict.btnPlayPause : dict.btnPlayPlay;
     }
 
     function applyTheme(th) {
       state.theme = th;
-      try { localStorage.setItem('conv3d_theme', th); } catch (e) {}
       document.body.classList.remove('theme-dark', 'theme-light', 'theme-projector');
       document.body.classList.add('theme-' + th);
       document.querySelectorAll('.theme-btn').forEach((b) => b.classList.toggle('active', b.getAttribute('data-theme') === th));
       rebuildSceneHelpers();
     }
 
-    function setLanguage(lang) {
-      state.lang = lang;
-      try { localStorage.setItem('conv3d_lang_pref', lang); } catch (e) {}
-      document.getElementById('lang-btn-text').textContent = lang === 'en' ? 'PT-BR' : 'EN';
-      const isEn = lang === 'en';
-      document.getElementById('btn-tab-conv').textContent = isEn ? '3D Convolution' : 'Convolução 3D';
-      document.getElementById('btn-tab-fourier').textContent = isEn ? '3D Fourier' : 'Fourier 3D';
-      renderPresetGallery();
-      updateNotebookUI(false);
-      updateScene3D();
-    }
-
     function initUIEvents() {
-      document.getElementById('btn-tab-conv').addEventListener('click', () => switchModule('convolution'));
-      document.getElementById('btn-tab-fourier').addEventListener('click', () => switchModule('fourier'));
-      document.getElementById('btn-lang-toggle').addEventListener('click', () => {
-        setLanguage(state.lang === 'en' ? 'pt' : 'en');
-      });
+      // 1. Language Toggle
+      const langToggle = document.getElementById('btn-lang-toggle');
+      if (langToggle) {
+        langToggle.addEventListener('click', () => {
+          setLanguage(state.lang === 'en' ? 'pt' : 'en');
+        });
+      }
 
-      // Fourier Harmonics Slider
-      const fourierSlider = document.getElementById('fourier-n-slider');
-      fourierSlider.addEventListener('input', (e) => {
-        state.fourierHarmonics = parseInt(e.target.value);
-        document.getElementById('fourier-readout-badge').textContent = `N = ${state.fourierHarmonics} (T₀=${state.fourierT0.toFixed(1)})`;
-        calculateFourierData();
-        updateNotebookUI(false);
-        updateScene3D();
-      });
+      // 2. Module Switcher Tabs
+      const tabConv = document.getElementById('btn-tab-conv');
+      const tabFourier = document.getElementById('btn-tab-fourier');
+      if (tabConv) tabConv.addEventListener('click', () => switchModule('convolution'));
+      if (tabFourier) tabFourier.addEventListener('click', () => switchModule('fourier'));
 
-      // Fourier Period Toggle Button
-      document.getElementById('btn-fourier-period').addEventListener('click', () => {
-        const periods = [1.0, 2.0, 3.0, 4.0];
-        const curIdx = periods.indexOf(state.fourierT0);
-        state.fourierT0 = periods[(curIdx + 1) % periods.length];
-        document.getElementById('btn-fourier-period').textContent = `T₀: ${state.fourierT0.toFixed(1)}`;
-        document.getElementById('fourier-readout-badge').textContent = `N = ${state.fourierHarmonics} (T₀=${state.fourierT0.toFixed(1)})`;
-        calculateFourierData();
-        updateNotebookUI(false);
-        updateScene3D();
-      });
-
-      // Fourier MathField box focus
-      document.getElementById('mf-box-fourier').addEventListener('click', () => {
-        setActiveMathField('fourier');
-      });
-
-      window.addEventListener('hashchange', () => {
-        const h = window.location.hash.replace('#', '');
-        if (h === 'fourier' && state.activeModule !== 'fourier') switchModule('fourier');
-        else if (h === 'convolution' && state.activeModule !== 'convolution') switchModule('convolution');
-      });
-
-      // Botões dos 4 Passos
+      // 3. Step Cards
       document.querySelectorAll('.step-card').forEach((btn) => {
         btn.addEventListener('click', () => {
           const s = Number(btn.getAttribute('data-step'));
@@ -3226,104 +3455,154 @@
         });
       });
 
-      // Botão Play / Pause
+      // 4. Play / Pause Button
       document.getElementById('btn-play').addEventListener('click', () => {
         state.isPlaying = !state.isPlaying;
         updatePlayButtonUI();
       });
 
-      // Modo Sequência 1º -> 4º
+      // 5. Sequence Mode
       const seqBtn = document.getElementById('btn-seq-mode');
-      seqBtn.addEventListener('click', () => {
-        state.seqMode = !state.seqMode;
-        seqBtn.style.borderColor = state.seqMode ? 'var(--c-conv)' : '';
-        seqBtn.style.backgroundColor = state.seqMode ? 'var(--accent-bg)' : '';
-        if (state.seqMode) {
-          state.isPlaying = true;
-          updatePlayButtonUI();
-          setStep(1, true);
-        }
-      });
+      if (seqBtn) {
+        seqBtn.addEventListener('click', () => {
+          state.seqMode = !state.seqMode;
+          seqBtn.style.borderColor = state.seqMode ? 'var(--c-conv)' : '';
+          seqBtn.style.backgroundColor = state.seqMode ? 'var(--accent-bg)' : '';
+          if (state.seqMode) {
+            state.isPlaying = true;
+            updatePlayButtonUI();
+            setStep(1, true);
+          }
+        });
+      }
 
-      // Botão Comutar (x * h <-> h * x)
+      // 6. Commutative Property (x * h <-> h * x)
       const commBtn = document.getElementById('btn-commute');
-      commBtn.addEventListener('click', () => {
-        state.isCommuted = !state.isCommuted;
-        commBtn.style.borderColor = state.isCommuted ? 'var(--c-x1)' : '';
-        updateNotebookUI(true);
-      });
+      if (commBtn) {
+        commBtn.addEventListener('click', () => {
+          state.isCommuted = !state.isCommuted;
+          commBtn.style.borderColor = state.isCommuted ? 'var(--c-x1)' : '';
+          updateNotebookUI(true);
+        });
+      }
 
-      // Slider Principal
+      // 7. Time / Parameter Slider
       const slider = document.getElementById('t-slider');
-      slider.addEventListener('input', (e) => {
-        const val = parseFloat(e.target.value);
-        if (state.step === 1) {
-          state.tauSweep = val;
-        } else if (state.step === 2) {
-          state.flipAngle = val;
-        } else {
-          state.t = val;
-        }
-        updateSliderBadge();
-        updateNotebookUI(false);
-      });
+      if (slider) {
+        slider.addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          if (state.activeModule === 'fourier') {
+            state.t = val;
+          } else {
+            if (state.step === 1) {
+              state.tauSweep = val;
+            } else if (state.step === 2) {
+              state.flipAngle = val;
+            } else {
+              state.t = val;
+            }
+          }
+          updateSliderBadge();
+          updateNotebookUI(false);
+          updateScene3D();
+        });
+      }
 
-      // Reescrever Passo no Caderno
-      document.getElementById('btn-rewatch-write').addEventListener('click', () => {
-        updateNotebookUI(true);
-      });
+      // 8. Fourier N Harmonics Slider
+      const fourierSlider = document.getElementById('fourier-n-slider');
+      if (fourierSlider) {
+        fourierSlider.addEventListener('input', (e) => {
+          state.fourierN = parseInt(e.target.value, 10);
+          const badge = document.getElementById('fourier-n-badge');
+          if (badge) badge.textContent = `N = ${state.fourierN}`;
+          calculateFourierData();
+          updateNotebookUI(false);
+          updateScene3D();
+        });
+      }
 
-      // Seletor de Temas (Escuro / Claro / Projetor)
+      // 9. Fourier T0 Input
+      const fourierT0Input = document.getElementById('fourier-t0-input');
+      if (fourierT0Input) {
+        fourierT0Input.addEventListener('change', (e) => {
+          state.fourierT0 = parseFloat(e.target.value) || 3.0;
+          calculateFourierData();
+          syncInputsWithPreset();
+          updateNotebookUI(false);
+          updateScene3D();
+        });
+      }
+
+      // 10. Fourier Mathfield Focus
+      const boxF = document.getElementById('mf-box-fourier');
+      if (boxF) boxF.addEventListener('click', () => setActiveMathField('fourier'));
+
+      // 11. Rewatch Step Button
+      const rewatchBtn = document.getElementById('btn-rewatch-write');
+      if (rewatchBtn) {
+        rewatchBtn.addEventListener('click', () => {
+          updateNotebookUI(true);
+        });
+      }
+
+      // 12. Theme Switcher
       document.querySelectorAll('.theme-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
-          const th = btn.getAttribute('data-theme');
-          state.theme = th;
-          document.body.classList.remove('theme-dark', 'theme-light', 'theme-projector');
-          document.body.classList.add(`theme-${th}`);
-          document.querySelectorAll('.theme-btn').forEach((b) => b.classList.toggle('active', b === btn));
-          rebuildSceneHelpers();
+          applyTheme(btn.getAttribute('data-theme'));
         });
       });
 
-      // Espessura Forte (2x)
+      // 13. Thick Lines
       const thickBtn = document.getElementById('btn-thick');
-      thickBtn.addEventListener('click', () => {
-        state.thickLines = !state.thickLines;
-        thickBtn.style.borderColor = state.thickLines ? 'var(--c-conv)' : '';
-      });
+      if (thickBtn) {
+        thickBtn.addEventListener('click', () => {
+          state.thickLines = !state.thickLines;
+          thickBtn.style.borderColor = state.thickLines ? 'var(--c-conv)' : '';
+        });
+      }
 
-      // Expandir Palco 3D no Mobile
+      // 14. Expand Stage on Mobile
       const expBtn = document.getElementById('btn-expand-stage');
-      expBtn.addEventListener('click', () => {
-        const expanded = document.body.classList.toggle('stage-expanded');
-        document.getElementById('expand-stage-lbl').textContent = expanded ? '3D-' : '3D+';
-        setTimeout(handleResize, 260);
-      });
+      if (expBtn) {
+        expBtn.addEventListener('click', () => {
+          const expanded = document.body.classList.toggle('stage-expanded');
+          document.getElementById('expand-stage-lbl').textContent = expanded ? '3D-' : '3D+';
+          setTimeout(handleResize, 260);
+        });
+      }
 
-      // Alternar Cascata de Fatias 3D
+      // 15. Waterfall Toggle
       const wfBtn = document.getElementById('btn-waterfall');
-      wfBtn.addEventListener('click', () => {
-        state.showWaterfall = !state.showWaterfall;
-        wfBtn.style.borderColor = state.showWaterfall ? 'var(--c-prod)' : 'var(--border-subtle)';
-        wfBtn.style.opacity = state.showWaterfall ? '1' : '0.6';
-      });
+      if (wfBtn) {
+        wfBtn.addEventListener('click', () => {
+          state.showWaterfall = !state.showWaterfall;
+          wfBtn.style.borderColor = state.showWaterfall ? 'var(--c-prod)' : 'var(--border-subtle)';
+          wfBtn.style.opacity = state.showWaterfall ? '1' : '0.6';
+        });
+      }
 
-      // Resetar Câmera 3D
-      document.getElementById('btn-reset-cam').addEventListener('click', () => {
-        camOrbit.autoOrient = true;
-        camOrbit.targetTheta = -0.62;
-        camOrbit.targetPhi = 1.05;
-        camOrbit.targetRadius = 13.2;
-      });
+      // 16. Reset 3D Camera
+      const resetCamBtn = document.getElementById('btn-reset-cam');
+      if (resetCamBtn) {
+        resetCamBtn.addEventListener('click', () => {
+          camOrbit.autoOrient = true;
+          camOrbit.targetTheta = -0.62;
+          camOrbit.targetPhi = 1.05;
+          camOrbit.targetRadius = 13.2;
+        });
+      }
 
-      // Tela Cheia
-      document.getElementById('btn-fullscreen').addEventListener('click', () => {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen().catch(() => {});
-        } else {
-          document.exitFullscreen().catch(() => {});
-        }
-      });
+      // 17. Fullscreen Toggle
+      const fsBtn = document.getElementById('btn-fullscreen');
+      if (fsBtn) {
+        fsBtn.addEventListener('click', () => {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          } else {
+            document.exitFullscreen().catch(() => {});
+          }
+        });
+      }
 
       window.addEventListener('resize', handleResize);
     }
