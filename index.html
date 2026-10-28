@@ -799,7 +799,7 @@
       if (!el) return;
       if (window.katex) {
         try {
-          window.katex.render(latex, el, { throwOnError: false, displayMode });
+          window.katex.render(latex, el, { throwOnError: false, displayMode, strict: false });
           return;
         } catch (err) {
           // fallback silencioso
@@ -811,7 +811,7 @@
     function latexToHtml(latex, displayMode = false) {
       if (window.katex) {
         try {
-          return window.katex.renderToString(latex, { throwOnError: false, displayMode });
+          return window.katex.renderToString(latex, { throwOnError: false, displayMode, strict: false });
         } catch (err) {
           return latex;
         }
@@ -835,7 +835,7 @@
         .replace(/cos\(([^)]+)\)/g, '\\cos($1)')
         .replace(/e\^\(\s*([^)]+)\s*\)/g, 'e^{$1}')
         .replace(/e\^([a-zA-Z0-9_\\+-]+)/g, 'e^{$1}')
-        .replace(/\*/g, '\\cdot ');
+        .replace(/sign\(([^)]+)\)/g, '\\mathrm{sgn}($1)').replace(/sgn\(([^)]+)\)/g, '\\mathrm{sgn}($1)').replace(/abs\(([^)]+)\)/g, '|$1|').replace(/\*/g, '\\cdot ');
       return s;
     }
 
@@ -847,7 +847,7 @@
       const rect = (v) => (Math.abs(v) <= 0.5 ? 1.0 : 0.0);
       const tri = (v) => (Math.abs(v) <= 1.0 ? 1.0 - Math.abs(v) : 0.0);
       const sinc = (v) => (Math.abs(v) < 1e-6 ? 1.0 : Math.sin(Math.PI * v) / (Math.PI * v));
-      const sign = (v) => Math.sign(v);
+      const sign = (v) => (v > 0 ? 1.0 : v < 0 ? -1.0 : 0.0);
       const sgn = sign;
 
       let jsExpr = clean
@@ -867,7 +867,7 @@
         fn(0.5, u, r, rect, tri, sinc, sign, sgn);
         return (tVal) => {
           try {
-            const val = fn(tVal, u, r, rect, tri, sinc);
+            const val = fn(tVal, u, r, rect, tri, sinc, sign, sgn);
             return Number.isFinite(val) ? val : 0;
           } catch (e) {
             return 0;
@@ -1507,7 +1507,7 @@
       }
 
       const wfPeriodBtn = document.getElementById('btn-waterfall-period');
-      if (wfPeriodBtn) wfPeriodBtn.classList.toggle('hidden', !isFourier || !state.isWaterfall);
+      if (wfPeriodBtn) wfPeriodBtn.classList.toggle('hidden', !isFourier || !state.showWaterfall);
 
       const btnCommute = document.getElementById('btn-commute');
       if (btnCommute) btnCommute.classList.toggle('hidden', isFourier);
@@ -1556,6 +1556,7 @@
       activeModule: 'convolution',
       fourierN: 7,
       fourierT0: 3.0,
+      fourierCustomPresets: [],
       fourierExpr: '(u(t) - u(t-1.5)) - (u(t-1.5) - u(t-3))',
       fourierPresetKey: 'square',
       fourierCalculated: null
@@ -1753,7 +1754,7 @@
         },
         {
           label: isEn ? '4.3 Gibbs Phenomenon and Mean Square Error:' : '4.3 Fenômeno de Gibbs e Erro Médio Quadrático (MSE):',
-          latex: `\\text{MSE}_N = \\frac{1}{T_0}\\int_0^{T_0} |f(t) - S_N(t)|^2\\,dt \\approx ${calc.mse.toFixed(5)} \\quad (${isEn ? 'approx 9% overshoot near jumps' : '~9% sobressinal em descontinuidades'})`
+          latex: `\\text{MSE}_N = \\frac{1}{T_0}\\int_0^{T_0} |f(t) - S_N(t)|^2\\,dt \\approx ${calc.mse.toFixed(5)} \\quad (${isEn ? 'approx 9\% overshoot near jumps' : '~9\% sobressinal em descontinuidades'})`
         }
       ];
     }
@@ -2062,22 +2063,40 @@
       const isEn = state.lang === 'en';
 
       if (state.activeModule === 'fourier') {
-        Object.keys(FOURIER_PRESETS).forEach((k) => {
-          const p = FOURIER_PRESETS[k];
-          const isActive = state.fourierPresetKey === k;
+        const allFourier = [
+          ...Object.values(FOURIER_PRESETS),
+          ...(state.fourierCustomPresets || []).map((cp) => ({ ...cp, isCustom: true }))
+        ];
+        allFourier.forEach((p) => {
+          const isActive = state.fourierPresetKey === p.id;
           const card = document.createElement('div');
           card.className = `preset-pill rounded-lg p-2 cursor-pointer flex flex-col justify-between gap-1 relative ${
             isActive ? 'active' : ''
           }`;
+          const pTitle = isEn ? (p.titleEn || p.title) : p.title;
+          const pSub = isEn ? (p.subtitleEn || p.subtitle) : p.subtitle;
           card.innerHTML = `
             <div class="flex items-center justify-between gap-1">
-              <span class="text-[11px] font-bold truncate text-primary">${isEn ? p.titleEn : p.title}</span>
-              <span class="text-[9px] font-mono-code text-accent font-semibold">T₀ = ${p.T0}</span>
+              <span class="text-[11px] font-bold truncate text-primary">${pTitle}</span>
+              <div class="flex items-center gap-1">
+                <span class="text-[9px] font-mono-code text-accent font-semibold">T₀ = ${p.T0}</span>
+                ${
+                  p.isCustom
+                    ? `<button type="button" class="del-preset text-[10px] px-1 rounded hover:bg-red-500/20 text-rose-400" title="\${isEn ? 'Remove' : 'Remover'}">✕</button>`
+                    : ''
+                }
+              </div>
             </div>
-            <div class="text-[10px] text-mut truncate">${isEn ? p.subtitleEn : p.subtitle}</div>
+            <div class="text-[10px] text-mut truncate">${pSub}</div>
+            <div class="preset-math text-[10px] pt-0.5 truncate"></div>
           `;
-          card.onclick = () => {
-            state.fourierPresetKey = k;
+          const mathPreview = card.querySelector('.preset-math');
+          if (mathPreview && p.expr) {
+            renderMath(mathPreview, `f(t) = ${exprToLatex(p.expr, 't')}`, false);
+          }
+          card.addEventListener('click', (e) => {
+            if (e.target.closest('.del-preset')) return;
+            state.fourierPresetKey = p.id;
             state.fourierExpr = p.expr;
             state.fourierT0 = p.T0;
             state.fourierN = p.N;
@@ -2086,7 +2105,28 @@
             renderPresetGallery();
             updateNotebookUI(true);
             updateScene3D();
-          };
+          });
+          const delBtn = card.querySelector('.del-preset');
+          if (delBtn) {
+            delBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              state.fourierCustomPresets = (state.fourierCustomPresets || []).filter((item) => item.id !== p.id);
+              try {
+                localStorage.setItem('fourier3d_custom_presets_v1', JSON.stringify(state.fourierCustomPresets));
+              } catch (err) {}
+              if (state.fourierPresetKey === p.id) {
+                state.fourierPresetKey = 'square';
+                state.fourierExpr = FOURIER_PRESETS.square.expr;
+                state.fourierT0 = FOURIER_PRESETS.square.T0;
+                state.fourierN = FOURIER_PRESETS.square.N;
+                calculateFourierData();
+                syncInputsWithPreset();
+              }
+              renderPresetGallery();
+              updateNotebookUI(true);
+              updateScene3D();
+            });
+          }
           gallery.appendChild(card);
         });
         return;
@@ -2167,6 +2207,10 @@
         if (rawF) rawF.textContent = state.fourierExpr;
         if (t0Input) t0Input.value = state.fourierT0;
         if (w0Prev) w0Prev.textContent = `ω₀ = ${calc.w0.toFixed(2)} rad/s`;
+        const fSlider = document.getElementById('fourier-n-slider');
+        const badge = document.getElementById('fourier-n-badge');
+        if (fSlider) fSlider.value = state.fourierN;
+        if (badge) badge.textContent = `N = ${state.fourierN}`;
         return;
       }
       renderMath(document.getElementById('mf-render-x'), exprToLatex(state.exprX, 't'), false);
@@ -2223,6 +2267,7 @@
       syncInputsWithPreset();
       renderPresetGallery();
       updateNotebookUI(false);
+      updateScene3D();
     }
 
     function initMathKeyboard() {
@@ -2285,25 +2330,48 @@
       // Salvar função personalizada na galeria
       document.getElementById('btn-save-custom').addEventListener('click', () => {
         const id = 'custom_' + Date.now();
-        const count = state.customPresets.length + 1;
-        const dict = I18N[state.lang] || I18N.en;
-        const newPreset = {
-          id,
-          shortTitle: `${I18N.pt.savedPreset}${count}`,
-          shortTitleEn: `${I18N.en.savedPreset}${count}`,
-          subtitle: I18N.pt.customSignal,
-          subtitleEn: I18N.en.customSignal,
-          exprX: state.exprX,
-          exprH: state.exprH,
-          latexX: exprToLatex(state.exprX, 't'),
-          latexH: exprToLatex(state.exprH, 't')
-        };
-        state.customPresets.push(newPreset);
-        state.presetKey = id;
-        try {
-          localStorage.setItem('conv3d_custom_presets_v2', JSON.stringify(state.customPresets));
-        } catch (err) {}
-        renderPresetGallery();
+        const isFourier = state.activeModule === 'fourier';
+        if (isFourier) {
+          if (!state.fourierCustomPresets) state.fourierCustomPresets = [];
+          const count = state.fourierCustomPresets.length + 1;
+          const newPreset = {
+            id,
+            title: `${I18N.pt.savedPreset}${count}`,
+            titleEn: `${I18N.en.savedPreset}${count}`,
+            subtitle: I18N.pt.customSignal,
+            subtitleEn: I18N.en.customSignal,
+            expr: state.fourierExpr,
+            T0: state.fourierT0,
+            N: state.fourierN,
+            isCustom: true
+          };
+          state.fourierCustomPresets.push(newPreset);
+          state.fourierPresetKey = id;
+          try {
+            localStorage.setItem('fourier3d_custom_presets_v1', JSON.stringify(state.fourierCustomPresets));
+          } catch (err) {}
+          renderPresetGallery();
+        } else {
+          const count = state.customPresets.length + 1;
+          const newPreset = {
+            id,
+            shortTitle: `${I18N.pt.savedPreset}${count}`,
+            shortTitleEn: `${I18N.en.savedPreset}${count}`,
+            subtitle: I18N.pt.customSignal,
+            subtitleEn: I18N.en.customSignal,
+            exprX: state.exprX,
+            exprH: state.exprH,
+            latexX: exprToLatex(state.exprX, 't'),
+            latexH: exprToLatex(state.exprH, 't'),
+            isCustom: true
+          };
+          state.customPresets.push(newPreset);
+          state.presetKey = id;
+          try {
+            localStorage.setItem('conv3d_custom_presets_v2', JSON.stringify(state.customPresets));
+          } catch (err) {}
+          renderPresetGallery();
+        }
       });
     }
 
@@ -3102,9 +3170,10 @@
       const T0 = calc.T0;
       const tNow = state.t;
       const strokeScale = state.thickLines || state.theme === 'projector' ? 1.55 : 1.0;
+      const cycles = state.waterfallCycles || 2;
 
-      const T_MIN = -T0 * 1.5;
-      const T_MAX = T0 * 1.5;
+      const T_MIN = -T0 * (cycles * 0.5);
+      const T_MAX = T0 * (cycles * 0.5);
       const AMP_MAX = 1.35;
       const N_HARM = calc.harmonics.length;
       const Z_MAX = Math.max(4.0, N_HARM * 0.5);
@@ -3157,6 +3226,25 @@
         }
         draw3DPolyline(harmPts, pal.prod, 1.4 * strokeScale, [], false);
       });
+
+      // Cursor indicator at tNow
+      const recNow = calc.reconstruct(tNow);
+      draw3DLine(
+        { x: tNow, y: 0, z: 0.1 },
+        { x: tNow, y: recNow, z: 0.1 },
+        pal.conv,
+        1.5 * strokeScale
+      );
+      const ptRec = projectPoint3D(tNow, recNow, 0.1);
+      if (ptRec) {
+        ctx3d.fillStyle = pal.conv;
+        ctx3d.beginPath();
+        ctx3d.arc(ptRec.x, ptRec.y, 4.5 * strokeScale, 0, Math.PI * 2);
+        ctx3d.fill();
+        ctx3d.strokeStyle = '#ffffff';
+        ctx3d.lineWidth = 1.5;
+        ctx3d.stroke();
+      }
 
       if (state.showWaterfall) {
         for (let idx = 0; idx < calc.harmonics.length - 1; idx++) {
@@ -3222,6 +3310,8 @@
       placeLabel('lbl-x1', 0.5, calc.fn(0.5) + 0.25, 0, true);
       placeLabel('lbl-x2', tNow, calc.reconstruct(tNow) + 0.25, 0.1, true);
       placeLabel('lbl-conv', -1.2, calc.reconstruct(-1.2) + 0.25, 0.1, true);
+      placeLabel('lbl-b1', 0, 0, 0, false);
+      placeLabel('lbl-b2', 0, 0, 0, false);
 
       const livePill = document.getElementById('stage-live-pill');
       if (livePill) {
@@ -3571,13 +3661,25 @@
         });
       }
 
-      // 15. Waterfall Toggle
+      // 15. Waterfall Toggle & Window Duration
       const wfBtn = document.getElementById('btn-waterfall');
+      const wfPeriodBtn = document.getElementById('btn-waterfall-period');
       if (wfBtn) {
         wfBtn.addEventListener('click', () => {
           state.showWaterfall = !state.showWaterfall;
           wfBtn.style.borderColor = state.showWaterfall ? 'var(--c-prod)' : 'var(--border-subtle)';
           wfBtn.style.opacity = state.showWaterfall ? '1' : '0.6';
+          if (wfPeriodBtn) wfPeriodBtn.classList.toggle('hidden', state.activeModule !== 'fourier' || !state.showWaterfall);
+          updateScene3D();
+        });
+      }
+      if (wfPeriodBtn) {
+        wfPeriodBtn.addEventListener('click', () => {
+          state.waterfallCycles = (state.waterfallCycles || 2) + 1;
+          if (state.waterfallCycles > 4) state.waterfallCycles = 1;
+          const lblWf = document.getElementById('lbl-wf-period');
+          if (lblWf) lblWf.textContent = `${state.waterfallCycles} T₀`;
+          updateScene3D();
         });
       }
 
@@ -3617,63 +3719,75 @@
       if (state.isPlaying) {
         const slider = document.getElementById('t-slider');
 
-        if (state.step === 1) {
-          state.tauSweep += 0.038;
-          if (state.tauSweep > 5.5) {
-            if (state.seqMode) {
-              setStep(2, true);
-            } else {
-              state.tauSweep = -3.2;
-            }
+        if (state.activeModule === 'fourier') {
+          const T0 = state.fourierT0 || 3.0;
+          state.t += 0.022;
+          if (state.t > T0 * 1.5) {
+            state.t = -T0 * 1.5;
           }
-          slider.value = state.tauSweep;
-        } else if (state.step === 2) {
-          if (state.flipAngle < Math.PI) {
-            // Velocidade com suavização senoidal no início e fim do giro de 180°
-            const norm = state.flipAngle / Math.PI;
-            const speed = 0.014 + 0.026 * Math.sin(Math.max(0.08, Math.min(0.92, norm)) * Math.PI);
-            state.flipAngle = Math.min(Math.PI, state.flipAngle + speed);
-          } else {
-            // Pausa didática em 180° para observar o sinal refletido antes de reiniciar ou avançar
-            step2PauseFrames++;
-            if (step2PauseFrames > 42) {
-              step2PauseFrames = 0;
+          const badge = document.getElementById('t-readout-badge');
+          if (badge) badge.textContent = `t = ${state.t.toFixed(2)}`;
+          frameCounter++;
+          if (frameCounter % 4 === 0 && !handwritingTimer) {
+            updateNotebookUI(false);
+          }
+        } else {
+          if (state.step === 1) {
+            state.tauSweep += 0.038;
+            if (state.tauSweep > 5.5) {
               if (state.seqMode) {
-                state.t = -2.2;
-                setStep(3, true);
+                setStep(2, true);
               } else {
-                state.flipAngle = 0;
+                state.tauSweep = -3.2;
               }
             }
-          }
-          slider.value = state.flipAngle;
-        } else if (state.step === 3) {
-          state.t += 0.024;
-          if (state.t > 5.8) {
-            if (state.seqMode) {
-              state.t = -2.2;
-              setStep(4, true);
+            slider.value = state.tauSweep;
+          } else if (state.step === 2) {
+            if (state.flipAngle < Math.PI) {
+              const norm = state.flipAngle / Math.PI;
+              const speed = 0.014 + 0.026 * Math.sin(Math.max(0.08, Math.min(0.92, norm)) * Math.PI);
+              state.flipAngle = Math.min(Math.PI, state.flipAngle + speed);
             } else {
-              state.t = -2.2;
+              step2PauseFrames++;
+              if (step2PauseFrames > 42) {
+                step2PauseFrames = 0;
+                if (state.seqMode) {
+                  state.t = -2.2;
+                  setStep(3, true);
+                } else {
+                  state.flipAngle = 0;
+                }
+              }
             }
-          }
-          slider.value = state.t;
-        } else if (state.step === 4) {
-          state.t += 0.022;
-          if (state.t > 5.8) {
-            if (state.seqMode) {
-              setStep(1, true);
-            } else {
-              state.t = -2.2;
+            slider.value = state.flipAngle;
+          } else if (state.step === 3) {
+            state.t += 0.024;
+            if (state.t > 5.8) {
+              if (state.seqMode) {
+                state.t = -2.2;
+                setStep(4, true);
+              } else {
+                state.t = -2.2;
+              }
             }
+            slider.value = state.t;
+          } else if (state.step === 4) {
+            state.t += 0.022;
+            if (state.t > 5.8) {
+              if (state.seqMode) {
+                setStep(1, true);
+              } else {
+                state.t = -2.2;
+              }
+            }
+            slider.value = state.t;
           }
-          slider.value = state.t;
-        }
 
-        updateSliderBadge();
-        frameCounter++;
-        if (frameCounter % 4 === 0 && !handwritingTimer) {
-          updateNotebookUI(false);
+          updateSliderBadge();
+          frameCounter++;
+          if (frameCounter % 4 === 0 && !handwritingTimer) {
+            updateNotebookUI(false);
+          }
         }
       }
 
@@ -3688,6 +3802,9 @@
       syncInputsWithPreset();
       initMathKeyboard();
       initUIEvents();
+      try {
+        state.fourierCustomPresets = JSON.parse(localStorage.getItem('fourier3d_custom_presets_v1') || '[]');
+      } catch (e) {}
       const initH = window.location.hash.replace('#', '');
       if (initH === 'fourier') {
         switchModule('fourier');
