@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Analisador de Fourier 3D</title>
+    
+    <!-- Math.js para avaliar as expressões matemáticas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+    
+    <!-- Plotly.js para gráficos 3D -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+
+    <!-- MathLive: Renderização MathJax-like e Teclado Matemático Virtual -->
+    <script src="https://unpkg.com/mathlive"></script>
+
+    <style>
+        :root {
+            color-scheme: dark;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #09090b;
+            color: #f4f4f5;
+            --app-bg: #09090b;
+            --panel-bg: rgba(24, 24, 27, 0.95);
+            --panel-bg-solid: #27272a;
+            --surface-bg: #27272a;
+            --surface-bg-hover: #3f3f46;
+            --muted-surface: rgba(9, 9, 11, 0.5);
+            --notice-bg: rgba(39, 39, 42, 0.6);
+            --overlay-bg: rgba(9, 9, 11, 0.8);
+            --text: #f4f4f5;
+            --text-strong: #e4e4e7;
+            --text-muted: #a1a1aa;
+            --text-subtle: #71717a;
+            --field-bg: #09090b;
+            --border: #3f3f46;
+            --border-strong: #52525b;
+            --accent: #2563eb;
+            --accent-hover: #3b82f6;
+            --accent-active: #1d4ed8;
+            --focus: rgba(59, 130, 246, 0.5);
+            --danger-bg: rgba(127, 29, 29, 0.5);
+            --danger-border: #ef4444;
+            --danger-text: #fecaca;
+            --title-start: #60a5fa;
+            --title-end: #818cf8;
+            --plot-grid: #3f3f46;
+            --plot-zero: #52525b;
+            --plot-legend-bg: rgba(24, 24, 27, 0.7);
+        }
+
+        :root[data-theme="light"] {
+            color-scheme: light;
+            background: #f8fafc;
+            color: #18181b;
+            --app-bg: #f8fafc;
+            --panel-bg: rgba(255, 255, 255, 0.96);
+            --panel-bg-solid: #f1f5f9;
+            --surface-bg: #ffffff;
+            --surface-bg-hover: #e2e8f0;
+            --muted-surface: rgba(241, 245, 249, 0.72);
+            --notice-bg: rgba(226, 232, 240, 0.72);
+            --overlay-bg: rgba(248, 250, 252, 0.82);
+            --text: #18181b;
+            --text-strong: #27272a;
+            --text-muted: #475569;
+            --text-subtle: #64748b;
+            --field-bg: #ffffff;
+            --border: #cbd5e1;
+            --border-strong: #94a3b8;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-active: #1e40af;
+            --focus: rgba(37, 99, 235, 0.28);
+            --danger-bg: #fef2f2;
+            --danger-border: #ef4444;
+            --danger-text: #991b1b;
+            --title-start: #2563eb;
+            --title-end: #4f46e5;
+            --plot-grid: #cbd5e1;
+            --plot-zero: #94a3b8;
+            --plot-legend-bg: rgba(255, 255, 255, 0.82);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        strong {
+            font-weight: 700;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .app-shell {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            overscroll-behavior: none;
+            touch-action: none;
+            background: var(--app-bg);
+            color: var(--text);
+        }
+
+        .visualization-area {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+        }
+
+        .plot-area {
+            width: 100%;
+            height: 100%;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--overlay-bg);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .spinner {
+            width: 2.5rem;
+            height: 2.5rem;
+            margin-bottom: 0.75rem;
+            border: 0 solid transparent;
+            border-bottom: 2px solid #3b82f6;
+            border-radius: 999px;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin: 0;
+            color: var(--title-start);
+            font-size: 0.875rem;
+            font-weight: 600;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .controls-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 75vh;
+            background: var(--panel-bg);
+            border-top: 1px solid var(--border);
+            border-radius: 1rem 1rem 0 0;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .panel-closed {
+            transform: translateY(calc(100% - 3.5rem));
+        }
+
+        .panel-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            border-radius: 1rem 1rem 0 0;
+            cursor: pointer;
+        }
+
+        .panel-toggle .header-row {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .panel-arrow {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            width: 2rem;
+            height: 2rem;
+            padding: 0;
+            color: var(--text-muted);
+            background: transparent;
+            border: 0;
+            border-radius: 999px;
+        }
+
+        .panel-arrow:focus-visible,
+        .theme-option:focus-visible,
+        .legend-item:focus-visible,
+        .preset-button:focus-visible,
+        .primary-button:focus-visible {
+            outline: 2px solid var(--accent-hover);
+            outline-offset: 2px;
+        }
+
+        .panel-toggle:active {
+            background: var(--surface-bg-hover);
+        }
+
+        .toggle-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            color: var(--text-muted);
+            transition: transform 0.3s;
+        }
+
+        .panel-closed .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .desktop-header {
+            display: none;
+        }
+
+        .app-title {
+            margin: 0;
+            font-weight: 700;
+            color: transparent;
+            background: linear-gradient(to right, var(--title-start), var(--title-end));
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .mobile-title {
+            font-size: 1.125rem;
+            line-height: 1.75rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .desktop-title {
+            margin-bottom: 0.25rem;
+            font-size: 1.5rem;
+            line-height: 2rem;
+        }
+
+        .subtitle {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .controls-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            overflow-y: auto;
+            padding: 1rem 1rem 6rem;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-strong) transparent;
+        }
+
+        .alert {
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+        }
+
+        .error-alert {
+            color: var(--danger-text);
+            background: var(--danger-bg);
+            border: 1px solid var(--danger-border);
+        }
+
+        .notice {
+            margin: 0;
+            color: var(--text-muted);
+            background: var(--notice-bg);
+            border: 1px solid var(--border);
+        }
+
+        .form-stack,
+        .field-group,
+        .section-stack,
+        .legend-list {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-stack {
+            gap: 1rem;
+        }
+
+        .field-group {
+            gap: 0.375rem;
+        }
+
+        .section-stack {
+            gap: 0.75rem;
+        }
+
+        .fields-row {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        .half-field {
+            width: 50%;
+        }
+
+        .field-label {
+            margin-left: 0.25rem;
+            color: var(--text-strong);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .field-help {
+            margin: 0 0 0 0.25rem;
+            color: var(--text-subtle);
+            font-size: 0.75rem;
+            line-height: 1rem;
+        }
+
+        .number-input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            color: var(--text);
+            background: var(--field-bg);
+            border: 1px solid var(--border-strong);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            outline: none;
+        }
+
+        .number-input:focus {
+            border-color: var(--accent-hover);
+            box-shadow: 0 0 0 2px var(--focus);
+        }
+
+        .primary-button {
+            width: 100%;
+            margin-top: 0.5rem;
+            padding: 0.875rem 1rem;
+            color: #fff;
+            background: var(--accent);
+            border: 0;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .primary-button:hover {
+            background: var(--accent-hover);
+        }
+
+        .primary-button:active {
+            background: var(--accent-active);
+            transform: scale(0.98);
+        }
+
+        .divider {
+            width: 100%;
+            margin: 0;
+            border: 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .section-title {
+            margin: 0 0 0 0.25rem;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.5rem;
+        }
+
+        .preset-button {
+            display: flex;
+            flex-direction: column;
+            padding: 0.625rem;
+            color: inherit;
+            text-align: left;
+            background: var(--surface-bg);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+        }
+
+        .preset-button:hover,
+        .preset-button:active {
+            background: var(--surface-bg-hover);
+        }
+
+        .preset-label {
+            color: var(--text-strong);
+            font-size: 0.875rem;
+            font-weight: 700;
+        }
+
+        .legend-card {
+            margin-top: auto;
+            padding: 0.875rem;
+            color: var(--text-muted);
+            background: var(--muted-surface);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            line-height: 1rem;
+        }
+
+        .legend-list {
+            gap: 0.625rem;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            width: 100%;
+            padding: 0.35rem 0.25rem;
+            color: inherit;
+            text-align: left;
+            background: transparent;
+            border: 0;
+            border-radius: 0.375rem;
+            transition: color 0.2s, opacity 0.2s, background-color 0.2s;
+        }
+
+        .legend-item:hover {
+            color: var(--text-strong);
+            background: var(--notice-bg);
+        }
+
+        .legend-item[aria-pressed="false"] {
+            opacity: 0.42;
+        }
+
+        .legend-swatch {
+            flex: 0 0 auto;
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 0.125rem;
+        }
+
+        .swatch-original {
+            background: #ef4444;
+            box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+        }
+
+        .swatch-reconstruction {
+            background: #fff;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        .swatch-dc {
+            background: #a855f7;
+            box-shadow: 0 0 5px rgba(168, 85, 247, 0.5);
+        }
+
+        .swatch-harmonics {
+            background: linear-gradient(to right, #3b82f6, #6366f1);
+        }
+
+        .swatch-spectrum {
+            background: #22c55e;
+            box-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .title-block {
+            min-width: 0;
+        }
+
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.125rem;
+            flex: 0 0 auto;
+            padding: 0.125rem;
+            color: var(--text-muted);
+            background: var(--muted-surface);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+        }
+
+        .theme-option {
+            min-width: 3.25rem;
+            padding: 0.35rem 0.55rem;
+            color: inherit;
+            background: transparent;
+            border: 0;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            line-height: 1;
+            transition: color 0.2s, background-color 0.2s;
+        }
+
+        .theme-option[aria-pressed="true"] {
+            color: #ffffff;
+            background: var(--accent);
+        }
+
+        :root[data-theme="light"] .theme-option[aria-pressed="true"] {
+            color: #ffffff;
+        }
+
+        .panel-toggle .theme-option {
+            min-width: 2.75rem;
+            padding-right: 0.45rem;
+            padding-left: 0.45rem;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-subtle); }
+        
+        /* Remover fundo da barra de ferramentas do Plotly */
+        .js-plotly-plot .plotly .modebar { background: transparent !important; }
+        
+        /* Customização do MathLive (Cores Escuras) */
+        math-field {
+            font-size: 1.25rem;
+            width: 100%;
+            background-color: var(--field-bg); 
+            color: var(--text); 
+            border: 1px solid var(--border-strong); 
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+            --keyboard-zindex: 100;
+            --keyboard-background: var(--panel-bg-solid);
+            --keyboard-toolbar-text: var(--text-muted);
+            --keycap-background: var(--surface-bg);
+            --keycap-text: var(--text);
+            --keycap-secondary-text: var(--text-muted);
+            --keycap-modifier-background: var(--surface-bg-hover);
+            --keycap-primary-background: var(--accent);
+            --keycap-primary-text: #ffffff;
+            --contains-highlight-background: var(--focus);
+        }
+
+        math-field:focus-within {
+            outline: none;
+            border-color: var(--accent-hover);
+            box-shadow: 0 0 0 2px var(--focus);
+        }
+
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            .loading-overlay {
+                background: var(--app-bg);
+            }
+
+            .controls-panel {
+                background: var(--panel-bg-solid);
+            }
+        }
+
+        @media (min-width: 768px) {
+            .app-shell {
+                flex-direction: row;
+                touch-action: auto;
+            }
+
+            .visualization-area {
+                position: relative;
+                inset: auto;
+                flex: 1;
+                height: 100%;
+            }
+
+            .controls-panel {
+                position: relative;
+                width: 20rem;
+                height: 100vh;
+                background: var(--panel-bg-solid);
+                border-top: 0;
+                border-right: 1px solid var(--border);
+                border-radius: 0;
+                transform: none !important;
+                backdrop-filter: none;
+            }
+
+            .panel-toggle {
+                display: none;
+            }
+
+            .desktop-header {
+                display: block;
+                padding: 1.5rem 1.5rem 0.5rem;
+            }
+
+            .controls-content {
+                padding: 1rem 1.5rem 1.5rem;
+            }
+
+            .panel-toggle .theme-option {
+                min-width: 3.25rem;
+                padding-right: 0.55rem;
+                padding-left: 0.55rem;
+            }
+
+            .primary-button {
+                padding-top: 0.625rem;
+                padding-bottom: 0.625rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .controls-panel {
+                width: 26rem;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .mobile-title {
+                font-size: 1rem;
+            }
+
+            .panel-toggle {
+                gap: 0.5rem;
+                padding-right: 0.75rem;
+                padding-left: 0.75rem;
+            }
+
+            .panel-toggle .theme-option {
+                min-width: 2.45rem;
+                padding-right: 0.35rem;
+                padding-left: 0.35rem;
+                font-size: 0.6875rem;
+            }
+        }
+    </style>
+</head>
+<body class="app-shell">
+
+    <!-- Área de Visualização 3D -->
+    <main class="visualization-area">
+        <div id="loading" class="loading-overlay hidden">
+            <div class="spinner"></div>
+            <p class="loading-text">Calculando integrais...</p>
+        </div>
+        
+        <div id="plotly-div" class="plot-area"></div>
+    </main>
+
+    <!-- Painel Lateral / Inferior -->
+    <aside id="controls-panel" class="controls-panel panel-closed">
+        
+        <!-- Header / Toggle Mobile -->
+        <div id="panel-toggle" class="panel-toggle">
+            <div class="header-row">
+                <h1 class="app-title mobile-title">
+                    Série de Fourier 3D
+                </h1>
+                <div class="theme-toggle" role="group" aria-label="Tema">
+                    <button type="button" class="theme-option" data-theme-option="dark" aria-pressed="true">Escuro</button>
+                    <button type="button" class="theme-option" data-theme-option="light" aria-pressed="false">Claro</button>
+                </div>
+            </div>
+            <button type="button" class="panel-arrow" aria-label="Abrir ou fechar painel">
+                <svg class="toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Header Desktop -->
+        <div class="desktop-header">
+            <div class="header-row">
+                <div class="title-block">
+                    <h1 class="app-title desktop-title">
+                        Série de Fourier 3D
+                    </h1>
+                    <p class="subtitle">Decomposição no tempo e frequência.</p>
+                </div>
+                <div class="theme-toggle" role="group" aria-label="Tema">
+                    <button type="button" class="theme-option" data-theme-option="dark" aria-pressed="true">Escuro</button>
+                    <button type="button" class="theme-option" data-theme-option="light" aria-pressed="false">Claro</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo Rolável -->
+        <div class="controls-content">
+            
+            <div id="error-alert" class="alert error-alert hidden">
+                <span id="error-msg">Erro na função.</span>
+            </div>
+
+            <p id="file-origin-notice" class="alert notice hidden">
+                Aberto via arquivo local. O app funciona assim, mas para evitar avisos de origem do MathLive no console, rode por um servidor local.
+            </p>
+
+            <!-- Entradas Principais -->
+            <div class="form-stack">
+                <div class="field-group">
+                    <label class="field-label">Função matemática f(t)</label>
+                    
+                    <!-- Componente MathLive -->
+                    <math-field id="func-input" math-virtual-keyboard-policy="auto">\operatorname{sign}(\sin(2\pi t))</math-field>
+                    
+                    <p class="field-help">Toque no campo acima para abrir o teclado matemático. Use a variável <strong>t</strong>.</p>
+                </div>
+
+                <div class="fields-row">
+                    <div class="field-group half-field">
+                        <label for="period-input" class="field-label">Período (T)</label>
+                        <input type="number" id="period-input" value="1" step="0.1" min="0.1" inputmode="decimal"
+                               class="number-input">
+                    </div>
+                    
+                    <div class="field-group half-field">
+                        <label for="harmonics-input" class="field-label">Harmônicos</label>
+                        <input type="number" id="harmonics-input" value="10" min="1" max="40" inputmode="numeric"
+                               class="number-input">
+                    </div>
+                </div>
+
+                <button id="analyze-btn" class="primary-button">
+                    Analisar Sinal
+                </button>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Predefinições (LaTeX puro) -->
+            <div class="section-stack">
+                <h3 class="section-title">Exemplos</h3>
+                <div class="preset-grid">
+                    <button onclick="setPreset('\\operatorname{sign}(\\sin(2\\pi t))', 1, 10)" class="preset-button">
+                        <span class="preset-label">Quadrada</span>
+                    </button>
+                    <button onclick="setPreset('2(t-\\lfloor t+0.5 \\rfloor)', 1, 10)" class="preset-button">
+                        <span class="preset-label">Dente de Serra</span>
+                    </button>
+                    <button onclick="setPreset('|\\sin(\\pi t)|', 2, 8)" class="preset-button">
+                        <span class="preset-label">Onda Retificada</span>
+                    </button>
+                    <button onclick="setPreset('\\sin(2\\pi t) + 0.3\\sin(10\\pi t)', 1, 6)" class="preset-button">
+                        <span class="preset-label">Ruído/Batimento</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Legenda -->
+            <div class="legend-card">
+                <ul class="legend-list">
+                    <li><button type="button" class="legend-item" data-signal-group="original" aria-pressed="true"><span class="legend-swatch swatch-original"></span> Sinal Original</button></li>
+                    <li><button type="button" class="legend-item" data-signal-group="reconstruction" aria-pressed="true"><span class="legend-swatch swatch-reconstruction"></span> Reconstrução</button></li>
+                    <li><button type="button" class="legend-item" data-signal-group="dc" aria-pressed="true"><span class="legend-swatch swatch-dc"></span> Média/DC</button></li>
+                    <li><button type="button" class="legend-item" data-signal-group="harmonics" aria-pressed="true"><span class="legend-swatch swatch-harmonics"></span> Harmônicos Individuais</button></li>
+                    <li><button type="button" class="legend-item" data-signal-group="spectrum" aria-pressed="true"><span class="legend-swatch swatch-spectrum"></span> Espectro de Frequência</button></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+
+    <script>
+        // Elementos da UI
+        const mathField = document.getElementById('func-input');
+        const periodInput = document.getElementById('period-input');
+        const harmonicsInput = document.getElementById('harmonics-input');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const errorAlert = document.getElementById('error-alert');
+        const errorMsg = document.getElementById('error-msg');
+        const loadingDiv = document.getElementById('loading');
+        const plotDiv = document.getElementById('plotly-div');
+        const panel = document.getElementById('controls-panel');
+        const panelToggle = document.getElementById('panel-toggle');
+        const fileOriginNotice = document.getElementById('file-origin-notice');
+        const themeOptions = document.querySelectorAll('[data-theme-option]');
+        const signalLegendButtons = document.querySelectorAll('[data-signal-group]');
+        const isFileOrigin = window.location.protocol === 'file:';
+        const signalVisibility = {
+            original: true,
+            reconstruction: true,
+            dc: true,
+            harmonics: true,
+            spectrum: true
+        };
+
+        // Detectar Mobile
+        const isMobile = () => window.innerWidth < 768;
+
+        function readStoredTheme() {
+            try {
+                return localStorage.getItem('fourier-theme');
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function storeTheme(theme) {
+            try {
+                localStorage.setItem('fourier-theme', theme);
+            } catch (e) {
+                // Firefox/LibreWolf podem bloquear storage em alguns modos; o tema continua ativo na sessão.
+            }
+        }
+
+        function getPreferredTheme() {
+            const storedTheme = readStoredTheme();
+            if (storedTheme === 'light' || storedTheme === 'dark') return storedTheme;
+
+            try {
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                    return 'light';
+                }
+            } catch (e) {
+                return 'dark';
+            }
+
+            return 'dark';
+        }
+
+        function getCssValue(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        function getThemeColors() {
+            return {
+                textMuted: getCssValue('--text-muted') || '#a1a1aa',
+                textStrong: getCssValue('--text-strong') || '#e4e4e7',
+                grid: getCssValue('--plot-grid') || '#3f3f46',
+                zero: getCssValue('--plot-zero') || '#52525b',
+                legendBg: getCssValue('--plot-legend-bg') || 'rgba(24, 24, 27, 0.7)'
+            };
+        }
+
+        function safeBlurMathField() {
+            if (mathField && typeof mathField.blur === 'function') {
+                mathField.blur();
+            }
+        }
+
+        function mathFieldHasFocus() {
+            if (!mathField) return false;
+            if (typeof mathField.hasFocus === 'function') return mathField.hasFocus();
+            return document.activeElement === mathField;
+        }
+
+        function updateThemeButtons(theme) {
+            themeOptions.forEach((button) => {
+                button.setAttribute('aria-pressed', button.dataset.themeOption === theme ? 'true' : 'false');
+            });
+        }
+
+        function updatePlotTheme() {
+            if (!plotDiv.data || !window.Plotly) return;
+
+            const colors = getThemeColors();
+            Plotly.relayout(plotDiv, {
+                'scene.xaxis.color': colors.textMuted,
+                'scene.xaxis.gridcolor': colors.grid,
+                'scene.xaxis.zerolinecolor': colors.zero,
+                'scene.yaxis.color': colors.textMuted,
+                'scene.yaxis.gridcolor': colors.grid,
+                'scene.yaxis.zerolinecolor': colors.zero,
+                'scene.zaxis.color': colors.textMuted,
+                'scene.zaxis.gridcolor': colors.grid,
+                'scene.zaxis.zerolinecolor': colors.zero,
+                'legend.font.color': colors.textStrong,
+                'legend.bgcolor': colors.legendBg
+            });
+        }
+
+        function getPlotConfig() {
+            return {
+                responsive: true,
+                displayModeBar: false,
+                // Firefox/LibreWolf podem falhar com FBO grande em WebGL quando o DPR da tela é alto.
+                plotGlPixelRatio: 1
+            };
+        }
+
+        function isPlotRenderError(err) {
+            const message = String(err && (err.message || err));
+            return /webgl|gl-fbo|framebuffer|fbo|renderbuffer/i.test(message);
+        }
+
+        function applyTheme(theme, persist = true) {
+            const nextTheme = theme === 'light' ? 'light' : 'dark';
+            document.documentElement.dataset.theme = nextTheme;
+            updateThemeButtons(nextTheme);
+            if (persist) storeTheme(nextTheme);
+            updatePlotTheme();
+        }
+
+        applyTheme(getPreferredTheme(), false);
+
+        function updateSignalLegendButtons() {
+            signalLegendButtons.forEach((button) => {
+                const group = button.dataset.signalGroup;
+                button.setAttribute('aria-pressed', signalVisibility[group] ? 'true' : 'false');
+            });
+        }
+
+        function getTraceIndexesByGroup(group) {
+            if (!plotDiv.data) return [];
+
+            return plotDiv.data
+                .map((trace, index) => trace.legendgroup === group ? index : -1)
+                .filter(index => index >= 0);
+        }
+
+        function setSignalGroupVisible(group, visible) {
+            signalVisibility[group] = visible;
+            updateSignalLegendButtons();
+
+            if (!window.Plotly || !plotDiv.data) return;
+
+            const traceIndexes = getTraceIndexesByGroup(group);
+            if (traceIndexes.length > 0) {
+                Plotly.restyle(plotDiv, { visible }, traceIndexes);
+            }
+        }
+
+        function applySignalVisibilityToPlot() {
+            if (!window.Plotly || !plotDiv.data) return;
+
+            Object.entries(signalVisibility).forEach(([group, visible]) => {
+                const traceIndexes = getTraceIndexesByGroup(group);
+                if (traceIndexes.length > 0) {
+                    Plotly.restyle(plotDiv, { visible }, traceIndexes);
+                }
+            });
+        }
+
+        signalLegendButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const group = button.dataset.signalGroup;
+                setSignalGroupVisible(group, !signalVisibility[group]);
+            });
+        });
+
+        updateSignalLegendButtons();
+
+        panelToggle.addEventListener('click', () => {
+            panel.classList.toggle('panel-closed');
+            if (mathFieldHasFocus()) safeBlurMathField(); 
+        });
+
+        themeOptions.forEach((button) => {
+            button.addEventListener('click', (event) => {
+                event.stopPropagation();
+                applyTheme(button.dataset.themeOption);
+            });
+        });
+
+        plotDiv.addEventListener('touchstart', (e) => {
+            if (isMobile() && !panel.classList.contains('panel-closed')) {
+                panel.classList.add('panel-closed');
+                safeBlurMathField();
+            }
+        }, { passive: true });
+
+        window.addEventListener('resize', () => {
+            if (window.Plotly && plotDiv.data) {
+                Plotly.Plots.resize(plotDiv);
+            }
+        });
+
+        // Integração Trapezoidal
+        function integrate(f, a, b, steps = 600) {
+            let sum = 0;
+            const dt = (b - a) / steps;
+            for (let i = 0; i < steps; i++) {
+                const t1 = a + i * dt;
+                const t2 = a + (i + 1) * dt;
+                sum += (f(t1) + f(t2)) / 2 * dt;
+            }
+            return sum;
+        }
+
+        function normalizeSpacedFunctionNames(input) {
+            const names = ['sin', 'cos', 'tan', 'sign', 'abs', 'floor', 'ceil', 'sqrt', 'log', 'ln', 'exp', 'pi'];
+            return names.reduce((value, name) => {
+                const spacedName = name.split('').join('\\s+');
+                return value.replace(new RegExp(`\\b${spacedName}\\b`, 'gi'), name);
+            }, input);
+        }
+
+        function normalizeAbsoluteBars(input) {
+            let s = input;
+            let previous = '';
+
+            while (s !== previous && /\|[^|]+\|/.test(s)) {
+                previous = s;
+                s = s.replace(/\|([^|]+)\|/g, 'abs($1)');
+            }
+
+            return s;
+        }
+
+        function normalizeLatexFractions(input) {
+            let s = input;
+            let previous = '';
+
+            while (s !== previous && /\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/.test(s)) {
+                previous = s;
+                s = s.replace(/\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, '(($1)/($2))');
+            }
+
+            return s;
+        }
+
+        function addImplicitMultiplication(input) {
+            let s = input;
+
+            s = s.replace(/\s+/g, ' ').trim();
+            s = s.replace(/\b(sin|cos|tan|sign|abs|floor|ceil|sqrt|log|exp)\s+\(/gi, '$1(');
+            s = s.replace(/\bln\s+\(/gi, 'ln(');
+            s = s.replace(/\bln\s*\(/gi, 'log(');
+            s = s.replace(/(\d|\bpi\b|\bt\b|\be\b|\))\s*(?=(sin|cos|tan|sign|abs|floor|ceil|sqrt|log|exp)\s*\()/gi, '$1*');
+            s = s.replace(/(\d)\s*(pi|t|e)\b/gi, '$1*$2');
+            s = s.replace(/\b(pi|t|e)\s*(pi|t|e)\b/gi, '$1*$2');
+            s = s.replace(/(\d|\bpi\b|\bt\b|\be\b|\))\s*\(/gi, '$1*(');
+            s = s.replace(/\)\s*(\d|\bpi\b|\bt\b|\be\b)/gi, ')*$1');
+            s = s.replace(/\)\s*\(/g, ')*(');
+
+            return s;
+        }
+
+        // Normaliza LaTeX/ascii-math vindo do MathLive para uma expressão aceita pelo Math.js.
+        function formatMathStringForMathjs(rawString) {
+            if (!rawString) return '';
+
+            let s = String(rawString).trim();
+
+            s = s.replace(/\u2212/g, '-');
+            s = s.replace(/[×·]/g, '*');
+            s = s.replace(/÷/g, '/');
+            s = s.replace(/π/g, 'pi');
+            s = s.replace(/"/g, '');
+            s = s.replace(/\\[,;!]/g, '');
+
+            s = normalizeLatexFractions(s);
+            s = s.replace(/\\left/g, '').replace(/\\right/g, '');
+            s = s.replace(/\\operatorname\s*\{([^{}]+)\}/g, '$1');
+            s = s.replace(/\\(?:mathrm|text)\s*\{([^{}]+)\}/g, '$1');
+            s = s.replace(/\\(?:cdot|times)/g, '*');
+            s = s.replace(/\\div/g, '/');
+            s = s.replace(/\\pi\b/g, 'pi');
+            s = s.replace(/\\lfloor/g, 'floor(').replace(/\\rfloor/g, ')');
+            s = s.replace(/\\lceil/g, 'ceil(').replace(/\\rceil/g, ')');
+            s = s.replace(/\\sqrt\s*\{/g, 'sqrt(');
+            s = s.replace(/\\(sin|cos|tan|sign|abs|floor|ceil|sqrt|log|ln|exp)\b/g, '$1');
+            s = s.replace(/\\/g, '');
+            s = s.replace(/\{/g, '(').replace(/\}/g, ')');
+            s = s.replace(/\[/g, '(').replace(/\]/g, ')');
+            s = s.replace(/\btext\s*\(([^()]*)\)/gi, '$1');
+            s = normalizeAbsoluteBars(s);
+            s = normalizeSpacedFunctionNames(s);
+            s = addImplicitMultiplication(s);
+
+            return s;
+        }
+
+        function createEvaluator(funcStr) {
+            const node = math.parse(funcStr);
+            const compiled = node.compile();
+
+            return (t) => {
+                const result = compiled.evaluate({ t, pi: Math.PI, e: Math.E });
+                const value = typeof result === 'number' ? result : Number(result);
+
+                if (!Number.isFinite(value)) {
+                    throw new Error(`A função retornou um valor inválido em t=${t}.`);
+                }
+
+                return value;
+            };
+        }
+
+        async function runAnalysis() {
+            errorAlert.classList.add('hidden');
+
+            if (!window.math || !window.Plotly) {
+                showError("Bibliotecas ainda não carregadas. Verifique a conexão ou rode por localhost e recarregue a página.");
+                return;
+            }
+            
+            // LaTeX preserva melhor funções como \operatorname{sign}; ascii-math fica como fallback.
+            let rawMath = '';
+            try { rawMath = mathField.getValue('latex'); } catch(e) {}
+            if (!rawMath || rawMath === 'Error') {
+                try { rawMath = mathField.getValue('ascii-math'); } catch(e) {}
+            }
+            if (!rawMath || rawMath === 'Error') {
+                rawMath = mathField.value; // Fallback para LaTeX
+            }
+
+            // Aplica a formatação corretiva
+            const funcStr = formatMathStringForMathjs(rawMath);
+            
+            const T = parseFloat(periodInput.value);
+            const N = parseInt(harmonicsInput.value);
+
+            if (!funcStr || isNaN(T) || T <= 0 || isNaN(N) || N < 1) {
+                showError("Preencha todos os campos corretamente.");
+                return;
+            }
+            if (N > 40) {
+                showError("Máximo de 40 harmônicos recomendado para não travar.");
+                return;
+            }
+
+            loadingDiv.classList.remove('hidden');
+
+            if (isMobile() && !panel.classList.contains('panel-closed')) {
+                panel.classList.add('panel-closed');
+            }
+
+            setTimeout(async () => {
+                try {
+                    const f = createEvaluator(funcStr);
+
+                    // Testes rápidos de validação sintática e numérica antes de calcular integrais.
+                    f(0);
+                    f(T / 4);
+
+                    const w0 = (2 * Math.PI) / T;
+                    const timeSpan = 2.5 * T;
+                    
+                    const numTimeSteps = isMobile() ? 250 : 400; 
+                    const dt = timeSpan / numTimeSteps;
+                    const t_vals = [];
+                    for(let i=0; i<=numTimeSteps; i++) {
+                        t_vals.push(i * dt);
+                    }
+
+                    const traces = [];
+
+                    // Original
+                    const z_original = t_vals.map(t => f(t));
+                    traces.push({
+                        type: 'scatter3d', mode: 'lines',
+                        x: t_vals, y: t_vals.map(() => -2), z: z_original,
+                        name: 'Original',
+                        legendgroup: 'original',
+                        line: { color: 'rgb(239, 68, 68)', width: 4 },
+                        hoverinfo: 'x+z'
+                    });
+
+                    // DC (Média)
+                    const a0 = (1 / T) * integrate(t => f(t), 0, T);
+                    const a = [a0], b = [0], C = [Math.abs(a0)];
+
+                    const z_dc = t_vals.map(() => a0);
+                    traces.push({
+                        type: 'scatter3d', mode: 'lines',
+                        x: t_vals, y: t_vals.map(() => 0), z: z_dc,
+                        name: 'Média/DC',
+                        legendgroup: 'dc',
+                        line: { color: 'rgb(168, 85, 247)', width: 2 }
+                    });
+
+                    let z_sum = [...z_dc];
+
+                    for (let n = 1; n <= N; n++) {
+                        a[n] = (2 / T) * integrate(t => f(t) * Math.cos(n * w0 * t), 0, T);
+                        b[n] = (2 / T) * integrate(t => f(t) * Math.sin(n * w0 * t), 0, T);
+                        C[n] = Math.sqrt(a[n]*a[n] + b[n]*b[n]);
+
+                        const z_harmonic = [];
+                        for(let i=0; i<t_vals.length; i++) {
+                            const t = t_vals[i];
+                            const val = a[n] * Math.cos(n * w0 * t) + b[n] * Math.sin(n * w0 * t);
+                            z_harmonic.push(val);
+                            z_sum[i] += val;
+                        }
+
+                        const hue = 200 + (60 * (n / N));
+                        traces.push({
+                            type: 'scatter3d', mode: 'lines',
+                            x: t_vals, y: t_vals.map(() => n), z: z_harmonic,
+                            name: n === 1 ? 'Harmônicos' : `H${n}`,
+                            legendgroup: 'harmonics',
+                            showlegend: n === 1,
+                            line: { color: `hsl(${hue}, 80%, 60%)`, width: 2 }
+                        });
+
+                        // Espectro Freq
+                        traces.push({
+                            type: 'scatter3d', mode: 'lines',
+                            x: [timeSpan, timeSpan], y: [n, n], z: [0, C[n]],
+                            name: n === 1 ? 'Espectro' : `Esp ${n}`,
+                            legendgroup: 'spectrum',
+                            showlegend: n === 1,
+                            line: { color: 'rgb(34, 197, 94)', width: 4 },
+                            hoverinfo: 'y+z'
+                        });
+                    }
+
+                    // Espectro DC
+                    traces.push({
+                        type: 'scatter3d', mode: 'lines',
+                        x: [timeSpan, timeSpan], y: [0, 0], z: [0, C[0]],
+                        name: 'Espectro DC',
+                        legendgroup: 'spectrum',
+                        showlegend: false,
+                        line: { color: 'rgb(34, 197, 94)', width: 4 },
+                        hoverinfo: 'y+z'
+                    });
+
+                    // Reconstrução (Soma)
+                    traces.push({
+                        type: 'scatter3d', mode: 'lines',
+                        x: t_vals, y: t_vals.map(() => -1), z: z_sum,
+                        name: `Reconstrução`,
+                        legendgroup: 'reconstruction',
+                        line: { color: 'rgb(255, 255, 255)', width: 3 },
+                        hoverinfo: 'x+z'
+                    });
+
+                    const cameraSettings = isMobile() ? 
+                        { eye: { x: -1.8, y: -2.0, z: 1.0 }, center: { x: 0, y: 0, z: 0 } } : 
+                        { eye: { x: -1.5, y: -1.5, z: 0.9 }, center: { x: 0, y: 0, z: -0.1 } };
+
+                    const themeColors = getThemeColors();
+                    const layout = {
+                        margin: { l: 0, r: 0, b: isMobile() ? 60 : 0, t: 0 },
+                        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+                        scene: {
+                            xaxis: { title: 'Tempo (t)', color: themeColors.textMuted, gridcolor: themeColors.grid, zerolinecolor: themeColors.zero, showbackground: false },
+                            yaxis: { title: 'Freq', color: themeColors.textMuted, gridcolor: themeColors.grid, zerolinecolor: themeColors.zero, showbackground: false, tickmode: 'linear', dtick: Math.ceil(N/10) },
+                            zaxis: { title: 'f(t)', color: themeColors.textMuted, gridcolor: themeColors.grid, zerolinecolor: themeColors.zero, showbackground: false },
+                            camera: cameraSettings
+                        },
+                        showlegend: false
+                    };
+
+                    if (plotDiv.data) {
+                        Plotly.purge(plotDiv);
+                    }
+
+                    await Plotly.newPlot(plotDiv, traces, layout, getPlotConfig());
+                    applySignalVisibilityToPlot();
+
+                } catch (err) {
+                    // Log silencioso do erro real para debugar via console se precisar
+                    console.error("String que gerou o erro:", funcStr, err);
+                    if (isPlotRenderError(err)) {
+                        showError("Erro de renderização WebGL. O gráfico foi ajustado para maior compatibilidade; recarregue a página ou rode por localhost se o navegador bloquear WebGL em arquivo local.");
+                    } else {
+                        showError(`Erro: Expressão matemática inválida ou não suportada.`);
+                    }
+                    if (isMobile()) panel.classList.remove('panel-closed');
+                } finally {
+                    loadingDiv.classList.add('hidden');
+                }
+            }, 100);
+        }
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorAlert.classList.remove('hidden');
+        }
+
+        window.setPreset = function(latexFormula, period, harmonics) {
+            mathField.setValue(latexFormula);
+            periodInput.value = period;
+            harmonicsInput.value = harmonics;
+            runAnalysis();
+        }
+
+        analyzeBtn.addEventListener('click', () => {
+            safeBlurMathField();
+            periodInput.blur();
+            harmonicsInput.blur();
+            runAnalysis();
+        });
+        
+        mathField.addEventListener('input', (ev) => {
+            if(ev.inputType === 'insertLineBreak') {
+                safeBlurMathField();
+                runAnalysis();
+            }
+        });
+
+        // Aguarda a injeção completa do componente web MathLive antes de analisar a primeira vez
+        window.addEventListener('DOMContentLoaded', () => {
+            if (isFileOrigin) {
+                fileOriginNotice.classList.remove('hidden');
+            }
+            setTimeout(runAnalysis, 800); 
+        });
+
+    </script>
+</body>
+</html>

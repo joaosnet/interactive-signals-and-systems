@@ -1,0 +1,3046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Interactive Signals & Systems — 3D Convolution & Fourier Series Lab</title>
+  <meta name="description" content="Interactive 3D educational laboratory for continuous convolution and Fourier series analysis with step-by-step analytical notebook, high-contrast projector mode, and 120 FPS performance." />
+  <meta name="keywords" content="signals and systems, 3d convolution, fourier series 3d, dsp, interactive learning, lathi, continuous signals" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Typography: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Three.js r128 (Camera & Matrix Math) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- KaTeX for Textbook-Grade Math Typography -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+  <style>
+    :root {
+      --bg-canvas: #090b10;
+      --bg-panel: rgba(13, 17, 26, 0.90);
+      --bg-card: rgba(20, 26, 38, 0.80);
+      --bg-control: rgba(30, 39, 56, 0.85);
+      --bg-hover: rgba(45, 58, 82, 0.65);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.18);
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-muted: #64748b;
+      --slider-track: rgba(255, 255, 255, 0.14);
+      --label-bg: rgba(13, 17, 26, 0.92);
+      --label-border: rgba(148, 163, 184, 0.3);
+      --label-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+      --c-x1: #38bdf8;
+      --c-x2: #fb7185;
+      --c-prod: #c084fc;
+      --c-conv: #10b981;
+      --accent-bg: rgba(16, 185, 129, 0.12);
+    }
+
+    /* Padrão Inicial: Modo Projetor de Alto Contraste para Salas de Aula */
+    body.theme-projector {
+      --bg-canvas: #ffffff;
+      --bg-panel: rgba(255, 255, 255, 0.98);
+      --bg-card: #f8fafc;
+      --bg-control: #f1f5f9;
+      --bg-hover: #e2e8f0;
+      --border-subtle: #94a3b8;
+      --border-strong: #1e293b;
+      --text-primary: #000000;
+      --text-secondary: #0f172a;
+      --text-muted: #334155;
+      --slider-track: #94a3b8;
+      --label-bg: #ffffff;
+      --label-border: #0f172a;
+      --label-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+      --c-x1: #00449e;
+      --c-x2: #be123c;
+      --c-prod: #6b21a8;
+      --c-conv: #047857;
+      --accent-bg: rgba(4, 120, 87, 0.14);
+    }
+
+    body.theme-dark {
+      --bg-canvas: #090b10;
+      --bg-panel: rgba(13, 17, 26, 0.90);
+      --bg-card: rgba(20, 26, 38, 0.80);
+      --bg-control: rgba(30, 39, 56, 0.85);
+      --bg-hover: rgba(45, 58, 82, 0.65);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.18);
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-muted: #64748b;
+      --slider-track: rgba(255, 255, 255, 0.14);
+      --label-bg: rgba(13, 17, 26, 0.92);
+      --label-border: rgba(148, 163, 184, 0.3);
+      --label-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+      --c-x1: #38bdf8;
+      --c-x2: #fb7185;
+      --c-prod: #c084fc;
+      --c-conv: #10b981;
+      --accent-bg: rgba(16, 185, 129, 0.12);
+    }
+
+    body.theme-light {
+      --bg-canvas: #f1f5f9;
+      --bg-panel: rgba(255, 255, 255, 0.94);
+      --bg-card: #f8fafc;
+      --bg-control: #e2e8f0;
+      --bg-hover: #cbd5e1;
+      --border-subtle: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --slider-track: #cbd5e1;
+      --label-bg: rgba(255, 255, 255, 0.95);
+      --label-border: #cbd5e1;
+      --label-shadow: 0 2px 8px rgba(15, 23, 42, 0.10);
+      --c-x1: #0284c7;
+      --c-x2: #e11d48;
+      --c-prod: #7e22ce;
+      --c-conv: #059669;
+      --accent-bg: rgba(5, 150, 105, 0.10);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      overscroll-behavior: none;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .font-mono-code { font-family: 'JetBrains Mono', monospace; }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      outline: none;
+      touch-action: none;
+    }
+
+    .ui-surface {
+      background-color: var(--bg-panel);
+      border-color: var(--border-subtle);
+      color: var(--text-primary);
+    }
+    body.theme-projector .ui-surface {
+      border-color: var(--border-strong);
+      border-width: 1.5px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+    }
+    .ui-card {
+      background-color: var(--bg-card);
+      border-color: var(--border-subtle);
+    }
+    body.theme-projector .ui-card {
+      border-color: var(--border-subtle);
+      border-width: 1.5px;
+    }
+    .ui-control {
+      background-color: var(--bg-control);
+      border-color: var(--border-subtle);
+      color: var(--text-primary);
+      transition: all 0.15s ease;
+    }
+    .ui-control:hover {
+      background-color: var(--bg-hover);
+      border-color: var(--border-strong);
+    }
+    .text-sec { color: var(--text-secondary); }
+    .text-mut { color: var(--text-muted); }
+
+    /* Precision Slider */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--slider-track);
+      height: 6px;
+      border-radius: 999px;
+      outline: none;
+      touch-action: pan-x;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--c-conv);
+      cursor: pointer;
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+      transition: transform 0.12s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--c-conv);
+      cursor: pointer;
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    .label-3d {
+      position: absolute;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      transition: opacity 0.15s ease;
+      white-space: nowrap;
+      background-color: var(--label-bg);
+      border: 1px solid var(--label-border);
+      box-shadow: var(--label-shadow);
+      color: var(--text-primary);
+      backdrop-filter: blur(6px);
+    }
+    body.theme-projector .label-3d { border-width: 1.5px; }
+
+    .seg-btn {
+      color: var(--text-secondary);
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .seg-btn:hover { color: var(--text-primary); }
+    .seg-btn.active {
+      background-color: var(--bg-panel);
+      color: var(--text-primary);
+      border-color: var(--border-strong);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      font-weight: 600;
+    }
+
+    .step-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      transition: all 0.15s ease;
+    }
+    .step-card:hover {
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+    .step-card.active {
+      border-color: var(--c-conv);
+      background-color: var(--accent-bg);
+      color: var(--text-primary);
+      box-shadow: inset 0 0 0 1px var(--c-conv);
+    }
+
+    .katex { font-size: 1.02em; }
+    .math-block .katex { font-size: 1.04em; }
+
+    .preset-pill {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      transition: all 0.15s ease;
+    }
+    .preset-pill:hover {
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+    .preset-pill.active {
+      border-color: var(--c-x1);
+      background-color: rgba(56, 189, 248, 0.12);
+      color: var(--text-primary);
+      box-shadow: inset 0 0 0 1px var(--c-x1);
+    }
+
+    .region-row {
+      border-left: 2px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .region-row.active {
+      border-left-color: var(--c-conv);
+      background-color: var(--accent-bg);
+      color: var(--text-primary);
+    }
+
+    .mathfield-box {
+      background-color: var(--bg-control);
+      border: 1.5px solid var(--border-subtle);
+      color: var(--text-primary);
+      transition: all 0.15s ease;
+      cursor: text;
+      min-height: 36px;
+    }
+    .mathfield-box.focused {
+      border-color: var(--c-x1);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.22);
+    }
+    .mathfield-caret {
+      display: inline-block;
+      width: 1.5px;
+      height: 1.15em;
+      background-color: var(--c-conv);
+      vertical-align: middle;
+      margin-left: 2px;
+      animation: caretBlink 1s steps(2, start) infinite;
+    }
+    @keyframes caretBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .mkb-key {
+      background-color: var(--bg-control);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      border-radius: 0.5rem;
+      padding: 0.35rem 0.25rem;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.1s ease;
+      user-select: none;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+    }
+    .mkb-key:hover {
+      background-color: var(--bg-hover);
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
+    }
+    .mkb-key:active { transform: translateY(0px) scale(0.96); }
+    .mkb-key.mkb-accent {
+      background-color: rgba(56, 189, 248, 0.14);
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+    .mkb-key.mkb-fn {
+      background-color: rgba(192, 132, 252, 0.12);
+      border-color: rgba(192, 132, 252, 0.3);
+    }
+    .mkb-key.mkb-action {
+      background-color: rgba(251, 113, 133, 0.14);
+      border-color: rgba(251, 113, 133, 0.35);
+    }
+
+    /* Progressive Handwriting Animation */
+    .handwriting-line {
+      position: relative;
+      opacity: 0;
+      transform: translateY(3px);
+      border-left: 2px solid transparent;
+      padding-left: 6px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .handwriting-line .hw-clip {
+      display: inline-block;
+      clip-path: inset(0 100% 0 0);
+      transition: clip-path 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+      vertical-align: middle;
+    }
+    .handwriting-line.written {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .handwriting-line.written .hw-clip {
+      clip-path: inset(0 0% 0 0);
+    }
+    .handwriting-line.writing-now {
+      opacity: 1;
+      transform: translateY(0);
+      border-left-color: var(--c-conv);
+      background: linear-gradient(90deg, var(--accent-bg) 0%, transparent 92%);
+      border-radius: 0 6px 6px 0;
+    }
+    .handwriting-line.writing-now .hw-clip {
+      clip-path: inset(0 0% 0 0);
+    }
+    .pen-nib {
+      display: inline-flex;
+      align-items: center;
+      margin-left: 5px;
+      color: var(--c-conv);
+      animation: penWriteMove 0.4s ease-in-out infinite alternate;
+      vertical-align: middle;
+    }
+    @keyframes penWriteMove {
+      0% { transform: translate(0, 0) rotate(-10deg) scale(1); }
+      100% { transform: translate(4px, -3px) rotate(8deg) scale(1.08); }
+    }
+
+    .hw-math-content .katex-display {
+      margin: 0.2em 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    @media (max-width: 420px) {
+      .katex { font-size: 0.94em; }
+      .mkb-key .katex { font-size: 0.88em; }
+      .label-3d { font-size: 10px !important; padding: 1px 5px !important; }
+      input[type="range"]::-webkit-slider-thumb { width: 16px; height: 16px; }
+    }
+
+    /* Responsive AAA Split-Screen */
+    #app-shell {
+      display: flex;
+      flex-direction: column;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+    }
+    #stage-wrapper {
+      position: relative;
+      width: 100%;
+      height: 38dvh;
+      min-height: 240px;
+      max-height: 62dvh;
+      flex-shrink: 0;
+      overflow: hidden;
+      transition: height 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    body.stage-expanded #stage-wrapper { height: 58dvh; }
+    body.mkb-open:not(.stage-expanded) #stage-wrapper { height: 29dvh; min-height: 205px; }
+
+    #ui-panel {
+      flex: 1 1 0%;
+      min-height: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid var(--border-subtle);
+      overflow: hidden;
+    }
+
+    @media (max-height: 540px) and (orientation: landscape) {
+      #app-shell { flex-direction: row-reverse; }
+      #stage-wrapper { width: 52vw; height: 100dvh !important; max-height: none; }
+      #ui-panel { width: 48vw; height: 100dvh; border-top: none; border-right: 1px solid var(--border-subtle); }
+    }
+    @media (min-width: 768px) {
+      #app-shell { flex-direction: row-reverse; }
+      #stage-wrapper { flex: 1 1 0%; width: auto; height: 100dvh !important; max-height: none; }
+      #ui-panel { width: 415px; height: 100dvh; flex: none; border-top: none; border-right: 1px solid var(--border-subtle); }
+    }
+    @media (min-width: 1200px) {
+      #ui-panel { width: 445px; }
+    }
+
+    .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.35);
+      border-radius: 999px;
+    }
+    .custom-scroll {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+    }
+
+    .mod-tab-btn.active {
+      background-color: var(--bg-panel);
+      color: var(--text-primary);
+      border-color: var(--border-strong);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+  </style>
+</head>
+
+<body class="theme-projector relative w-screen h-[100vh] h-[100dvh] overflow-hidden">
+
+  <div id="app-shell">
+
+    <!-- 3D STAGE VIEWPORT -->
+    <main id="stage-wrapper">
+      <div id="canvas-container" class="w-full h-full relative"></div>
+
+      <!-- Floating 3D Labels -->
+      <div id="labels-container" class="absolute inset-0 pointer-events-none overflow-hidden z-10">
+        <div id="lbl-tau" class="label-3d px-2 py-0.5 rounded text-xs font-medium"></div>
+        <div id="lbl-t" class="label-3d px-2 py-0.5 rounded text-xs font-medium"></div>
+        <div id="lbl-z" class="label-3d px-2 py-0.5 rounded text-xs font-medium"></div>
+        <div id="lbl-x1" class="label-3d px-2 py-0.5 rounded text-xs font-semibold"></div>
+        <div id="lbl-x2" class="label-3d px-2 py-0.5 rounded text-xs font-semibold"></div>
+        <div id="lbl-conv" class="label-3d px-2 py-0.5 rounded text-xs font-semibold"></div>
+        <div id="lbl-fourier-recon" class="label-3d px-2 py-0.5 rounded text-xs font-semibold hidden"></div>
+        <div id="lbl-fourier-spec" class="label-3d px-2 py-0.5 rounded text-xs font-semibold hidden"></div>
+      </div>
+
+      <!-- Top Bar on 3D Stage: Legend & Stage Camera Actions -->
+      <div class="absolute top-2 left-2 right-2 flex items-center justify-between gap-1.5 pointer-events-none z-20">
+        <div id="stage-legend" class="ui-surface backdrop-blur-md px-2.5 py-1 rounded-lg border flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] pointer-events-auto shadow-sm">
+          <!-- Populated dynamically according to module -->
+        </div>
+
+        <div class="flex items-center gap-1 pointer-events-auto">
+          <button id="btn-waterfall" type="button" title="Toggle 3D Waterfall Slices" class="ui-surface backdrop-blur-md px-2 py-1 rounded-lg border text-[10px] font-semibold flex items-center gap-1 shadow-sm" style="border-color: var(--c-prod)">
+            <span id="lbl-waterfall" data-i18n="waterfall">Cascata 3D</span>
+          </button>
+          <button id="btn-expand-stage" type="button" title="Expand/Collapse 3D Stage on Mobile" class="md:hidden ui-surface backdrop-blur-md px-2 py-1 rounded-lg border text-[10px] font-semibold flex items-center gap-1 shadow-sm">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="9 21 3 21 3 15"></polyline>
+              <line x1="21" y1="3" x2="14" y2="10"></line>
+              <line x1="3" y1="21" x2="10" y2="14"></line>
+            </svg>
+            <span id="expand-stage-lbl">3D+</span>
+          </button>
+          <button id="btn-reset-cam" type="button" title="Frame 3D Camera" class="ui-surface backdrop-blur-md px-2 py-1 rounded-lg border text-[10px] font-semibold flex items-center gap-1 shadow-sm hover:opacity-90">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+              <path d="M3 3v5h5"></path>
+            </svg>
+            <span data-i18n="resetCam">Enquadrar</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom Instant Badge on 3D Stage -->
+      <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between pointer-events-none z-20">
+        <div id="stage-live-pill" class="ui-surface backdrop-blur-md px-2.5 py-1 rounded-lg border text-[11px] font-medium shadow-sm pointer-events-auto truncate max-w-[72%]"></div>
+        <div class="ui-surface backdrop-blur-md px-2 py-0.5 rounded-md border text-[10px] text-mut hidden sm:flex items-center gap-1.5">
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span data-i18n="stageHint">Arraste: Orbitar • Pinça/Scroll: Zoom</span>
+          <span class="text-neutral-400">/</span>
+          <span class="font-mono-code font-semibold">120 FPS</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- CONTROL PANEL & ANALYTICAL NOTEBOOK -->
+    <aside id="ui-panel" class="ui-surface z-30">
+
+      <!-- Module Switcher (Segmented Control: 3D Convolution vs 3D Fourier Series) -->
+      <nav class="p-2 border-b border-[var(--border-subtle)] bg-[var(--bg-card)] flex items-center gap-1 flex-shrink-0">
+        <button id="nav-conv" type="button" class="mod-tab-btn active flex-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1.5 border border-transparent transition-all">
+          <span class="w-2 h-2 rounded-full" style="background: var(--c-conv)"></span>
+          <span data-i18n="modConvolution">Convolução 3D</span>
+        </button>
+        <button id="nav-fourier" type="button" class="mod-tab-btn flex-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1.5 border border-transparent transition-all text-sec hover:text-primary">
+          <span class="w-2 h-2 rounded-full" style="background: var(--c-x1)"></span>
+          <span data-i18n="modFourier">Série de Fourier 3D</span>
+        </button>
+      </nav>
+
+      <!-- Header: Title + Language Switcher + Theme Selector + Fullscreen -->
+      <header class="px-3 py-2 border-b border-[var(--border-subtle)] flex items-center justify-between gap-1.5 flex-shrink-0">
+        <div class="flex items-center gap-2 min-w-0">
+          <div id="header-accent-pip" class="w-2 h-5 rounded-full flex-shrink-0" style="background: var(--c-conv)"></div>
+          <div class="truncate">
+            <h1 id="app-title-display" class="text-xs sm:text-sm font-bold tracking-tight truncate">Convolução 3D Passo a Passo</h1>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <!-- Language Toggle Button [ EN | PT-BR ] -->
+          <button id="btn-lang-toggle" type="button" title="Switch Language / Alternar Idioma" class="ui-control px-2 py-0.5 rounded-md border text-[10px] font-bold font-mono-code flex items-center gap-1">
+            <span id="lang-btn-label">PT-BR</span>
+          </button>
+
+          <!-- Theme Selector (Projector is default) -->
+          <div class="ui-card p-0.5 rounded-lg border flex items-center text-[10px]">
+            <button type="button" data-theme="projector" class="theme-btn seg-btn active px-1.5 py-0.5 rounded-md" title="Alto Contraste para Projetores">Projetor</button>
+            <button type="button" data-theme="dark" class="theme-btn seg-btn px-1.5 py-0.5 rounded-md">Escuro</button>
+            <button type="button" data-theme="light" class="theme-btn seg-btn px-1.5 py-0.5 rounded-md">Claro</button>
+          </div>
+
+          <button id="btn-thick" type="button" title="Alternar Espessura do Traço" class="ui-control px-1.5 py-1 rounded-lg border text-[10px] font-semibold">
+            2x
+          </button>
+
+          <button id="btn-fullscreen" type="button" title="Tela Cheia" class="ui-control p-1 rounded-lg border">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Step Bar (1 to 4) + Animation & Parameter Controls -->
+      <section class="px-3 py-2 border-b border-[var(--border-subtle)] flex flex-col gap-2 flex-shrink-0 bg-[var(--bg-card)]">
+        <!-- 4 Steps Header -->
+        <div id="steps-container" class="grid grid-cols-4 gap-1">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Controls Row: Play/Pause + Sliders + Contextual Actions -->
+        <div id="controls-row-wrapper" class="flex items-center gap-1.5">
+          <button id="btn-play" type="button" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1 flex-shrink-0 text-white shadow-sm" style="background: var(--c-conv)">
+            <svg id="icon-play" class="w-3 h-3 hidden" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <svg id="icon-pause" class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+            <span id="lbl-play" data-i18n="pause">Pausar</span>
+          </button>
+
+          <!-- Convolution Slider Controls -->
+          <div id="conv-slider-group" class="flex-1 flex flex-col gap-0.5 min-w-0">
+            <div class="flex items-center justify-between text-[10px]">
+              <span id="slider-param-title" class="text-sec font-medium truncate" data-i18n="sliderShiftT">Deslocamento t</span>
+              <span id="t-readout-badge" class="font-mono-code font-semibold">t = 1.50</span>
+            </div>
+            <input id="t-slider" type="range" min="-2.5" max="6.0" step="0.02" value="1.50" class="w-full" />
+          </div>
+
+          <!-- Fourier Slider Controls (Visible in Fourier Mode) -->
+          <div id="fourier-slider-group" class="hidden flex-1 flex flex-col gap-0.5 min-w-0">
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="text-sec font-medium truncate" data-i18n="sliderHarmonics">Harmônicos N</span>
+              <span id="fourier-readout-badge" class="font-mono-code font-semibold">N = 10 (T₀=2.0)</span>
+            </div>
+            <input id="fourier-n-slider" type="range" min="1" max="30" step="1" value="10" class="w-full" />
+          </div>
+
+          <!-- Contextual Action Buttons -->
+          <div id="conv-action-buttons" class="flex items-center gap-1 flex-shrink-0">
+            <button id="btn-seq-mode" type="button" title="Encadear Animação do 1º ao 4º Passo" class="ui-control px-2 py-1 rounded-lg border text-[10px] font-semibold">
+              1º→4º
+            </button>
+            <button id="btn-commute" type="button" title="Propriedade Comutativa: Alternar quem fica fixo" class="ui-control px-2 py-1 rounded-lg border text-[10px] font-semibold">
+              x∗h ⇄ h∗x
+            </button>
+          </div>
+
+          <div id="fourier-action-buttons" class="hidden flex items-center gap-1 flex-shrink-0">
+            <button id="btn-fourier-period" type="button" title="Alterar Período Fundamental T₀" class="ui-control px-2 py-1 rounded-lg border text-[10px] font-semibold">
+              T₀: 2.0
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Main Scrollable Area: Analytical Notebook + Gallery + Math Input -->
+      <div id="panel-scroll" class="flex-1 overflow-y-auto custom-scroll p-3 space-y-3">
+
+        <!-- 1. ANALYTICAL NOTEBOOK (Manual Step-by-Step with Progressive Handwriting) -->
+        <section class="ui-card rounded-xl border p-2.5 space-y-2">
+          <div class="flex items-center justify-between gap-2 border-b border-[var(--border-subtle)] pb-1.5">
+            <div class="flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-[var(--c-conv)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                <path d="M2 2l7.586 7.586"></path>
+              </svg>
+              <h2 id="notebook-main-title" class="text-[11px] font-bold uppercase tracking-wider" data-i18n="notebookTitle">Resolução Analítica Manual</h2>
+            </div>
+            <button id="btn-rewatch-write" type="button" class="ui-control px-2 py-0.5 rounded text-[10px] font-medium flex items-center gap-1">
+              <span data-i18n="rewriteStep">Reescrever Passo</span>
+            </button>
+          </div>
+
+          <!-- Instant Numerical Metrics Bar -->
+          <div id="live-step-metrics" class="rounded-lg px-2.5 py-1.5 text-[11px] border border-[var(--border-subtle)] bg-[var(--bg-panel)] flex flex-wrap items-center justify-between gap-2"></div>
+
+          <!-- KaTeX Handwritten Lines -->
+          <div id="notebook-lines" class="space-y-1.5 text-xs hw-math-content"></div>
+
+          <!-- Interactive Regions Table (Convolution) or Harmonics Table (Fourier) -->
+          <div id="secondary-table-section" class="pt-1 border-t border-[var(--border-subtle)]">
+            <div id="secondary-table-title" class="text-[10px] font-semibold uppercase tracking-wider text-mut mb-1">
+              Síntese por Intervalos de t:
+            </div>
+            <div id="secondary-table-content" class="space-y-1 text-[11px]"></div>
+          </div>
+        </section>
+
+        <!-- 2. PRESET GALLERY (Textbook Waveforms & Saved) -->
+        <section class="ui-card rounded-xl border p-2.5 space-y-2">
+          <div class="flex items-center justify-between">
+            <span id="gallery-main-title" class="text-[10px] font-bold uppercase tracking-wider text-sec" data-i18n="galleryTitle">Exemplos das Notas de Aula & Salvos</span>
+            <span class="text-[10px] text-mut" data-i18n="tapToLoad">Toque para carregar</span>
+          </div>
+          <div id="preset-gallery" class="grid grid-cols-2 gap-1.5"></div>
+        </section>
+
+        <!-- 3. INPUT SIGNAL DEFINITIONS & DEDICATED MATH KEYBOARD -->
+        <section class="ui-card rounded-xl border p-2.5 space-y-2">
+          <div class="flex items-center justify-between">
+            <span id="input-section-title" class="text-[10px] font-bold uppercase tracking-wider text-sec" data-i18n="inputSignalsTitle">Sinais de Entrada (Toque para Editar)</span>
+            <button id="btn-save-custom" type="button" class="ui-control px-2 py-0.5 rounded-md border text-[10px] font-semibold" style="color: var(--c-x1)">
+              <span data-i18n="pinToGallery">+ Fixar na Galeria</span>
+            </button>
+          </div>
+
+          <!-- Convolution Inputs: x(t) and h(t) -->
+          <div id="conv-inputs-container" class="grid grid-cols-1 gap-1.5">
+            <div id="mf-box-x" class="mathfield-box rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 min-w-0 flex-1 overflow-x-auto custom-scroll">
+                <span class="text-xs font-bold flex-shrink-0" style="color: var(--c-x1)">x(t) =</span>
+                <div id="mf-render-x" class="text-xs truncate"></div>
+                <span id="mf-caret-x" class="mathfield-caret hidden"></span>
+              </div>
+              <span class="text-[10px] font-mono-code text-mut flex-shrink-0" id="mf-raw-x"></span>
+            </div>
+
+            <div id="mf-box-h" class="mathfield-box rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 min-w-0 flex-1 overflow-x-auto custom-scroll">
+                <span class="text-xs font-bold flex-shrink-0" style="color: var(--c-x2)">h(t) =</span>
+                <div id="mf-render-h" class="text-xs truncate"></div>
+                <span id="mf-caret-h" class="mathfield-caret hidden"></span>
+              </div>
+              <span class="text-[10px] font-mono-code text-mut flex-shrink-0" id="mf-raw-h"></span>
+            </div>
+          </div>
+
+          <!-- Fourier Input: Periodic f(t) -->
+          <div id="fourier-inputs-container" class="hidden grid grid-cols-1 gap-1.5">
+            <div id="mf-box-fourier" class="mathfield-box rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 min-w-0 flex-1 overflow-x-auto custom-scroll">
+                <span class="text-xs font-bold flex-shrink-0" style="color: var(--c-x1)">f(t) =</span>
+                <div id="mf-render-fourier" class="text-xs truncate"></div>
+                <span id="mf-caret-fourier" class="mathfield-caret hidden"></span>
+              </div>
+              <span class="text-[10px] font-mono-code text-mut flex-shrink-0" id="mf-raw-fourier"></span>
+            </div>
+          </div>
+
+          <!-- Dedicated Virtual Math Keyboard -->
+          <div id="math-keyboard" class="hidden pt-1.5 border-t border-[var(--border-subtle)] space-y-1.5">
+            <div class="flex items-center justify-between gap-1">
+              <div class="flex items-center gap-1">
+                <button type="button" data-mkb-tab="signals" class="mkb-tab seg-btn active px-2 py-0.5 rounded text-[10px]" data-i18n="mkbSignals">Sinais & Funções</button>
+                <button type="button" data-mkb-tab="algebra" class="mkb-tab seg-btn px-2 py-0.5 rounded text-[10px]" data-i18n="mkbAlgebra">Álgebra & Números</button>
+              </div>
+              <button id="btn-close-mkb" type="button" class="ui-control px-2 py-0.5 rounded text-[10px] font-semibold" data-i18n="done">
+                Concluir
+              </button>
+            </div>
+
+            <!-- Tab 1: Signals & Functions -->
+            <div id="mkb-pane-signals" class="grid grid-cols-4 gap-1">
+              <button type="button" data-insert="u(t)" class="mkb-key mkb-accent" data-katex="u(t)"></button>
+              <button type="button" data-insert="u(t-1)" class="mkb-key mkb-accent" data-katex="u(t-1)"></button>
+              <button type="button" data-insert="(u(t)-u(t-3))" class="mkb-key mkb-accent" data-katex="p_{[0,3]}(t)"></button>
+              <button type="button" data-insert="e^(-t)*u(t)" class="mkb-key mkb-accent" data-katex="e^{-t}u(t)"></button>
+
+              <button type="button" data-insert="e^(-2*t)*u(t)" class="mkb-key mkb-fn" data-katex="e^{-2t}u(t)"></button>
+              <button type="button" data-insert="t*(u(t)-u(t-2))" class="mkb-key mkb-fn" data-katex="t\cdot p_{[0,2]}"></button>
+              <button type="button" data-insert="rect(t)" class="mkb-key mkb-fn" data-katex="\mathrm{rect}(t)"></button>
+              <button type="button" data-insert="tri(t)" class="mkb-key mkb-fn" data-katex="\mathrm{tri}(t)"></button>
+
+              <button type="button" data-insert="sin(pi*t)" class="mkb-key" data-katex="\sin(\pi t)"></button>
+              <button type="button" data-insert="cos(pi*t)" class="mkb-key" data-katex="\cos(\pi t)"></button>
+              <button type="button" data-insert="sign(sin(pi*t))" class="mkb-key mkb-fn" data-katex="\mathrm{sgn}(\sin)"></button>
+              <button type="button" data-insert="r(t)" class="mkb-key" data-katex="r(t)"></button>
+
+              <button type="button" data-insert="t" class="mkb-key" data-katex="t"></button>
+              <button type="button" data-insert="abs(t)" class="mkb-key" data-katex="|t|"></button>
+              <button type="button" data-action="backspace" class="mkb-key mkb-action font-semibold">⌫</button>
+              <button type="button" data-action="clear" class="mkb-key mkb-action font-semibold">AC</button>
+            </div>
+
+            <!-- Tab 2: Algebra & Numbers -->
+            <div id="mkb-pane-algebra" class="hidden grid grid-cols-5 gap-1">
+              <button type="button" data-insert="7" class="mkb-key">7</button>
+              <button type="button" data-insert="8" class="mkb-key">8</button>
+              <button type="button" data-insert="9" class="mkb-key">9</button>
+              <button type="button" data-insert="+" class="mkb-key mkb-accent">+</button>
+              <button type="button" data-insert="-" class="mkb-key mkb-accent">−</button>
+
+              <button type="button" data-insert="4" class="mkb-key">4</button>
+              <button type="button" data-insert="5" class="mkb-key">5</button>
+              <button type="button" data-insert="6" class="mkb-key">6</button>
+              <button type="button" data-insert="*" class="mkb-key mkb-accent">·</button>
+              <button type="button" data-insert="/" class="mkb-key mkb-accent">÷</button>
+
+              <button type="button" data-insert="1" class="mkb-key">1</button>
+              <button type="button" data-insert="2" class="mkb-key">2</button>
+              <button type="button" data-insert="3" class="mkb-key">3</button>
+              <button type="button" data-insert="(" class="mkb-key">(</button>
+              <button type="button" data-insert=")" class="mkb-key">)</button>
+
+              <button type="button" data-insert="0" class="mkb-key">0</button>
+              <button type="button" data-insert="." class="mkb-key">.</button>
+              <button type="button" data-insert="^" class="mkb-key mkb-fn">xʸ</button>
+              <button type="button" data-insert="pi" class="mkb-key mkb-fn">π</button>
+              <button type="button" data-action="backspace" class="mkb-key mkb-action font-semibold">⌫</button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </aside>
+
+  </div>
+
+  <script>
+    // ============================================================================
+    // 1. DICTIONARY & INTERNATIONALIZATION (i18n)
+    // ============================================================================
+    const I18N = {
+      en: {
+        appTitle: "Interactive Signals & Systems",
+        convTitle: "3D Convolution Step by Step",
+        fourierTitle: "3D Fourier Series Analyzer",
+        modConvolution: "3D Convolution",
+        modFourier: "3D Fourier Series",
+        themeProjector: "Projector",
+        themeDark: "Dark",
+        themeLight: "Light",
+        langBtn: "PT-BR",
+        // Convolution Steps
+        step1Label: "1st Step",
+        step1Title: "t → τ",
+        step2Label: "2nd Step",
+        step2Title: "Reflection",
+        step3Label: "3rd Step",
+        step3Title: "Shift",
+        step4Label: "4th Step",
+        step4Title: "Integral",
+        // Fourier Steps
+        fourierStep1Label: "1st Step",
+        fourierStep1Title: "Period & Symmetry",
+        fourierStep2Label: "2nd Step",
+        fourierStep2Title: "DC Level a₀",
+        fourierStep3Label: "3rd Step",
+        fourierStep3Title: "Coefficients",
+        fourierStep4Label: "4th Step",
+        fourierStep4Title: "Synthesis & Spec",
+        // Controls
+        sliderShiftT: "Time Displacement t",
+        sliderHarmonics: "Harmonics N",
+        play: "Play",
+        pause: "Pause",
+        waterfall: "3D Waterfall",
+        resetCam: "Frame",
+        stageHint: "Drag: Orbit • Pinch/Scroll: Zoom",
+        rewriteStep: "Replay Step",
+        galleryTitle: "Textbook Cases (Lathi)",
+        galleryFourierTitle: "Standard Periodic Waveforms",
+        tapToLoad: "Tap to load",
+        inputSignalsTitle: "Input Signals (Tap to Edit)",
+        pinToGallery: "+ Pin to Gallery",
+        mkbSignals: "Signals & Functions",
+        mkbAlgebra: "Algebra & Numbers",
+        done: "Done",
+        // Legends
+        legFixed: "Fixed",
+        legMoving: "Moving",
+        legProd: "Product",
+        legOut: "y(t)",
+        legOrig: "Original f(t)",
+        legDC: "DC a₀",
+        legHarmonics: "Harmonics",
+        legRecon: "Sum ∑",
+        legSpec: "Spectrum |Cₙ|",
+        // Analytical Texts
+        symEven: "Even Symmetry f(t)=f(-t) ⇒ bₙ = 0 (only cosines)",
+        symOdd: "Odd Symmetry f(t)=-f(-t) ⇒ a₀=0, aₙ = 0 (only sines)",
+        symHalfWave: "Half-Wave Symmetry f(t+T₀/2)=-f(t) ⇒ only odd harmonics",
+        symNone: "No elementary symmetry detected (both aₙ and bₙ exist)",
+        tableTitleConv: "Summary by Time Intervals t:",
+        tableTitleFourier: "Harmonic Coefficients Table (n = 1..N):",
+        parsevalNotice: "Parseval Power Capture:"
+      },
+      pt: {
+        appTitle: "Sinais e Sistemas Interativo",
+        convTitle: "Convolução 3D Passo a Passo",
+        fourierTitle: "Analisador de Fourier 3D",
+        modConvolution: "Convolução 3D",
+        modFourier: "Série de Fourier 3D",
+        themeProjector: "Projetor",
+        themeDark: "Escuro",
+        themeLight: "Claro",
+        langBtn: "EN",
+        // Convolution Steps
+        step1Label: "1º Passo",
+        step1Title: "t → τ",
+        step2Label: "2º Passo",
+        step2Title: "Reflexão",
+        step3Label: "3º Passo",
+        step3Title: "Deslocamento",
+        step4Label: "4º Passo",
+        step4Title: "Integral",
+        // Fourier Steps
+        fourierStep1Label: "1º Passo",
+        fourierStep1Title: "Período e Simetria",
+        fourierStep2Label: "2º Passo",
+        fourierStep2Title: "Nível DC a₀",
+        fourierStep3Label: "3º Passo",
+        fourierStep3Title: "Coeficientes",
+        fourierStep4Label: "4º Passo",
+        fourierStep4Title: "Síntese e Espectro",
+        // Controls
+        sliderShiftT: "Deslocamento t",
+        sliderHarmonics: "Harmônicos N",
+        play: "Reproduzir",
+        pause: "Pausar",
+        waterfall: "Cascata 3D",
+        resetCam: "Enquadrar",
+        stageHint: "Arraste: Orbitar • Pinça/Scroll: Zoom",
+        rewriteStep: "Reescrever Passo",
+        galleryTitle: "Exemplos das Notas de Aula (Lathi)",
+        galleryFourierTitle: "Sinais Periódicos Padrão",
+        tapToLoad: "Toque para carregar",
+        inputSignalsTitle: "Sinais de Entrada (Toque para Editar)",
+        pinToGallery: "+ Fixar na Galeria",
+        mkbSignals: "Sinais & Funções",
+        mkbAlgebra: "Álgebra & Números",
+        done: "Concluir",
+        // Legends
+        legFixed: "Fixo",
+        legMoving: "Móvel",
+        legProd: "Produto",
+        legOut: "y(t)",
+        legOrig: "Original f(t)",
+        legDC: "DC a₀",
+        legHarmonics: "Harmônicos",
+        legRecon: "Soma ∑",
+        legSpec: "Espectro |Cₙ|",
+        // Analytical Texts
+        symEven: "Simetria Par f(t)=f(-t) ⇒ bₙ = 0 (apenas cossenos)",
+        symOdd: "Simetria Ímpar f(t)=-f(-t) ⇒ a₀=0, aₙ = 0 (apenas senos)",
+        symHalfWave: "Simetria de Meia-Onda f(t+T₀/2)=-f(t) ⇒ apenas harmônicos ímpares",
+        symNone: "Sem simetria elementar detectada (existem aₙ e bₙ)",
+        tableTitleConv: "Síntese por Intervalos de t:",
+        tableTitleFourier: "Tabela de Coeficientes Harmônicos (n = 1..N):",
+        parsevalNotice: "Captura de Potência de Parseval:"
+      }
+    };
+
+    function resolveInitialLanguage() {
+      try {
+        const stored = localStorage.getItem('iss_lang_pref');
+        if (stored === 'en' || stored === 'pt') return stored;
+        const nav = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+        if (nav.toLowerCase().startsWith('pt')) return 'pt';
+      } catch (e) {}
+      return 'en'; // Padrão mundial em inglês
+    }
+
+    function resolveInitialTheme() {
+      try {
+        const stored = localStorage.getItem('iss_theme_pref');
+        if (stored && ['projector', 'dark', 'light'].includes(stored)) return stored;
+      } catch (e) {}
+      return 'projector'; // Padrão: Modo Projetor
+    }
+
+    // ============================================================================
+    // 2. GLOBAL APPLICATION STATE
+    // ============================================================================
+    const state = {
+      activeModule: 'convolution', // 'convolution' ou 'fourier'
+      theme: resolveInitialTheme(),
+      lang: resolveInitialLanguage(),
+      thickLines: true, // Modo projetor inicia com linha reforçada
+      // Estado de Convolução 3D
+      presetKey: 'ex8',
+      customPresets: [],
+      step: 4,
+      t: 1.5,
+      tauSweep: 1.2,
+      flipAngle: Math.PI,
+      isPlaying: true,
+      seqMode: false,
+      isCommuted: false,
+      showWaterfall: true,
+      activeMathField: null,
+      exprX: 'e^(-t)*u(t)',
+      exprH: 'u(t)-u(t-3)',
+      // Estado de Série de Fourier 3D
+      fourierPresetKey: 'square',
+      fourierStep: 4,
+      fourierExpr: 'sign(sin(pi*t))',
+      fourierT0: 2.0,
+      fourierHarmonics: 10,
+      fourierIsPlaying: true,
+      fourierCalculated: null
+    };
+
+    function t(key) {
+      const dict = I18N[state.lang] || I18N.en;
+      return dict[key] || I18N.en[key] || key;
+    }
+
+    // ============================================================================
+    // 3. MATHEMATICAL PARSER & SIMPSON NUMERICAL INTEGRATION
+    // ============================================================================
+    function exprToLatex(rawExpr, varName = 't') {
+      let s = (rawExpr || '')
+        .replace(/([a-zA-Z0-9_\(\)]+)\/([a-zA-Z0-9_\(\)]+)/g, '\\frac{$1}{$2}')
+        .replace(/\bpi\b/gi, '\\pi')
+        .replace(/\binfty\b/gi, '\\infty')
+        .replace(/\bsign\b/gi, '\\mathrm{sgn}')
+        .replace(/\brect\b/gi, '\\mathrm{rect}')
+        .replace(/\btri\b/gi, '\\mathrm{tri}')
+        .replace(/\bsinc\b/gi, '\\mathrm{sinc}')
+        .replace(/e\^\(\s*([^)]+)\s*\)/g, 'e^{$1}')
+        .replace(/e\^([a-zA-Z0-9_\\+-]+)/g, 'e^{$1}')
+        .replace(/\*/g, '\\cdot ');
+      return s;
+    }
+
+    function compileSignalExpr(expr) {
+      const clean = (expr || '0').trim();
+      const u = (v) => (v >= 0 ? 1.0 : 0.0);
+      const r = (v) => (v >= 0 ? v : 0.0);
+      const rect = (v) => (Math.abs(v) <= 0.5 ? 1.0 : 0.0);
+      const tri = (v) => (Math.abs(v) <= 1.0 ? 1.0 - Math.abs(v) : 0.0);
+      const sinc = (v) => (Math.abs(v) < 1e-6 ? 1.0 : Math.sin(Math.PI * v) / (Math.PI * v));
+      const sign = (v) => (v > 1e-6 ? 1.0 : v < -1e-6 ? -1.0 : 0.0);
+
+      let jsExpr = clean
+        .replace(/\^/g, '**')
+        .replace(/\bpi\b/gi, 'Math.PI')
+        .replace(/\be\b/g, 'Math.E')
+        .replace(/\bsin\s*\(/g, 'Math.sin(')
+        .replace(/\bcos\s*\(/g, 'Math.cos(')
+        .replace(/\bexp\s*\(/g, 'Math.exp(')
+        .replace(/\bsqrt\s*\(/g, 'Math.sqrt(')
+        .replace(/\babs\s*\(/g, 'Math.abs(');
+
+      try {
+        const fn = new Function('t', 'u', 'r', 'rect', 'tri', 'sinc', 'sign', `"use strict"; return Number(${jsExpr}) || 0;`);
+        fn(0.5, u, r, rect, tri, sinc, sign);
+        return (tVal) => {
+          try {
+            const val = fn(tVal, u, r, rect, tri, sinc, sign);
+            return Number.isFinite(val) ? val : 0;
+          } catch (e) {
+            return 0;
+          }
+        };
+      } catch (err) {
+        return () => 0;
+      }
+    }
+
+    function integrateSimpson(fnA, fnB, tVal, a = -5.0, b = 7.5, n = 260) {
+      const h = (b - a) / n;
+      let sum = fnA(a) * fnB(tVal - a) + fnA(b) * fnB(tVal - b);
+      for (let i = 1; i < n; i++) {
+        const tau = a + i * h;
+        const val = fnA(tau) * fnB(tVal - tau);
+        sum += (i % 2 === 0 ? 2 : 4) * val;
+      }
+      return (h / 3) * sum;
+    }
+
+    function integrate1D(fn, a, b, n = 300) {
+      const h = (b - a) / n;
+      let sum = fn(a) + fn(b);
+      for (let i = 1; i < n; i++) {
+        const x = a + i * h;
+        sum += (i % 2 === 0 ? 2 : 4) * fn(x);
+      }
+      return (h / 3) * sum;
+    }
+
+    // ============================================================================
+    // 4. FOURIER SERIES MATHEMATICAL ENGINE
+    // ============================================================================
+    function calculateFourierData() {
+      const T0 = Math.max(0.2, state.fourierT0);
+      const w0 = (2 * Math.PI) / T0;
+      const f0 = 1 / T0;
+      const N = Math.max(1, Math.min(30, state.fourierHarmonics));
+      const fnBase = compileSignalExpr(state.fourierExpr);
+
+      // Avaliador de sinal periódico estendido com suporte a t negativos e múltiplos períodos
+      const fPeriodic = (t) => {
+        let rem = ((t % T0) + T0) % T0;
+        return fnBase(rem);
+      };
+
+      // Detecção de Simetrias via Amostragem
+      let isEven = true;
+      let isOdd = true;
+      let isHalfWave = true;
+      const testSteps = 24;
+      for (let i = 1; i < testSteps; i++) {
+        const tVal = (i / testSteps) * T0;
+        const vPos = fPeriodic(tVal);
+        const vNeg = fPeriodic(-tVal);
+        const vHalf = fPeriodic(tVal + T0 / 2);
+
+        if (Math.abs(vPos - vNeg) > 1e-3) isEven = false;
+        if (Math.abs(vPos + vNeg) > 1e-3) isOdd = false;
+        if (Math.abs(vHalf + vPos) > 1e-3) isHalfWave = false;
+      }
+
+      // Nível DC
+      let a0 = 0;
+      if (isOdd) {
+        a0 = 0;
+      } else {
+        a0 = (1 / T0) * integrate1D((t) => fPeriodic(t), 0, T0, 320);
+        if (Math.abs(a0) < 1e-5) a0 = 0;
+      }
+
+      const a = [a0];
+      const b = [0];
+      const C = [Math.abs(a0)];
+      const theta = [0];
+
+      let harmonicPower = a0 * a0;
+
+      for (let n = 1; n <= N; n++) {
+        let an = 0;
+        let bn = 0;
+
+        if (isHalfWave && n % 2 === 0) {
+          an = 0;
+          bn = 0;
+        } else {
+          if (!isOdd) {
+            an = (2 / T0) * integrate1D((t) => fPeriodic(t) * Math.cos(n * w0 * t), 0, T0, 320);
+            if (Math.abs(an) < 1e-5) an = 0;
+          }
+          if (!isEven) {
+            bn = (2 / T0) * integrate1D((t) => fPeriodic(t) * Math.sin(n * w0 * t), 0, T0, 320);
+            if (Math.abs(bn) < 1e-5) bn = 0;
+          }
+        }
+
+        a[n] = an;
+        b[n] = bn;
+        const cn = Math.sqrt(an * an + bn * bn);
+        C[n] = cn;
+        theta[n] = Math.abs(cn) > 1e-5 ? -Math.atan2(bn, an) : 0;
+        harmonicPower += 0.5 * cn * cn;
+      }
+
+      const totalPower = Math.max(1e-6, (1 / T0) * integrate1D((t) => Math.pow(fPeriodic(t), 2), 0, T0, 400));
+      const efficiency = Math.min(100, Math.max(0, (harmonicPower / totalPower) * 100));
+
+      state.fourierCalculated = {
+        T0,
+        w0,
+        f0,
+        N,
+        fPeriodic,
+        isEven,
+        isOdd,
+        isHalfWave,
+        a0,
+        a,
+        b,
+        C,
+        theta,
+        totalPower,
+        harmonicPower,
+        efficiency
+      };
+      return state.fourierCalculated;
+    }
+
+    // ============================================================================
+    // 5. TEXTBOOK PRESETS BANK
+    // ============================================================================
+    const BUILTIN_PRESETS = {
+      ex8: {
+        id: 'ex8',
+        shortTitle: 'Exemplo #8',
+        subtitle: 'Exponencial e Pulso [0, 3]',
+        exprX: 'e^(-t)*u(t)',
+        exprH: 'u(t)-u(t-3)',
+        latexX: 'e^{-t}u(t)',
+        latexH: 'u(t) - u(t-3)',
+        fnX: (tau) => (tau >= 0 ? Math.exp(-tau) : 0),
+        fnH: (tau) => (tau >= 0 && tau <= 3 ? 1.0 : 0),
+        supportX: [0, Infinity],
+        supportH: [0, 3],
+        conv: (t) => {
+          if (t < 0) return 0;
+          if (t <= 3) return 1 - Math.exp(-t);
+          return Math.exp(-(t - 3)) - Math.exp(-t);
+        },
+        regions: [
+          { range: 't < 0', test: (t) => t < 0, sampleT: -0.8, latex: 'y(t) = 0' },
+          { range: '0 \\le t \\le 3', test: (t) => t >= 0 && t <= 3, sampleT: 1.6, latex: 'y(t) = 1 - e^{-t}' },
+          { range: 't > 3', test: (t) => t > 3, sampleT: 4.2, latex: 'y(t) = e^{-(t-3)} - e^{-t}' }
+        ]
+      },
+      ex1: {
+        id: 'ex1',
+        shortTitle: 'Exemplo #1 / #2',
+        subtitle: 'Exponencial e Degrau u(t)',
+        exprX: 'e^(-t)*u(t)',
+        exprH: 'u(t)',
+        latexX: 'e^{-t}u(t)',
+        latexH: 'u(t)',
+        fnX: (tau) => (tau >= 0 ? Math.exp(-tau) : 0),
+        fnH: (tau) => (tau >= 0 ? 1.0 : 0),
+        supportX: [0, Infinity],
+        supportH: [0, Infinity],
+        conv: (t) => (t >= 0 ? 1 - Math.exp(-t) : 0),
+        regions: [
+          { range: 't < 0', test: (t) => t < 0, sampleT: -1.0, latex: 'y(t) = 0' },
+          { range: 't \\ge 0', test: (t) => t >= 0, sampleT: 1.8, latex: 'y(t) = 1 - e^{-t}' }
+        ]
+      },
+      lathi25: {
+        id: 'lathi25',
+        shortTitle: 'Lathi Ex. 2.5',
+        subtitle: 'Duas Exponenciais Causais',
+        exprX: 'e^(-t)*u(t)',
+        exprH: 'e^(-2*t)*u(t)',
+        latexX: 'e^{-t}u(t)',
+        latexH: 'e^{-2t}u(t)',
+        fnX: (tau) => (tau >= 0 ? Math.exp(-tau) : 0),
+        fnH: (tau) => (tau >= 0 ? Math.exp(-2 * tau) : 0),
+        supportX: [0, Infinity],
+        supportH: [0, Infinity],
+        conv: (t) => (t >= 0 ? Math.exp(-t) - Math.exp(-2 * t) : 0),
+        regions: [
+          { range: 't < 0', test: (t) => t < 0, sampleT: -0.8, latex: 'y(t) = 0' },
+          { range: 't \\ge 0', test: (t) => t >= 0, sampleT: 1.2, latex: 'y(t) = e^{-t} - e^{-2t}' }
+        ]
+      },
+      ex5: {
+        id: 'ex5',
+        shortTitle: 'Exemplo #5',
+        subtitle: 'Pulso [-1,1] e Rampa t/3',
+        exprX: 'u(t+1)-u(t-1)',
+        exprH: '(t/3)*(u(t)-u(t-3))',
+        latexX: 'u(t+1)-u(t-1)',
+        latexH: '\\frac{t}{3}[u(t)-u(t-3)]',
+        fnX: (tau) => (tau >= -1 && tau <= 1 ? 1.0 : 0),
+        fnH: (tau) => (tau >= 0 && tau <= 3 ? tau / 3.0 : 0),
+        supportX: [-1, 1],
+        supportH: [0, 3],
+        conv: (t) => {
+          const a = Math.max(0, t - 1);
+          const b = Math.min(3, t + 1);
+          if (b <= a) return 0;
+          return (b * b - a * a) / 6.0;
+        },
+        regions: [
+          { range: 't < -1', test: (t) => t < -1, sampleT: -1.6, latex: 'y(t) = 0' },
+          { range: '-1 \\le t < 1', test: (t) => t >= -1 && t < 1, sampleT: 0.2, latex: 'y(t) = \\frac{(t+1)^2}{6}' },
+          { range: '1 \\le t < 2', test: (t) => t >= 1 && t < 2, sampleT: 1.5, latex: 'y(t) = \\frac{2t}{3}' },
+          { range: '2 \\le t \\le 4', test: (t) => t >= 2 && t <= 4, sampleT: 2.8, latex: 'y(t) = \\frac{9 - (t-1)^2}{6}' },
+          { range: 't > 4', test: (t) => t > 4, sampleT: 4.6, latex: 'y(t) = 0' }
+        ]
+      },
+      ex7: {
+        id: 'ex7',
+        shortTitle: 'Exemplo #7',
+        subtitle: 'Pulso Dipolo e Rampa t/2',
+        exprX: '2*(u(t+1)-u(t)) - 2*(u(t)-u(t-1))',
+        exprH: '(t/2)*(u(t)-u(t-2))',
+        latexX: '2p_{[-1,0]}(t) - 2p_{[0,1]}(t)',
+        latexH: '\\frac{t}{2}[u(t)-u(t-2)]',
+        fnX: (tau) => {
+          if (tau >= -1 && tau < 0) return 2.0;
+          if (tau >= 0 && tau <= 1) return -2.0;
+          return 0;
+        },
+        fnH: (tau) => (tau >= 0 && tau <= 2 ? tau / 2.0 : 0),
+        supportX: [-1, 1],
+        supportH: [0, 2],
+        conv: (t) => {
+          return integrateSimpson(
+            (tau) => (tau >= -1 && tau < 0 ? 2.0 : tau >= 0 && tau <= 1 ? -2.0 : 0),
+            (tau) => (tau >= 0 && tau <= 2 ? tau / 2.0 : 0),
+            t,
+            -2,
+            4,
+            240
+          );
+        },
+        regions: [
+          { range: 't < -1', test: (t) => t < -1, sampleT: -1.5, latex: 'y(t) = 0' },
+          { range: '-1 \\le t < 0', test: (t) => t >= -1 && t < 0, sampleT: -0.4, latex: 'y(t) = \\frac{(t+1)^2}{2}' },
+          { range: '0 \\le t < 1', test: (t) => t >= 0 && t < 1, sampleT: 0.5, latex: 'y(t) = -\\frac{t^2}{2} + t + \\frac{1}{2}' },
+          { range: '1 \\le t \\le 3', test: (t) => t >= 1 && t <= 3, sampleT: 1.8, latex: 'y(t) = \\int_{t-2}^{1} x_1(\\tau)\\frac{t-\\tau}{2}d\\tau' },
+          { range: 't > 3', test: (t) => t > 3, sampleT: 3.6, latex: 'y(t) = 0' }
+        ]
+      }
+    };
+
+    const FOURIER_PRESETS = {
+      square: {
+        id: 'square',
+        shortTitle: 'Onda Quadrada',
+        shortTitleEn: 'Square Wave',
+        subtitle: 'Simetria Ímpar, bₙ = 4/(nπ)',
+        subtitleEn: 'Odd Symmetry, bₙ = 4/(nπ)',
+        expr: 'sign(sin(pi*t))',
+        T0: 2.0,
+        defaultN: 11
+      },
+      triangle: {
+        id: 'triangle',
+        shortTitle: 'Onda Triangular',
+        shortTitleEn: 'Triangle Wave',
+        subtitle: 'Simetria Par, decaimento 1/n²',
+        subtitleEn: 'Even Symmetry, 1/n² falloff',
+        expr: '1 - 2*abs(t - 1)',
+        T0: 2.0,
+        defaultN: 9
+      },
+      sawtooth: {
+        id: 'sawtooth',
+        shortTitle: 'Dente de Serra',
+        shortTitleEn: 'Sawtooth Wave',
+        subtitle: 'Rampa Contínua, todos os harmônicos',
+        subtitleEn: 'Continuous Ramp, all harmonics',
+        expr: 't - 1',
+        T0: 2.0,
+        defaultN: 15
+      },
+      halfwave: {
+        id: 'halfwave',
+        shortTitle: 'Retificador Meia Onda',
+        shortTitleEn: 'Half-Wave Rectifier',
+        subtitle: 'Senoide Truncada [0, T₀/2]',
+        subtitleEn: 'Truncated Sine [0, T₀/2]',
+        expr: 'sin(pi*t)*u(sin(pi*t))',
+        T0: 2.0,
+        defaultN: 10
+      },
+      fullwave: {
+        id: 'fullwave',
+        shortTitle: 'Retificador Onda Completa',
+        shortTitleEn: 'Full-Wave Rectifier',
+        subtitle: 'Módulo do Seno |sen(πt)|',
+        subtitleEn: 'Absolute Sine |sin(πt)|',
+        expr: 'abs(sin(pi*t))',
+        T0: 1.0,
+        defaultN: 8
+      },
+      pulseTrain: {
+        id: 'pulseTrain',
+        shortTitle: 'Trem de Pulsos',
+        shortTitleEn: 'Pulse Train',
+        subtitle: 'Pulso Estreito, envelope Sinc',
+        subtitleEn: 'Narrow Pulse, Sinc envelope',
+        expr: 'u(t) - u(t - 0.5)',
+        T0: 2.5,
+        defaultN: 14
+      }
+    };
+
+    function getActivePresetObject() {
+      if (BUILTIN_PRESETS[state.presetKey]) return BUILTIN_PRESETS[state.presetKey];
+      const found = state.customPresets.find((p) => p.id === state.presetKey);
+      if (found) {
+        const fnX = compileSignalExpr(found.exprX);
+        const fnH = compileSignalExpr(found.exprH);
+        return {
+          ...found,
+          fnX,
+          fnH,
+          supportX: [-2, 3],
+          supportH: [0, 3],
+          conv: (tVal) => integrateSimpson(fnX, fnH, tVal),
+          regions: [
+            { range: 't < 0', test: (t) => t < 0, sampleT: -1.0, latex: `y(t) = \\int x(\\tau)h(t-\\tau)d\\tau` },
+            { range: 't \\ge 0', test: (t) => t >= 0, sampleT: 1.5, latex: `y(t) = (x*h)(t)` }
+          ]
+        };
+      }
+      const fnX = compileSignalExpr(state.exprX);
+      const fnH = compileSignalExpr(state.exprH);
+      return {
+        id: 'custom_live',
+        shortTitle: state.lang === 'en' ? 'Custom Input' : 'Personalizado',
+        subtitle: state.lang === 'en' ? 'Live Edition' : 'Edição Direta',
+        exprX: state.exprX,
+        exprH: state.exprH,
+        latexX: exprToLatex(state.exprX, 't'),
+        latexH: exprToLatex(state.exprH, 't'),
+        fnX,
+        fnH,
+        supportX: [-2, 3],
+        supportH: [0, 3],
+        conv: (tVal) => integrateSimpson(fnX, fnH, tVal),
+        regions: [
+          { range: 't < 0', test: (t) => t < 0, sampleT: -1.0, latex: `y(t) = 0` },
+          { range: 't \\ge 0', test: (t) => t >= 0, sampleT: 1.5, latex: `y(t) = \\int_{-\\infty}^{\\infty} x(\\tau)h(t-\\tau)d\\tau` }
+        ]
+      };
+    }
+
+    function getEffectiveSignals() {
+      const p = getActivePresetObject();
+      if (!state.isCommuted) {
+        return {
+          fixedSym: 'x',
+          movingSym: 'h',
+          fixedLatexTau: exprToLatex(p.exprX, '\\tau'),
+          movingLatexT: exprToLatex(p.exprH, 't'),
+          movingLatexTau: exprToLatex(p.exprH, '\\tau'),
+          movingLatexNegTau: exprToLatex(p.exprH, '(-\\tau)'),
+          movingLatexShifted: exprToLatex(p.exprH, '(t-\\tau)'),
+          fnFixed: p.fnX,
+          fnMoving: p.fnH,
+          supportFixed: p.supportX || [0, 3],
+          supportMoving: p.supportH || [0, 3],
+          conv: p.conv,
+          regions: p.regions,
+          preset: p
+        };
+      } else {
+        return {
+          fixedSym: 'h',
+          movingSym: 'x',
+          fixedLatexTau: exprToLatex(p.exprH, '\\tau'),
+          movingLatexT: exprToLatex(p.exprX, 't'),
+          movingLatexTau: exprToLatex(p.exprX, '\\tau'),
+          movingLatexNegTau: exprToLatex(p.exprX, '(-\\tau)'),
+          movingLatexShifted: exprToLatex(p.exprX, '(t-\\tau)'),
+          fnFixed: p.fnH,
+          fnMoving: p.fnX,
+          supportFixed: p.supportH || [0, 3],
+          supportMoving: p.supportX || [0, 3],
+          conv: p.conv,
+          regions: p.regions,
+          preset: p
+        };
+      }
+    }
+
+    // ============================================================================
+    // 6. ANALYTICAL NOTEBOOK (STEP-BY-STEP HANDWRITING ENGINE)
+    // ============================================================================
+    let handwritingTimer = null;
+    const PEN_SVG = `<span class="pen-nib"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg></span>`;
+
+    function buildNotebookLinesConvolution(sig) {
+      const fSym = sig.fixedSym;
+      const mSym = sig.movingSym;
+      const tNow = state.t;
+      const tauNow = state.tauSweep;
+      const degNow = Math.round((state.flipAngle / Math.PI) * 180);
+      const yNow = sig.conv(tNow);
+
+      const [fA, fB] = sig.supportFixed;
+      const [mA, mB] = sig.supportMoving;
+      const fAStr = Number.isFinite(fA) ? String(fA) : '-\\infty';
+      const fBStr = Number.isFinite(fB) ? String(fB) : '+\\infty';
+
+      const isEn = state.lang === 'en';
+
+      if (state.step === 1) {
+        return [
+          {
+            label: isEn ? '1.1 Convolution Integral Definition:' : '1.1 Definição da Integral de Convolução:',
+            latex: `y(t) = ${fSym}(t) \\ast ${mSym}(t) = \\int_{-\\infty}^{+\\infty} ${fSym}(\\tau)\\,${mSym}(t-\\tau)\\,d\\tau`
+          },
+          {
+            label: isEn ? '1.2 Independent Variable Swap (t → τ):' : '1.2 Mudança de Variável Independente (t → τ):',
+            latex: `${fSym}(\\tau) = ${sig.fixedLatexTau}, \\quad ${mSym}(\\tau) = ${sig.movingLatexTau}`
+          },
+          {
+            label: isEn ? '1.3 Signal Evaluation along Axis τ:' : '1.3 Varredura e Avaliação no Eixo τ:',
+            latex: `\\text{Cursor } \\tau = ${tauNow.toFixed(2)} \\implies ${fSym}(${tauNow.toFixed(2)}) = ${sig.fnFixed(tauNow).toFixed(3)}`
+          }
+        ];
+      } else if (state.step === 2) {
+        return [
+          {
+            label: isEn ? '2.1 Time Inversion / Reflection Property:' : '2.1 Propriedade da Reflexão no Tempo:',
+            latex: `${mSym}(\\tau) \\;\\xrightarrow{\\text{giro de } 180^\\circ}\\; ${mSym}(-\\tau)`
+          },
+          {
+            label: isEn ? '2.2 Inverted Expression on Mirror Axis:' : '2.2 Expressão Refletida no Eixo Espelhado:',
+            latex: `${mSym}(-\\tau) = ${sig.movingLatexNegTau}`
+          },
+          {
+            label: isEn ? '2.3 Inverted Support Interval:' : '2.3 Intervalo de Suporte Invertido:',
+            latex: `\\text{Suporte: } \\tau \\in [${Number.isFinite(mB) ? -mB : '-\\infty'}, \\; ${Number.isFinite(mA) ? -mA : '+\\infty'}] \\quad (\\text{Rotação } \\theta = ${degNow}^\\circ)`
+          }
+        ];
+      } else if (state.step === 3) {
+        const leftEdge = Number.isFinite(mB) ? (tNow - mB).toFixed(2) : '-\\infty';
+        const rightEdge = Number.isFinite(mA) ? (tNow - mA).toFixed(2) : '+\\infty';
+        return [
+          {
+            label: isEn ? '3.1 Rigid Displacement by Offset t:' : '3.1 Deslocamento Rígido por Offset t:',
+            latex: `${mSym}(-( \\tau - t )) = ${mSym}(t - \\tau) = ${sig.movingLatexShifted}`
+          },
+          {
+            label: isEn ? '3.2 Moving Wavefront Limits at Instant t:' : '3.2 Limites da Frente Móvel no Instante t:',
+            latex: `t = ${tNow.toFixed(2)} \\implies \\tau \\in [${leftEdge}, \\; ${rightEdge}]`
+          },
+          {
+            label: isEn ? '3.3 Overlap Status with Fixed Signal:' : '3.3 Status de Sobreposição com o Sinal Fixo:',
+            latex: yNow !== 0 ? `\\text{Interseção Ativa } \\implies \\text{Produto } ${fSym}(\\tau)${mSym}(t-\\tau) \\neq 0` : `\\text{Sem sobreposição no instante } t = ${tNow.toFixed(2)} \\implies y(t) = 0`
+          }
+        ];
+      } else {
+        let activeReg = (sig.regions || []).find((r) => r.test(tNow));
+        const regLatex = activeReg ? activeReg.latex : `y(${tNow.toFixed(2)}) = ${yNow.toFixed(4)}`;
+        return [
+          {
+            label: isEn ? '4.1 Definite Convolution Integral:' : '4.1 Integral Definida da Convolução:',
+            latex: `y(t) = \\int_{-\\infty}^{+\\infty} ${fSym}(\\tau)\\,${mSym}(t-\\tau)\\,d\\tau`
+          },
+          {
+            label: isEn ? '4.2 Active Analytic Region for Current t:' : '4.2 Região Analítica Vigente no Intervalo:',
+            latex: `${activeReg ? activeReg.range + ': ' : ''}${regLatex}`
+          },
+          {
+            label: isEn ? '4.3 Instantaneous Evaluated Convolution Value:' : '4.3 Valor Numérico Instantâneo Concluído:',
+            latex: `y(${tNow.toFixed(2)}) = \\mathbf{${yNow.toFixed(4)}}`
+          }
+        ];
+      }
+    }
+
+    function buildNotebookLinesFourier(data) {
+      const isEn = state.lang === 'en';
+      const T0 = data.T0;
+      const w0 = data.w0;
+      const N = data.N;
+      const a0 = data.a0;
+
+      let symDesc = t('symNone');
+      if (data.isEven) symDesc = t('symEven');
+      else if (data.isOdd) symDesc = t('symOdd');
+      else if (data.isHalfWave) symDesc = t('symHalfWave');
+
+      if (state.fourierStep === 1) {
+        return [
+          {
+            label: isEn ? '1.1 Fundamental Period and Angular Frequency:' : '1.1 Período Fundamental e Frequência Angular:',
+            latex: `T_0 = ${T0.toFixed(2)}\\,\\text{s}, \\quad \\omega_0 = \\frac{2\\pi}{T_0} = ${w0.toFixed(3)}\\,\\text{rad/s}, \\quad f_0 = ${(1/T0).toFixed(3)}\\,\\text{Hz}`
+          },
+          {
+            label: isEn ? '1.2 Signal Parity and Symmetry Deduction:' : '1.2 Dedução de Paridade e Simetrias:',
+            latex: `\\text{Classificação: } \\mathbf{${symDesc}}`
+          },
+          {
+            label: isEn ? '1.3 Symmetry Consequence on Coefficients:' : '1.3 Impacto Direto nas Integrais da Série:',
+            latex: data.isOdd ? `a_0 = 0, \\quad a_n = 0 \\;(\\forall n) \\implies \\text{Série exclusivamente em senos}` : (data.isEven ? `b_n = 0 \\;(\\forall n) \\implies \\text{Série exclusivamente em cossenos}` : `a_0 \\neq 0, \\; a_n \\neq 0, \\; b_n \\neq 0 \\implies \\text{Harmônicos completos}`)
+          }
+        ];
+      } else if (state.fourierStep === 2) {
+        return [
+          {
+            label: isEn ? '2.1 Continuous Average / DC Level Integral Formula:' : '2.1 Fórmula da Componente DC (Valor Médio):',
+            latex: `a_0 = \\frac{1}{T_0} \\int_{0}^{T_0} f(t)\\,dt`
+          },
+          {
+            label: isEn ? '2.2 Definite Integration over Fundamental Period:' : '2.2 Integração Definida no Período [0, T₀]:',
+            latex: `a_0 = \\frac{1}{${T0.toFixed(2)}} \\int_{0}^{${T0.toFixed(2)}} f(t)\\,dt`
+          },
+          {
+            label: isEn ? '2.3 Computed Net DC Level:' : '2.3 Nível DC Concluído:',
+            latex: `a_0 = \\mathbf{${a0.toFixed(4)}} \\quad (\\text{Linha média horizontal no espaço 3D})`
+          }
+        ];
+      } else if (state.fourierStep === 3) {
+        const topH = Math.min(N, 4);
+        let sampleTerms = [];
+        for (let n = 1; n <= topH; n++) {
+          sampleTerms.push(`C_${n} = ${data.C[n].toFixed(3)} \\;(\\theta_${n}=${((data.theta[n]*180)/Math.PI).toFixed(1)}^\\circ)`);
+        }
+        return [
+          {
+            label: isEn ? '3.1 Trigonometric Integral Definitions:' : '3.1 Definições dos Coeficientes Trigonométricos:',
+            latex: `a_n = \\frac{2}{T_0}\\int_{0}^{T_0} f(t)\\cos(n\\omega_0 t)dt, \\quad b_n = \\frac{2}{T_0}\\int_{0}^{T_0} f(t)\\sin(n\\omega_0 t)dt`
+          },
+          {
+            label: isEn ? '3.2 Compact Polar Amplitude and Phase:' : '3.2 Amplitude Compacta e Fase Polar:',
+            latex: `C_n = \\sqrt{a_n^2 + b_n^2}, \\quad \\theta_n = -\\mathrm{atan2}(b_n, a_n)`
+          },
+          {
+            label: isEn ? '3.3 Dominant Harmonics Sample:' : '3.3 Amostra dos Primeiros Harmônicos Calculados:',
+            latex: sampleTerms.join(',\\; ')
+          }
+        ];
+      } else {
+        let reconFormula = `f(t) \\approx ${Math.abs(a0) > 1e-4 ? a0.toFixed(3) : '0'}`;
+        const topH = Math.min(N, 3);
+        for (let n = 1; n <= topH; n++) {
+          if (data.C[n] > 0.01) {
+            reconFormula += ` + ${data.C[n].toFixed(2)}\\cos(${n === 1 ? '' : n}\\omega_0 t ${data.theta[n] >= 0 ? '+' : ''}${data.theta[n].toFixed(2)})`;
+          }
+        }
+        if (N > 3) reconFormula += ` + \\dots + C_{${N}}\\cos(${N}\\omega_0 t + \\theta_{${N}})`;
+
+        return [
+          {
+            label: isEn ? '4.1 Compact Trigonometric Fourier Series Synthesis:' : '4.1 Síntese da Série Trigonométrica Compacta:',
+            latex: `f(t) \\approx a_0 + \\sum_{n=1}^{N} C_n \\cos(n\\omega_0 t + \\theta_n)`
+          },
+          {
+            label: isEn ? `4.2 Evaluated Sum for N = ${N} Harmonics:` : `4.2 Série Expandida para N = ${N} Harmônicos:`,
+            latex: reconFormula
+          },
+          {
+            label: isEn ? '4.3 Parseval Power Distribution and Efficiency:' : '4.3 Teorema de Parseval e Taxa de Energia Capturada:',
+            latex: `P_{\\text{total}} = ${data.totalPower.toFixed(3)}\\,\\text{W}, \\quad P_{${N}} = ${data.harmonicPower.toFixed(3)}\\,\\text{W} \\implies \\eta = \\mathbf{${data.efficiency.toFixed(2)}\\%}`
+          }
+        ];
+      }
+    }
+
+    function updateNotebookUI(triggerAnimation = false) {
+      const liveMetricsEl = document.getElementById('live-step-metrics');
+      const linesContainer = document.getElementById('notebook-lines');
+      const tableTitleEl = document.getElementById('secondary-table-title');
+      const tableContentEl = document.getElementById('secondary-table-content');
+      const isEn = state.lang === 'en';
+
+      if (state.activeModule === 'convolution') {
+        const sig = getEffectiveSignals();
+        const tNow = state.t;
+        const yNow = sig.conv(tNow);
+
+        liveMetricsEl.innerHTML = `
+          <div class="flex items-center gap-1.5">
+            <span class="text-mut font-semibold">Instante:</span>
+            <span class="font-mono-code font-bold text-[var(--c-conv)]">t = ${tNow.toFixed(2)}</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-mut font-semibold">y(t):</span>
+            <span class="font-mono-code font-bold text-white bg-[var(--c-conv)] px-1.5 py-0.5 rounded text-[10px]">${yNow.toFixed(4)}</span>
+          </div>
+          <div class="flex items-center gap-1.5 text-[10px] text-mut font-mono-code">
+            <span>Simpson n=260</span>
+          </div>
+        `;
+
+        tableTitleEl.textContent = t('tableTitleConv');
+        tableContentEl.innerHTML = '';
+        (sig.regions || []).forEach((reg) => {
+          const isActive = reg.test(tNow);
+          const row = document.createElement('div');
+          row.className = `region-row px-2 py-1 rounded cursor-pointer flex items-center justify-between gap-1 border border-transparent ${
+            isActive ? 'active' : 'hover:bg-[var(--bg-hover)]'
+          }`;
+          row.innerHTML = `
+            <span class="font-mono-code font-semibold text-[10px]">${reg.range}</span>
+            <span class="math-block text-[11px] truncate" id="reg-math-${Math.random().toString(36).substr(2, 5)}"></span>
+          `;
+          tableContentEl.appendChild(row);
+          const mathTarget = row.querySelector('.math-block');
+          try {
+            katex.render(reg.latex, mathTarget, { throwOnError: false, displayMode: false });
+          } catch (e) {
+            mathTarget.textContent = reg.latex;
+          }
+          row.addEventListener('click', () => {
+            state.t = reg.sampleT;
+            document.getElementById('t-slider').value = state.t;
+            updateSliderBadge();
+            updateNotebookUI(false);
+            updateScene3D();
+          });
+        });
+
+        const lines = buildNotebookLinesConvolution(sig);
+        renderNotebookLinesWithKaTeX(lines, triggerAnimation);
+
+      } else {
+        // Modo Fourier 3D
+        const data = state.fourierCalculated || calculateFourierData();
+        liveMetricsEl.innerHTML = `
+          <div class="flex items-center gap-1.5">
+            <span class="text-mut font-semibold">T₀:</span>
+            <span class="font-mono-code font-bold">${data.T0.toFixed(2)}s</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-mut font-semibold">ω₀:</span>
+            <span class="font-mono-code font-bold">${data.w0.toFixed(2)} rad/s</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-mut font-semibold">N:</span>
+            <span class="font-mono-code font-bold text-[var(--c-x1)]">${data.N}</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-mut font-semibold">η:</span>
+            <span class="font-mono-code font-bold text-[var(--c-conv)]">${data.efficiency.toFixed(1)}%</span>
+          </div>
+        `;
+
+        tableTitleEl.textContent = t('tableTitleFourier');
+        tableContentEl.innerHTML = `
+          <div class="grid grid-cols-5 text-[9px] font-bold text-mut pb-1 border-b border-[var(--border-subtle)] uppercase">
+            <span>n</span>
+            <span>aₙ</span>
+            <span>bₙ</span>
+            <span>Cₙ</span>
+            <span>θₙ (graus)</span>
+          </div>
+        `;
+        const listDiv = document.createElement('div');
+        listDiv.className = 'max-h-28 overflow-y-auto custom-scroll space-y-0.5 pt-1';
+
+        for (let n = 1; n <= data.N; n++) {
+          const row = document.createElement('div');
+          const isDom = data.C[n] > 0.1;
+          row.className = `grid grid-cols-5 text-[10px] font-mono-code py-0.5 px-1 rounded ${
+            isDom ? 'bg-[var(--accent-bg)] font-bold text-primary' : 'text-sec hover:bg-[var(--bg-hover)]'
+          }`;
+          row.innerHTML = `
+            <span>#${n}</span>
+            <span>${data.a[n].toFixed(3)}</span>
+            <span>${data.b[n].toFixed(3)}</span>
+            <span class="text-[var(--c-conv)]">${data.C[n].toFixed(3)}</span>
+            <span>${((data.theta[n] * 180) / Math.PI).toFixed(0)}°</span>
+          `;
+          listDiv.appendChild(row);
+        }
+        tableContentEl.appendChild(listDiv);
+
+        const lines = buildNotebookLinesFourier(data);
+        renderNotebookLinesWithKaTeX(lines, triggerAnimation);
+      }
+    }
+
+    function renderNotebookLinesWithKaTeX(lines, triggerAnimation) {
+      const container = document.getElementById('notebook-lines');
+      if (handwritingTimer) {
+        clearInterval(handwritingTimer);
+        handwritingTimer = null;
+      }
+      container.innerHTML = '';
+
+      lines.forEach((item, idx) => {
+        const lineEl = document.createElement('div');
+        lineEl.className = 'handwriting-line';
+        lineEl.innerHTML = `
+          <div class="text-[10px] font-semibold text-mut mb-0.5">${item.label}</div>
+          <div class="hw-clip py-0.5">
+            <span class="math-content font-mono-code"></span>
+          </div>
+        `;
+        container.appendChild(lineEl);
+        const mathTarget = lineEl.querySelector('.math-content');
+        try {
+          katex.render(item.latex, mathTarget, { throwOnError: false, displayMode: true });
+        } catch (e) {
+          mathTarget.textContent = item.latex;
+        }
+      });
+
+      const lineEls = container.querySelectorAll('.handwriting-line');
+      if (!triggerAnimation) {
+        lineEls.forEach((el) => {
+          el.classList.add('written');
+          el.classList.remove('writing-now');
+        });
+        return;
+      }
+
+      let curIdx = 0;
+      function writeNext() {
+        if (curIdx > 0 && curIdx - 1 < lineEls.length) {
+          lineEls[curIdx - 1].classList.remove('writing-now');
+          lineEls[curIdx - 1].classList.add('written');
+          const oldPen = lineEls[curIdx - 1].querySelector('.pen-nib');
+          if (oldPen) oldPen.remove();
+        }
+        if (curIdx >= lineEls.length) return;
+        const current = lineEls[curIdx];
+        current.classList.add('writing-now');
+        current.insertAdjacentHTML('beforeend', PEN_SVG);
+        curIdx++;
+        handwritingTimer = setTimeout(writeNext, 380);
+      }
+      writeNext();
+    }
+
+    // ============================================================================
+    // 7. PRESET GALLERY RENDERING
+    // ============================================================================
+    function renderPresetGallery() {
+      const gallery = document.getElementById('preset-gallery');
+      const titleEl = document.getElementById('gallery-main-title');
+      if (!gallery) return;
+      gallery.innerHTML = '';
+
+      if (state.activeModule === 'convolution') {
+        titleEl.textContent = t('galleryTitle');
+        const allPresets = [
+          ...Object.values(BUILTIN_PRESETS),
+          ...state.customPresets.map((cp) => ({ ...cp, isCustom: true }))
+        ];
+
+        allPresets.forEach((p) => {
+          const card = document.createElement('div');
+          const isActive = state.presetKey === p.id;
+          card.className = `preset-pill rounded-lg p-2 cursor-pointer flex flex-col justify-between gap-1 relative ${
+            isActive ? 'active' : ''
+          }`;
+          card.innerHTML = `
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-[11px] font-bold truncate">${p.shortTitle}</span>
+              ${
+                p.isCustom
+                  ? `<button type="button" class="del-preset text-[10px] px-1 rounded hover:bg-red-500/20 text-rose-400" title="Remover">✕</button>`
+                  : ''
+              }
+            </div>
+            <div class="text-[10px] text-mut truncate">${p.subtitle}</div>
+          `;
+          gallery.appendChild(card);
+
+          card.addEventListener('click', (e) => {
+            if (e.target.classList.contains('del-preset')) {
+              e.stopPropagation();
+              state.customPresets = state.customPresets.filter((cp) => cp.id !== p.id);
+              try {
+                localStorage.setItem('conv3d_custom_presets_v2', JSON.stringify(state.customPresets));
+              } catch (err) {}
+              if (state.presetKey === p.id) state.presetKey = 'ex8';
+              renderPresetGallery();
+              syncInputsWithPreset();
+              updateNotebookUI(true);
+              updateScene3D();
+              return;
+            }
+            state.presetKey = p.id;
+            state.exprX = p.exprX;
+            state.exprH = p.exprH;
+            renderPresetGallery();
+            syncInputsWithPreset();
+            updateNotebookUI(true);
+            updateScene3D();
+          });
+        });
+
+      } else {
+        // Fourier Waveforms
+        titleEl.textContent = t('galleryFourierTitle');
+        Object.values(FOURIER_PRESETS).forEach((p) => {
+          const card = document.createElement('div');
+          const isActive = state.fourierPresetKey === p.id;
+          const isEn = state.lang === 'en';
+          card.className = `preset-pill rounded-lg p-2 cursor-pointer flex flex-col justify-between gap-1 ${
+            isActive ? 'active' : ''
+          }`;
+          card.innerHTML = `
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-[11px] font-bold truncate">${isEn ? p.shortTitleEn : p.shortTitle}</span>
+              <span class="font-mono-code text-[9px] text-[var(--c-x1)]">T₀=${p.T0}</span>
+            </div>
+            <div class="text-[10px] text-mut truncate">${isEn ? p.subtitleEn : p.subtitle}</div>
+          `;
+          gallery.appendChild(card);
+
+          card.addEventListener('click', () => {
+            state.fourierPresetKey = p.id;
+            state.fourierExpr = p.expr;
+            state.fourierT0 = p.T0;
+            state.fourierHarmonics = p.defaultN;
+            document.getElementById('fourier-n-slider').value = p.defaultN;
+            document.getElementById('btn-fourier-period').textContent = `T₀: ${p.T0.toFixed(1)}`;
+            renderPresetGallery();
+            syncInputsWithPreset();
+            calculateFourierData();
+            updateNotebookUI(true);
+            updateScene3D();
+          });
+        });
+      }
+    }
+
+    function syncInputsWithPreset() {
+      if (state.activeModule === 'convolution') {
+        const renderX = document.getElementById('mf-render-x');
+        const renderH = document.getElementById('mf-render-h');
+        const rawX = document.getElementById('mf-raw-x');
+        const rawH = document.getElementById('mf-raw-h');
+        try {
+          katex.render(exprToLatex(state.exprX, 't'), renderX, { throwOnError: false });
+          katex.render(exprToLatex(state.exprH, 't'), renderH, { throwOnError: false });
+        } catch (e) {}
+        rawX.textContent = state.exprX;
+        rawH.textContent = state.exprH;
+      } else {
+        const renderF = document.getElementById('mf-render-fourier');
+        const rawF = document.getElementById('mf-raw-fourier');
+        try {
+          katex.render(exprToLatex(state.fourierExpr, 't'), renderF, { throwOnError: false });
+        } catch (e) {}
+        rawF.textContent = state.fourierExpr;
+      }
+    }
+
+    // ============================================================================
+    // 8. VIRTUAL MATH KEYBOARD INTERACTION
+    // ============================================================================
+    function initMathKeyboard() {
+      const mkb = document.getElementById('math-keyboard');
+      const boxX = document.getElementById('mf-box-x');
+      const boxH = document.getElementById('mf-box-h');
+      const boxF = document.getElementById('mf-box-fourier');
+
+      function openKeyboardFor(field) {
+        state.activeMathField = field;
+        boxX.classList.toggle('focused', field === 'x');
+        boxH.classList.toggle('focused-h', field === 'h');
+        boxF.classList.toggle('focused', field === 'fourier');
+        document.getElementById('mf-caret-x').classList.toggle('hidden', field !== 'x');
+        document.getElementById('mf-caret-h').classList.toggle('hidden', field !== 'h');
+        document.getElementById('mf-caret-fourier').classList.toggle('hidden', field !== 'fourier');
+        mkb.classList.remove('hidden');
+        document.body.classList.add('mkb-open');
+      }
+
+      boxX.addEventListener('click', () => openKeyboardFor('x'));
+      boxH.addEventListener('click', () => openKeyboardFor('h'));
+      boxF.addEventListener('click', () => openKeyboardFor('fourier'));
+
+      document.getElementById('btn-close-mkb').addEventListener('click', () => {
+        mkb.classList.add('hidden');
+        document.body.classList.remove('mkb-open');
+        boxX.classList.remove('focused');
+        boxH.classList.remove('focused-h');
+        boxF.classList.remove('focused');
+        document.getElementById('mf-caret-x').classList.add('hidden');
+        document.getElementById('mf-caret-h').classList.add('hidden');
+        document.getElementById('mf-caret-fourier').classList.add('hidden');
+        state.activeMathField = null;
+      });
+
+      document.querySelectorAll('.mkb-tab').forEach((tabBtn) => {
+        tabBtn.addEventListener('click', () => {
+          document.querySelectorAll('.mkb-tab').forEach((b) => b.classList.remove('active'));
+          tabBtn.classList.add('active');
+          const tab = tabBtn.getAttribute('data-mkb-tab');
+          document.getElementById('mkb-pane-signals').classList.toggle('hidden', tab !== 'signals');
+          document.getElementById('mkb-pane-algebra').classList.toggle('hidden', tab !== 'algebra');
+        });
+      });
+
+      document.querySelectorAll('.mkb-key[data-katex]').forEach((keyEl) => {
+        const tex = keyEl.getAttribute('data-katex');
+        try {
+          katex.render(tex, keyEl, { throwOnError: false });
+        } catch (e) {
+          keyEl.textContent = tex;
+        }
+      });
+
+      document.querySelectorAll('.mkb-key').forEach((keyEl) => {
+        keyEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const targetField = state.activeMathField || (state.activeModule === 'fourier' ? 'fourier' : 'x');
+          const insertText = keyEl.getAttribute('data-insert');
+          const action = keyEl.getAttribute('data-action');
+
+          let current = targetField === 'fourier' ? state.fourierExpr : (targetField === 'x' ? state.exprX : state.exprH);
+
+          if (action === 'clear') {
+            current = '';
+          } else if (action === 'backspace') {
+            current = current.slice(0, -1);
+          } else if (insertText) {
+            current = current ? current + insertText : insertText;
+          }
+
+          if (targetField === 'fourier') {
+            state.fourierExpr = current || '0';
+            state.fourierPresetKey = 'custom';
+            calculateFourierData();
+          } else if (targetField === 'x') {
+            state.exprX = current || '0';
+            state.presetKey = 'custom_live';
+          } else {
+            state.exprH = current || '0';
+            state.presetKey = 'custom_live';
+          }
+
+          syncInputsWithPreset();
+          updateNotebookUI(false);
+          updateScene3D();
+        });
+      });
+    }
+
+    // ============================================================================
+    // 9. HIGH-PERFORMANCE 3D GRAPHIC ENGINE (Three.js Math + Canvas Painter)
+    // ============================================================================
+    const canvasContainer = document.getElementById('canvas-container');
+    let camera = null;
+    let stageCanvas = null;
+    let ctx3d = null;
+
+    const camOrbit = {
+      theta: -0.62,
+      phi: 1.05,
+      radius: 13.2,
+      targetTheta: -0.62,
+      targetPhi: 1.05,
+      targetRadius: 13.2,
+      target: { x: 1.25, y: 0.15, z: 2.0 },
+      autoOrient: true
+    };
+
+    function getThemePalette() {
+      if (state.theme === 'projector') {
+        return {
+          bgCss: '#ffffff',
+          wallFill: 'rgba(241, 245, 249, 0.85)',
+          wallStroke: '#94a3b8',
+          grid: 'rgba(148, 163, 184, 0.45)',
+          axis: '#0f172a',
+          textMuted: '#334155',
+          x1: '#00449e',
+          x1Fill: 'rgba(0, 68, 158, 0.12)',
+          x2: '#be123c',
+          x2Fill: 'rgba(190, 18, 60, 0.12)',
+          prod: '#6b21a8',
+          prodFill: 'rgba(107, 33, 168, 0.32)',
+          prodSliceFill: 'rgba(107, 33, 168, 0.12)',
+          prodSliceStroke: 'rgba(107, 33, 168, 0.45)',
+          conv: '#047857',
+          convFill: 'rgba(4, 120, 87, 0.22)',
+          activePlaneFill: 'rgba(0, 68, 158, 0.05)',
+          activePlaneBorder: 'rgba(15, 23, 42, 0.35)'
+        };
+      } else if (state.theme === 'light') {
+        return {
+          bgCss: '#f1f5f9',
+          wallFill: 'rgba(255, 255, 255, 0.70)',
+          wallStroke: '#cbd5e1',
+          grid: 'rgba(203, 213, 225, 0.7)',
+          axis: '#334155',
+          textMuted: '#64748b',
+          x1: '#0284c7',
+          x1Fill: 'rgba(2, 132, 199, 0.12)',
+          x2: '#e11d48',
+          x2Fill: 'rgba(225, 29, 72, 0.12)',
+          prod: '#7e22ce',
+          prodFill: 'rgba(126, 34, 206, 0.28)',
+          prodSliceFill: 'rgba(126, 34, 206, 0.10)',
+          prodSliceStroke: 'rgba(126, 34, 206, 0.40)',
+          conv: '#059669',
+          convFill: 'rgba(5, 150, 105, 0.18)',
+          activePlaneFill: 'rgba(2, 132, 199, 0.04)',
+          activePlaneBorder: 'rgba(51, 65, 85, 0.25)'
+        };
+      } else {
+        return {
+          bgCss: '#090b10',
+          wallFill: 'rgba(13, 17, 26, 0.55)',
+          wallStroke: 'rgba(255, 255, 255, 0.12)',
+          grid: 'rgba(255, 255, 255, 0.07)',
+          axis: 'rgba(255, 255, 255, 0.35)',
+          textMuted: '#64748b',
+          x1: '#38bdf8',
+          x1Fill: 'rgba(56, 189, 248, 0.14)',
+          x2: '#fb7185',
+          x2Fill: 'rgba(251, 113, 133, 0.14)',
+          prod: '#c084fc',
+          prodFill: 'rgba(192, 132, 252, 0.35)',
+          prodSliceFill: 'rgba(168, 85, 247, 0.19)',
+          prodSliceStroke: 'rgba(192, 132, 252, 0.55)',
+          conv: '#10b981',
+          convFill: 'rgba(16, 185, 129, 0.24)',
+          activePlaneFill: 'rgba(56, 189, 248, 0.05)',
+          activePlaneBorder: 'rgba(148, 163, 184, 0.24)'
+        };
+      }
+    }
+
+    function init3DStage() {
+      stageCanvas = document.createElement('canvas');
+      ctx3d = stageCanvas.getContext('2d');
+      canvasContainer.innerHTML = '';
+      canvasContainer.appendChild(stageCanvas);
+
+      if (window.THREE) {
+        camera = new THREE.PerspectiveCamera(38, 1, 0.1, 150);
+      }
+      initPointerOrbitControls();
+      handleResize();
+    }
+
+    function updateCameraFromOrbit() {
+      if (camOrbit.autoOrient) {
+        camOrbit.theta += (camOrbit.targetTheta - camOrbit.theta) * 0.08;
+        camOrbit.phi += (camOrbit.targetPhi - camOrbit.phi) * 0.08;
+        camOrbit.radius += (camOrbit.targetRadius - camOrbit.radius) * 0.08;
+      }
+      const w = canvasContainer.clientWidth || 384;
+      const h = canvasContainer.clientHeight || 260;
+      const aspect = w / Math.max(h, 1);
+      const responsiveScale = aspect < 0.85 ? 1.24 : aspect < 1.2 ? 1.08 : 0.95;
+      const r = camOrbit.radius * responsiveScale;
+
+      const sinPhi = Math.sin(camOrbit.phi);
+      const cx = camOrbit.target.x + r * sinPhi * Math.sin(camOrbit.theta);
+      const cy = camOrbit.target.y + r * Math.cos(camOrbit.phi);
+      const cz = camOrbit.target.z + r * Math.cos(camOrbit.theta) * sinPhi;
+
+      if (camera) {
+        camera.aspect = aspect;
+        camera.updateProjectionMatrix();
+        camera.position.set(cx, cy, cz);
+        camera.lookAt(camOrbit.target.x, camOrbit.target.y, camOrbit.target.z);
+        camera.updateMatrixWorld();
+      }
+      return { cx, cy, cz };
+    }
+
+    function projectPoint3D(x, y, z) {
+      const w = canvasContainer.clientWidth || 384;
+      const h = canvasContainer.clientHeight || 260;
+
+      if (camera && window.THREE) {
+        const v = new THREE.Vector3(x, y, z);
+        const camDist = v.distanceTo(camera.position);
+        v.project(camera);
+        if (v.z > 1.05 || v.z < -1.05) return null;
+        return {
+          x: (v.x * 0.5 + 0.5) * w,
+          y: (-v.y * 0.5 + 0.5) * h,
+          depth: camDist
+        };
+      }
+      return null;
+    }
+
+    function draw3DLine(p1, p2, color, width = 1.5, dash = []) {
+      const a = projectPoint3D(p1.x, p1.y, p1.z);
+      const b = projectPoint3D(p2.x, p2.y, p2.z);
+      if (!a || !b) return;
+      ctx3d.save();
+      ctx3d.beginPath();
+      ctx3d.setLineDash(dash);
+      ctx3d.moveTo(a.x, a.y);
+      ctx3d.lineTo(b.x, b.y);
+      ctx3d.strokeStyle = color;
+      ctx3d.lineWidth = width;
+      ctx3d.lineCap = 'round';
+      ctx3d.stroke();
+      ctx3d.restore();
+    }
+
+    function draw3DPolyline(pts3d, color, width = 2.2, dash = [], glow = false) {
+      if (pts3d.length < 2) return;
+      ctx3d.save();
+      ctx3d.beginPath();
+      ctx3d.setLineDash(dash);
+      let started = false;
+      for (let i = 0; i < pts3d.length; i++) {
+        const p = projectPoint3D(pts3d[i].x, pts3d[i].y, pts3d[i].z);
+        if (!p) continue;
+        if (!started) {
+          ctx3d.moveTo(p.x, p.y);
+          started = true;
+        } else {
+          ctx3d.lineTo(p.x, p.y);
+        }
+      }
+      ctx3d.strokeStyle = color;
+      ctx3d.lineWidth = width;
+      ctx3d.lineJoin = 'round';
+      ctx3d.lineCap = 'round';
+      if (glow && state.theme === 'dark') {
+        ctx3d.shadowColor = color;
+        ctx3d.shadowBlur = 8;
+      }
+      ctx3d.stroke();
+      ctx3d.restore();
+    }
+
+    function draw3DPolygon(pts3d, fillColor, strokeColor = null, strokeWidth = 1) {
+      if (pts3d.length < 3) return;
+      ctx3d.save();
+      ctx3d.beginPath();
+      let started = false;
+      for (let i = 0; i < pts3d.length; i++) {
+        const p = projectPoint3D(pts3d[i].x, pts3d[i].y, pts3d[i].z);
+        if (!p) continue;
+        if (!started) {
+          ctx3d.moveTo(p.x, p.y);
+          started = true;
+        } else {
+          ctx3d.lineTo(p.x, p.y);
+        }
+      }
+      ctx3d.closePath();
+      if (fillColor) {
+        ctx3d.fillStyle = fillColor;
+        ctx3d.fill();
+      }
+      if (strokeColor) {
+        ctx3d.strokeStyle = strokeColor;
+        ctx3d.lineWidth = strokeWidth;
+        ctx3d.stroke();
+      }
+      ctx3d.restore();
+    }
+
+    function buildCurveAreaPolygon(curvePts) {
+      if (curvePts.length < 2) return [];
+      const first = curvePts[0];
+      const last = curvePts[curvePts.length - 1];
+      return [
+        { x: first.x, y: 0, z: first.z },
+        ...curvePts,
+        { x: last.x, y: 0, z: last.z }
+      ];
+    }
+
+    function update3DLabel(elId, pt3d, htmlContent, offsetX = 0, offsetY = 0) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      if (!pt3d) {
+        el.style.display = 'none';
+        return;
+      }
+      const p = projectPoint3D(pt3d.x, pt3d.y, pt3d.z);
+      if (!p) {
+        el.style.display = 'none';
+        return;
+      }
+      el.style.display = 'block';
+      el.style.left = `${Math.round(p.x + offsetX)}px`;
+      el.style.top = `${Math.round(p.y + offsetY)}px`;
+      if (htmlContent) el.innerHTML = htmlContent;
+    }
+
+    // ============================================================================
+    // 10. SCENE RENDERERS: CONVOLUTION 3D & FOURIER 3D
+    // ============================================================================
+    function updateScene3D() {
+      if (!ctx3d || !stageCanvas) return;
+      const pal = getThemePalette();
+      const w = canvasContainer.clientWidth || 384;
+      const h = canvasContainer.clientHeight || 260;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      if (stageCanvas.width !== Math.floor(w * dpr) || stageCanvas.height !== Math.floor(h * dpr)) {
+        stageCanvas.width = Math.floor(w * dpr);
+        stageCanvas.height = Math.floor(h * dpr);
+      }
+
+      updateCameraFromOrbit();
+
+      ctx3d.save();
+      ctx3d.scale(dpr, dpr);
+      ctx3d.fillStyle = pal.bgCss;
+      ctx3d.fillRect(0, 0, w, h);
+
+      const strokeScale = state.thickLines || state.theme === 'projector' ? 1.55 : 1.0;
+
+      if (state.activeModule === 'convolution') {
+        renderConvolutionScene3D(w, h, pal, strokeScale);
+      } else {
+        renderFourierScene3D(w, h, pal, strokeScale);
+      }
+
+      ctx3d.restore();
+    }
+
+    function renderConvolutionScene3D(w, h, pal, strokeScale) {
+      const sig = getEffectiveSignals();
+      const TAU_MIN = -3.5;
+      const TAU_MAX = 6.0;
+      const T_MIN = -2.0;
+      const T_MAX = 6.0;
+      const AMP_MAX = 1.35;
+      const SAMPLES = 200;
+      const dTau = (TAU_MAX - TAU_MIN) / SAMPLES;
+
+      const maxTauStep1 = state.step === 1 ? state.tauSweep : TAU_MAX;
+      const effectiveT = state.step >= 3 ? state.t : 0;
+      const yNow = sig.conv(effectiveT);
+
+      // 1. Box Walls
+      draw3DPolygon(
+        [
+          { x: TAU_MIN, y: 0, z: T_MAX },
+          { x: TAU_MAX, y: 0, z: T_MAX },
+          { x: TAU_MAX, y: AMP_MAX, z: T_MAX },
+          { x: TAU_MIN, y: AMP_MAX, z: T_MAX }
+        ],
+        pal.wallFill,
+        pal.wallStroke,
+        1 * strokeScale
+      );
+
+      draw3DPolygon(
+        [
+          { x: TAU_MIN, y: 0, z: T_MIN },
+          { x: TAU_MAX, y: 0, z: T_MIN },
+          { x: TAU_MAX, y: 0, z: T_MAX },
+          { x: TAU_MIN, y: 0, z: T_MAX }
+        ],
+        pal.wallFill,
+        pal.wallStroke,
+        1 * strokeScale
+      );
+
+      // Grid Lines on Floor
+      for (let tTick = -2; tTick <= 6; tTick += 2) {
+        draw3DLine({ x: TAU_MIN, y: 0, z: tTick }, { x: TAU_MAX, y: 0, z: tTick }, pal.grid, 0.8 * strokeScale);
+      }
+      for (let tauTick = -3; tauTick <= 6; tauTick += 2) {
+        draw3DLine({ x: tauTick, y: 0, z: T_MIN }, { x: tauTick, y: 0, z: T_MAX }, pal.grid, 0.8 * strokeScale);
+      }
+
+      // 2. Fixed Signal (at z = 0)
+      const fixedPts = [];
+      for (let i = 0; i <= SAMPLES; i++) {
+        const tau = TAU_MIN + i * dTau;
+        if (state.step === 1 && tau > maxTauStep1) break;
+        fixedPts.push({ x: tau, y: sig.fnFixed(tau), z: 0 });
+      }
+      if (fixedPts.length > 2) {
+        draw3DPolygon(buildCurveAreaPolygon(fixedPts), pal.x1Fill);
+        draw3DPolyline(fixedPts, pal.x1, 2.6 * strokeScale, [], true);
+      }
+
+      // 3. Moving / Reflected Signal (at z = effectiveT)
+      const movingPts = [];
+      const flipNorm = state.step === 2 ? Math.min(1.0, state.flipAngle / Math.PI) : 1.0;
+      for (let i = 0; i <= SAMPLES; i++) {
+        const tau = TAU_MIN + i * dTau;
+        let vVal = 0;
+        if (state.step === 1) {
+          if (tau <= maxTauStep1) vVal = sig.fnMoving(tau);
+        } else if (state.step === 2) {
+          const vDirect = sig.fnMoving(tau);
+          const vFlipped = sig.fnMoving(-tau);
+          vVal = (1.0 - flipNorm) * vDirect + flipNorm * vFlipped;
+        } else {
+          vVal = sig.fnMoving(effectiveT - tau);
+        }
+        movingPts.push({ x: tau, y: vVal, z: effectiveT });
+      }
+      if (movingPts.length > 2) {
+        draw3DPolygon(buildCurveAreaPolygon(movingPts), pal.x2Fill);
+        draw3DPolyline(movingPts, pal.x2, 2.6 * strokeScale, state.step === 1 ? [4, 3] : [], true);
+      }
+
+      // 4. Product Area & Overlap (at z = effectiveT)
+      if (state.step >= 3) {
+        const prodPts = [];
+        for (let i = 0; i <= SAMPLES; i++) {
+          const tau = TAU_MIN + i * dTau;
+          const vF = sig.fnFixed(tau);
+          const vM = sig.fnMoving(effectiveT - tau);
+          prodPts.push({ x: tau, y: vF * vM, z: effectiveT });
+        }
+        if (prodPts.length > 2) {
+          draw3DPolygon(buildCurveAreaPolygon(prodPts), pal.prodFill, pal.prod, 1.2 * strokeScale);
+          draw3DPolyline(prodPts, pal.prod, 2.2 * strokeScale);
+        }
+      }
+
+      // 5. 3D Waterfall Slices
+      if (state.showWaterfall && state.step >= 3) {
+        const numSlices = 10;
+        const sliceStep = (effectiveT - T_MIN) / numSlices;
+        for (let s = 1; s < numSlices; s++) {
+          const tSlice = T_MIN + s * sliceStep;
+          if (tSlice >= effectiveT) break;
+          const sPts = [];
+          for (let i = 0; i <= SAMPLES; i += 3) {
+            const tau = TAU_MIN + i * dTau;
+            const pVal = sig.fnFixed(tau) * sig.fnMoving(tSlice - tau);
+            sPts.push({ x: tau, y: pVal, z: tSlice });
+          }
+          if (sPts.length > 2) {
+            draw3DPolygon(buildCurveAreaPolygon(sPts), pal.prodSliceFill);
+            draw3DPolyline(sPts, pal.prodSliceStroke, 1.0 * strokeScale);
+          }
+        }
+      }
+
+      // 6. Convolved Output Curve y(t) on Back Wall (at z = T_MAX)
+      const convCurvePts = [];
+      const tEnd = state.step >= 3 ? effectiveT : T_MIN;
+      const numStepsConv = 80;
+      const dtConv = (T_MAX - T_MIN) / numStepsConv;
+      for (let i = 0; i <= numStepsConv; i++) {
+        const tVal = T_MIN + i * dtConv;
+        if (tVal > tEnd) break;
+        convCurvePts.push({ x: 6.0, y: sig.conv(tVal), z: tVal });
+      }
+      if (convCurvePts.length > 1) {
+        draw3DPolyline(convCurvePts, pal.conv, 3.2 * strokeScale, [], true);
+      }
+
+      // Floating 3D Labels
+      update3DLabel('lbl-tau', { x: TAU_MAX - 0.2, y: 0.05, z: 0 }, '<b>τ</b>');
+      update3DLabel('lbl-t', { x: 6.0, y: 0.05, z: T_MAX }, '<b>t</b>');
+      update3DLabel('lbl-z', { x: TAU_MIN + 0.3, y: AMP_MAX, z: 0 }, '<b>f(τ)</b>');
+      update3DLabel('lbl-x1', { x: 0.5, y: sig.fnFixed(0.5) + 0.15, z: 0 }, `<b>${sig.fixedSym}(τ)</b>`);
+      update3DLabel('lbl-x2', { x: effectiveT - 0.5, y: sig.fnMoving(0.5) + 0.15, z: effectiveT }, `<b>${sig.movingSym}(t-τ)</b>`);
+      update3DLabel('lbl-conv', { x: 6.0, y: yNow + 0.12, z: effectiveT }, `<b>y(${effectiveT.toFixed(2)})</b>`);
+      document.getElementById('lbl-fourier-recon').style.display = 'none';
+      document.getElementById('lbl-fourier-spec').style.display = 'none';
+
+      document.getElementById('stage-live-pill').innerHTML = `
+        <span class="text-mut">${state.lang === 'en' ? 'Convolution at' : 'Convolução em'}</span>
+        <b class="font-mono-code text-[var(--c-conv)]">t = ${effectiveT.toFixed(2)}</b>
+        <span class="mx-1 text-mut">•</span>
+        <span class="text-mut">y(t) =</span>
+        <b class="font-mono-code">${yNow.toFixed(3)}</b>
+      `;
+    }
+
+    function renderFourierScene3D(w, h, pal, strokeScale) {
+      const data = state.fourierCalculated || calculateFourierData();
+      const T0 = data.T0;
+      const N = data.N;
+      const T_MAX = 2.5 * T0;
+      const SAMPLES = 180;
+      const dt = T_MAX / SAMPLES;
+
+      // 1. Box Floor & Walls
+      draw3DPolygon(
+        [
+          { x: 0, y: -1.4, z: -1.5 },
+          { x: T_MAX, y: -1.4, z: -1.5 },
+          { x: T_MAX, y: -1.4, z: N + 1 },
+          { x: 0, y: -1.4, z: N + 1 }
+        ],
+        pal.wallFill,
+        pal.wallStroke,
+        1 * strokeScale
+      );
+
+      // Spectrum Wall at x = T_MAX (Time boundary)
+      draw3DPolygon(
+        [
+          { x: T_MAX, y: -1.4, z: -1.5 },
+          { x: T_MAX, y: 1.5, z: -1.5 },
+          { x: T_MAX, y: 1.5, z: N + 1 },
+          { x: T_MAX, y: -1.4, z: N + 1 }
+        ],
+        pal.wallFill,
+        pal.wallStroke,
+        1 * strokeScale
+      );
+
+      // Floor Grid Lines
+      for (let nTick = 0; nTick <= N; nTick += Math.max(1, Math.round(N / 5))) {
+        draw3DLine({ x: 0, y: -1.4, z: nTick }, { x: T_MAX, y: -1.4, z: nTick }, pal.grid, 0.8 * strokeScale);
+      }
+      for (let tStep = 0; tStep <= T_MAX; tStep += T0 / 2) {
+        draw3DLine({ x: tStep, y: -1.4, z: -1.5 }, { x: tStep, y: -1.4, z: N + 1 }, pal.grid, 0.8 * strokeScale);
+      }
+
+      // 2. Original Signal Curve at z = -1 (Front Plane)
+      const origPts = [];
+      for (let i = 0; i <= SAMPLES; i++) {
+        const tVal = i * dt;
+        origPts.push({ x: tVal, y: data.fPeriodic(tVal), z: -1.0 });
+      }
+      draw3DPolyline(origPts, pal.x1, 2.8 * strokeScale, [], true);
+
+      // 3. DC Baseline at z = 0
+      draw3DLine({ x: 0, y: data.a0, z: 0 }, { x: T_MAX, y: data.a0, z: 0 }, pal.prod, 1.8 * strokeScale, [4, 3]);
+
+      // 4. Individual Harmonic Wave Curves at z = n (Depth Axis)
+      const w0 = data.w0;
+      for (let n = 1; n <= N; n++) {
+        const an = data.a[n];
+        const bn = data.b[n];
+        if (Math.abs(an) < 1e-4 && Math.abs(bn) < 1e-4) continue;
+
+        const hPts = [];
+        for (let i = 0; i <= SAMPLES; i += 2) {
+          const tVal = i * dt;
+          const yH = an * Math.cos(n * w0 * tVal) + bn * Math.sin(n * w0 * tVal);
+          hPts.push({ x: tVal, y: yH, z: n });
+        }
+        const hue = 205 + Math.round((55 * n) / N);
+        const harmColor = state.theme === 'projector' ? `hsl(${hue}, 80%, 42%)` : `hsl(${hue}, 80%, 62%)`;
+        draw3DPolyline(hPts, harmColor, 1.6 * strokeScale);
+
+        // Discrete Spectrum Stems at x = T_MAX
+        const stemTop = { x: T_MAX, y: data.C[n], z: n };
+        const stemBase = { x: T_MAX, y: 0, z: n };
+        draw3DLine(stemBase, stemTop, pal.conv, 2.4 * strokeScale);
+
+        // Stem peak circle dot
+        const dotProj = projectPoint3D(stemTop.x, stemTop.y, stemTop.z);
+        if (dotProj) {
+          ctx3d.save();
+          ctx3d.beginPath();
+          ctx3d.arc(dotProj.x, dotProj.y, 3.5 * strokeScale, 0, Math.PI * 2);
+          ctx3d.fillStyle = pal.conv;
+          ctx3d.fill();
+          ctx3d.restore();
+        }
+      }
+
+      // DC Spectrum Stem at x = T_MAX, z = 0
+      const dcStemTop = { x: T_MAX, y: data.C[0], z: 0 };
+      draw3DLine({ x: T_MAX, y: 0, z: 0 }, dcStemTop, pal.conv, 2.4 * strokeScale);
+
+      // 5. Reconstructed Signal Sum Curve at z = -0.5 (for comparison with original)
+      const reconPts = [];
+      for (let i = 0; i <= SAMPLES; i++) {
+        const tVal = i * dt;
+        let sum = data.a0;
+        for (let n = 1; n <= N; n++) {
+          sum += data.a[n] * Math.cos(n * w0 * tVal) + data.b[n] * Math.sin(n * w0 * tVal);
+        }
+        reconPts.push({ x: tVal, y: sum, z: -0.5 });
+      }
+      const reconColor = state.theme === 'projector' ? '#be123c' : '#ffffff';
+      draw3DPolyline(reconPts, reconColor, 2.4 * strokeScale, [3, 2], true);
+
+      // Labels
+      update3DLabel('lbl-tau', { x: T_MAX, y: -1.3, z: 0 }, '<b>t (Tempo)</b>');
+      update3DLabel('lbl-t', { x: T_MAX, y: -1.3, z: N }, '<b>n (Freq)</b>');
+      update3DLabel('lbl-z', { x: 0, y: 1.4, z: -1 }, '<b>f(t)</b>');
+      update3DLabel('lbl-x1', { x: 0.5 * T0, y: data.fPeriodic(0.5 * T0) + 0.15, z: -1 }, '<b>f(t) original</b>');
+      update3DLabel('lbl-conv', { x: T_MAX, y: data.C[1] + 0.15, z: 1 }, '<b>|Cₙ| Espectro</b>');
+      document.getElementById('lbl-x2').style.display = 'none';
+
+      document.getElementById('stage-live-pill').innerHTML = `
+        <span class="text-mut">${state.lang === 'en' ? 'Fourier Series' : 'Série de Fourier'}</span>
+        <b class="font-mono-code text-[var(--c-x1)]">N = ${N}</b>
+        <span class="mx-1 text-mut">•</span>
+        <span class="text-mut">${state.lang === 'en' ? 'Energy capture' : 'Energia capturada'}:</span>
+        <b class="font-mono-code text-[var(--c-conv)]">${data.efficiency.toFixed(1)}%</b>
+      `;
+    }
+
+    // ============================================================================
+    // 11. ORBIT CONTROLS & RESIZE
+    // ============================================================================
+    function initPointerOrbitControls() {
+      let isDragging = false;
+      let prevX = 0;
+      let prevY = 0;
+
+      canvasContainer.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        camOrbit.autoOrient = false;
+        prevX = e.clientX;
+        prevY = e.clientY;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - prevX;
+        const dy = e.clientY - prevY;
+        prevX = e.clientX;
+        prevY = e.clientY;
+        camOrbit.targetTheta += dx * 0.007;
+        camOrbit.targetPhi = Math.max(0.2, Math.min(Math.PI * 0.48, camOrbit.targetPhi - dy * 0.007));
+      });
+
+      window.addEventListener('mouseup', () => { isDragging = false; });
+
+      // Touch orbit
+      canvasContainer.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          isDragging = true;
+          camOrbit.autoOrient = false;
+          prevX = e.touches[0].clientX;
+          prevY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (!isDragging || e.touches.length !== 1) return;
+        const dx = e.touches[0].clientX - prevX;
+        const dy = e.touches[0].clientY - prevY;
+        prevX = e.touches[0].clientX;
+        prevY = e.touches[0].clientY;
+        camOrbit.targetTheta += dx * 0.007;
+        camOrbit.targetPhi = Math.max(0.2, Math.min(Math.PI * 0.48, camOrbit.targetPhi - dy * 0.007));
+      }, { passive: true });
+
+      window.addEventListener('touchend', () => { isDragging = false; });
+
+      // Wheel Zoom
+      canvasContainer.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        camOrbit.autoOrient = false;
+        const zoomDelta = e.deltaY * 0.008;
+        camOrbit.targetRadius = Math.max(5.0, Math.min(35.0, camOrbit.targetRadius + zoomDelta));
+      }, { passive: false });
+    }
+
+    function handleResize() {
+      const w = canvasContainer.clientWidth || 384;
+      const h = canvasContainer.clientHeight || 260;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      if (stageCanvas) {
+        stageCanvas.width = Math.floor(w * dpr);
+        stageCanvas.height = Math.floor(h * dpr);
+      }
+      if (camera) {
+        camera.aspect = w / Math.max(h, 1);
+        camera.updateProjectionMatrix();
+      }
+      updateScene3D();
+    }
+
+    // ============================================================================
+    // 12. UI EVENTS, STEP SELECTION & MODULE SWITCHER
+    // ============================================================================
+    function switchModule(modName) {
+      state.activeModule = modName;
+      window.location.hash = modName;
+
+      document.getElementById('nav-conv').classList.toggle('active', modName === 'convolution');
+      document.getElementById('nav-fourier').classList.toggle('active', modName === 'fourier');
+
+      document.getElementById('conv-slider-group').classList.toggle('hidden', modName !== 'convolution');
+      document.getElementById('fourier-slider-group').classList.toggle('hidden', modName !== 'fourier');
+      document.getElementById('conv-action-buttons').classList.toggle('hidden', modName !== 'convolution');
+      document.getElementById('fourier-action-buttons').classList.toggle('hidden', modName !== 'fourier');
+      document.getElementById('conv-inputs-container').classList.toggle('hidden', modName !== 'convolution');
+      document.getElementById('fourier-inputs-container').classList.toggle('hidden', modName !== 'fourier');
+
+      document.getElementById('app-title-display').textContent = modName === 'convolution' ? t('convTitle') : t('fourierTitle');
+      document.getElementById('header-accent-pip').style.background = modName === 'convolution' ? 'var(--c-conv)' : 'var(--c-x1)';
+
+      // Adjust camera target
+      camOrbit.autoOrient = true;
+      if (modName === 'convolution') {
+        camOrbit.target = { x: 1.25, y: 0.15, z: 2.0 };
+        camOrbit.targetRadius = 13.2;
+        camOrbit.targetTheta = -0.62;
+        camOrbit.targetPhi = 1.05;
+      } else {
+        const data = state.fourierCalculated || calculateFourierData();
+        camOrbit.target = { x: 1.25 * data.T0, y: 0.0, z: data.N * 0.4 };
+        camOrbit.targetRadius = 15.5;
+        camOrbit.targetTheta = -0.72;
+        camOrbit.targetPhi = 1.08;
+      }
+
+      renderStepsUI();
+      renderLegendUI();
+      renderPresetGallery();
+      syncInputsWithPreset();
+      updateNotebookUI(true);
+      updateScene3D();
+    }
+
+    function renderStepsUI() {
+      const container = document.getElementById('steps-container');
+      container.innerHTML = '';
+
+      if (state.activeModule === 'convolution') {
+        const steps = [
+          { num: 1, label: t('step1Label'), title: t('step1Title') },
+          { num: 2, label: t('step2Label'), title: t('step2Title') },
+          { num: 3, label: t('step3Label'), title: t('step3Title') },
+          { num: 4, label: t('step4Label'), title: t('step4Title') }
+        ];
+        steps.forEach((s) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `step-card rounded-lg px-1.5 py-1 text-left ${state.step === s.num ? 'active' : ''}`;
+          btn.innerHTML = `
+            <div class="text-[9px] uppercase font-bold tracking-wider opacity-75">${s.label}</div>
+            <div class="text-[11px] font-semibold truncate">${s.title}</div>
+          `;
+          btn.addEventListener('click', () => setStep(s.num, true));
+          container.appendChild(btn);
+        });
+      } else {
+        const steps = [
+          { num: 1, label: t('fourierStep1Label'), title: t('fourierStep1Title') },
+          { num: 2, label: t('fourierStep2Label'), title: t('fourierStep2Title') },
+          { num: 3, label: t('fourierStep3Label'), title: t('fourierStep3Title') },
+          { num: 4, label: t('fourierStep4Label'), title: t('fourierStep4Title') }
+        ];
+        steps.forEach((s) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `step-card rounded-lg px-1.5 py-1 text-left ${state.fourierStep === s.num ? 'active' : ''}`;
+          btn.innerHTML = `
+            <div class="text-[9px] uppercase font-bold tracking-wider opacity-75">${s.label}</div>
+            <div class="text-[11px] font-semibold truncate">${s.title}</div>
+          `;
+          btn.addEventListener('click', () => setFourierStep(s.num));
+          container.appendChild(btn);
+        });
+      }
+    }
+
+    function renderLegendUI() {
+      const legendEl = document.getElementById('stage-legend');
+      if (state.activeModule === 'convolution') {
+        legendEl.innerHTML = `
+          <span class="inline-flex items-center gap-1 font-medium">
+            <span class="w-2.5 h-1 rounded-full" style="background: var(--c-x1)"></span>
+            <span>${t('legFixed')}</span>
+          </span>
+          <span class="inline-flex items-center gap-1 font-medium">
+            <span class="w-2.5 h-1 rounded-full" style="background: var(--c-x2)"></span>
+            <span>${t('legMoving')}</span>
+          </span>
+          <span class="inline-flex items-center gap-1 font-medium">
+            <span class="w-2.5 h-2 rounded-sm opacity-80" style="background: var(--c-prod)"></span>
+            <span>${t('legProd')}</span>
+          </span>
+          <span class="inline-flex items-center gap-1 font-semibold">
+            <span class="w-2.5 h-1 rounded-full" style="background: var(--c-conv)"></span>
+            <span>${t('legOut')}</span>
+          </span>
+        `;
+      } else {
+        legendEl.innerHTML = `
+          <span class="inline-flex items-center gap-1 font-medium">
+            <span class="w-2.5 h-1 rounded-full" style="background: var(--c-x1)"></span>
+            <span>${t('legOrig')}</span>
+          </span>
+          <span class="inline-flex items-center gap-1 font-medium">
+            <span class="w-2.5 h-1 rounded-full" style="background: var(--c-prod)"></span>
+            <span>${t('legDC')}</span>
+          </span>
+          <span class="inline-flex items-center gap-1 font-medium">
+            <span class="w-2.5 h-1 rounded-full" style="background: hsl(230, 80%, 60%)"></span>
+            <span>${t('legHarmonics')}</span>
+          </span>
+          <span class="inline-flex items-center gap-1 font-semibold">
+            <span class="w-2.5 h-1 rounded-full" style="background: var(--c-conv)"></span>
+            <span>${t('legSpec')}</span>
+          </span>
+        `;
+      }
+    }
+
+    function setStep(stepNum, restartAnim = true) {
+      state.step = stepNum;
+      renderStepsUI();
+
+      const slider = document.getElementById('t-slider');
+      const titleEl = document.getElementById('slider-param-title');
+      camOrbit.autoOrient = true;
+
+      if (stepNum === 1) {
+        camOrbit.targetTheta = -0.48;
+        camOrbit.targetPhi = 1.15;
+        if (restartAnim) state.tauSweep = -3.2;
+        titleEl.textContent = state.lang === 'en' ? 'Varredura τ' : 'Varredura τ';
+      } else if (stepNum === 2) {
+        camOrbit.targetTheta = -0.65;
+        camOrbit.targetPhi = 1.25;
+        if (restartAnim) state.flipAngle = 0;
+        titleEl.textContent = state.lang === 'en' ? 'Rotation θ (180°)' : 'Rotação θ (180°)';
+      } else if (stepNum === 3) {
+        camOrbit.targetTheta = -0.72;
+        camOrbit.targetPhi = 1.05;
+        titleEl.textContent = t('sliderShiftT');
+      } else {
+        camOrbit.targetTheta = -0.62;
+        camOrbit.targetPhi = 1.05;
+        titleEl.textContent = t('sliderShiftT');
+      }
+
+      updateSliderBadge();
+      updateNotebookUI(true);
+      updateScene3D();
+    }
+
+    function setFourierStep(stepNum) {
+      state.fourierStep = stepNum;
+      renderStepsUI();
+      camOrbit.autoOrient = true;
+      const data = state.fourierCalculated || calculateFourierData();
+
+      if (stepNum === 1) {
+        camOrbit.targetTheta = -0.05; // Vista frontal do sinal
+        camOrbit.targetPhi = 1.45;
+        camOrbit.targetRadius = 14.0;
+      } else if (stepNum === 2) {
+        camOrbit.targetTheta = -0.45;
+        camOrbit.targetPhi = 1.20;
+      } else if (stepNum === 3) {
+        camOrbit.targetTheta = -1.48; // Vista lateral do espectro
+        camOrbit.targetPhi = 1.45;
+        camOrbit.targetRadius = 15.0;
+      } else {
+        camOrbit.targetTheta = -0.72; // Perspectiva 3D completa
+        camOrbit.targetPhi = 1.08;
+        camOrbit.targetRadius = 15.5;
+      }
+      updateNotebookUI(true);
+      updateScene3D();
+    }
+
+    function updateSliderBadge() {
+      const readout = document.getElementById('t-readout-badge');
+      if (state.step === 1) {
+        readout.textContent = `τ = ${state.tauSweep.toFixed(2)}`;
+      } else if (state.step === 2) {
+        const deg = Math.round((state.flipAngle / Math.PI) * 180);
+        readout.textContent = `θ = ${deg}°`;
+      } else {
+        readout.textContent = `t = ${state.t.toFixed(2)}`;
+      }
+    }
+
+    function setLanguage(lang) {
+      state.lang = lang;
+      try {
+        localStorage.setItem('iss_lang_pref', lang);
+      } catch (e) {}
+
+      document.getElementById('lang-btn-label').textContent = lang === 'en' ? 'PT-BR' : 'EN';
+      document.getElementById('app-title-display').textContent = state.activeModule === 'convolution' ? t('convTitle') : t('fourierTitle');
+
+      // Update static data-i18n tags
+      document.querySelectorAll('[data-i18n]').forEach((el) => {
+        const k = el.getAttribute('data-i18n');
+        el.textContent = t(k);
+      });
+
+      renderStepsUI();
+      renderLegendUI();
+      renderPresetGallery();
+      updateNotebookUI(false);
+      updateScene3D();
+    }
+
+    function setTheme(theme) {
+      state.theme = theme;
+      document.body.className = `theme-${theme} relative w-screen h-[100vh] h-[100dvh] overflow-hidden`;
+      document.querySelectorAll('.theme-btn').forEach((b) => {
+        b.classList.toggle('active', b.getAttribute('data-theme')) === theme;
+      });
+      try {
+        localStorage.setItem('iss_theme_pref', theme);
+      } catch (e) {}
+      updateNotebookUI(false);
+      updateScene3D();
+    }
+
+    function initUIEvents() {
+      // Module Switcher Tabs
+      document.getElementById('nav-conv').addEventListener('click', () => switchModule('convolution'));
+      document.getElementById('nav-fourier').addEventListener('click', () => switchModule('fourier'));
+
+      // Language Switcher
+      document.getElementById('btn-lang-toggle').addEventListener('click', () => {
+        setLanguage(state.lang === 'en' ? 'pt' : 'en');
+      });
+
+      // Theme Buttons
+      document.querySelectorAll('.theme-btn').forEach((b) => {
+        b.addEventListener('click', () => {
+          const theme = b.getAttribute('data-theme');
+          setTheme(theme);
+        });
+      });
+
+      // 2x Line Thickness Button
+      document.getElementById('btn-thick').addEventListener('click', () => {
+        state.thickLines = !state.thickLines;
+        document.getElementById('btn-thick').classList.toggle('active', state.thickLines);
+        updateScene3D();
+      });
+
+      // Convolution Slider
+      const slider = document.getElementById('t-slider');
+      slider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        if (state.step === 1) state.tauSweep = val;
+        else if (state.step === 2) state.flipAngle = Math.max(0, Math.min(Math.PI, val));
+        else state.t = val;
+        updateSliderBadge();
+        updateNotebookUI(false);
+        updateScene3D();
+      });
+
+      // Fourier Harmonics Slider
+      const fourierSlider = document.getElementById('fourier-n-slider');
+      fourierSlider.addEventListener('input', (e) => {
+        state.fourierHarmonics = parseInt(e.target.value);
+        document.getElementById('fourier-readout-badge').textContent = `N = ${state.fourierHarmonics} (T₀=${state.fourierT0.toFixed(1)})`;
+        calculateFourierData();
+        updateNotebookUI(false);
+        updateScene3D();
+      });
+
+      // Fourier Period Toggle Button
+      document.getElementById('btn-fourier-period').addEventListener('click', () => {
+        const periods = [1.0, 2.0, 3.0, 4.0];
+        const curIdx = periods.indexOf(state.fourierT0);
+        state.fourierT0 = periods[(curIdx + 1) % periods.length];
+        document.getElementById('btn-fourier-period').textContent = `T₀: ${state.fourierT0.toFixed(1)}`;
+        document.getElementById('fourier-readout-badge').textContent = `N = ${state.fourierHarmonics} (T₀=${state.fourierT0.toFixed(1)})`;
+        calculateFourierData();
+        updateNotebookUI(false);
+        updateScene3D();
+      });
+
+      // Play/Pause Button
+      const playBtn = document.getElementById('btn-play');
+      playBtn.addEventListener('click', () => {
+        if (state.activeModule === 'convolution') {
+          state.isPlaying = !state.isPlaying;
+          document.getElementById('icon-play').classList.toggle('hidden', state.isPlaying);
+          document.getElementById('icon-pause').classList.toggle('hidden', !state.isPlaying);
+          document.getElementById('lbl-play').textContent = state.isPlaying ? t('pause') : t('play');
+        } else {
+          state.fourierIsPlaying = !state.fourierIsPlaying;
+          document.getElementById('icon-play').classList.toggle('hidden', state.fourierIsPlaying);
+          document.getElementById('icon-pause').classList.toggle('hidden', !state.fourierIsPlaying);
+          document.getElementById('lbl-play').textContent = state.fourierIsPlaying ? t('pause') : t('play');
+        }
+      });
+
+      // Sequence Mode
+      document.getElementById('btn-seq-mode').addEventListener('click', () => {
+        state.seqMode = !state.seqMode;
+        document.getElementById('btn-seq-mode').classList.toggle('active', state.seqMode);
+        if (state.seqMode) {
+          state.isPlaying = true;
+          setStep(1, true);
+        }
+      });
+
+      // Commutative Toggle
+      document.getElementById('btn-commute').addEventListener('click', () => {
+        state.isCommuted = !state.isCommuted;
+        document.getElementById('btn-commute').classList.toggle('active', state.isCommuted);
+        updateNotebookUI(false);
+        updateScene3D();
+      });
+
+      // Waterfall Slices Toggle
+      document.getElementById('btn-waterfall').addEventListener('click', () => {
+        state.showWaterfall = !state.showWaterfall;
+        document.getElementById('btn-waterfall').classList.toggle('opacity-50', !state.showWaterfall);
+        updateScene3D();
+      });
+
+      // Expand Stage on Mobile
+      document.getElementById('btn-expand-stage').addEventListener('click', () => {
+        document.body.classList.toggle('stage-expanded');
+        handleResize();
+      });
+
+      // Rewatch Handwriting
+      document.getElementById('btn-rewatch-write').addEventListener('click', () => {
+        updateNotebookUI(true);
+      });
+
+      // Reset Camera
+      document.getElementById('btn-reset-cam').addEventListener('click', () => {
+        camOrbit.autoOrient = true;
+        if (state.activeModule === 'convolution') {
+          camOrbit.targetTheta = -0.62;
+          camOrbit.targetPhi = 1.05;
+          camOrbit.targetRadius = 13.2;
+          camOrbit.target = { x: 1.25, y: 0.15, z: 2.0 };
+        } else {
+          const data = state.fourierCalculated || calculateFourierData();
+          camOrbit.targetTheta = -0.72;
+          camOrbit.targetPhi = 1.08;
+          camOrbit.targetRadius = 15.5;
+          camOrbit.target = { x: 1.25 * data.T0, y: 0.0, z: data.N * 0.4 };
+        }
+      });
+
+      // Fullscreen
+      document.getElementById('btn-fullscreen').addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      });
+
+      window.addEventListener('resize', handleResize);
+
+      // Hash Routing Listener
+      window.addEventListener('hashchange', () => {
+        const hash = window.location.hash.replace('#', '');
+        if (hash === 'fourier' && state.activeModule !== 'fourier') {
+          switchModule('fourier');
+        } else if (hash === 'convolution' && state.activeModule !== 'convolution') {
+          switchModule('convolution');
+        }
+      });
+    }
+
+    // ============================================================================
+    // 13. MAIN ANIMATION LOOP (120 FPS / REFRESH-RATE BOUND)
+    // ============================================================================
+    let frameCounter = 0;
+    let step2PauseFrames = 0;
+
+    function animateLoop() {
+      requestAnimationFrame(animateLoop);
+
+      if (state.activeModule === 'convolution' && state.isPlaying) {
+        const slider = document.getElementById('t-slider');
+        if (state.step === 1) {
+          state.tauSweep += 0.038;
+          if (state.tauSweep > 5.5) {
+            if (state.seqMode) setStep(2, true);
+            else state.tauSweep = -3.2;
+          }
+          slider.value = state.tauSweep;
+        } else if (state.step === 2) {
+          if (state.flipAngle < Math.PI) {
+            const norm = state.flipAngle / Math.PI;
+            const speed = 0.014 + 0.026 * Math.sin(Math.max(0.08, Math.min(0.92, norm)) * Math.PI);
+            state.flipAngle = Math.min(Math.PI, state.flipAngle + speed);
+          } else {
+            step2PauseFrames++;
+            if (step2PauseFrames > 40) {
+              step2PauseFrames = 0;
+              if (state.seqMode) {
+                state.t = -2.2;
+                setStep(3, true);
+              } else {
+                state.flipAngle = 0;
+              }
+            }
+          }
+          slider.value = state.flipAngle;
+        } else if (state.step === 3 || state.step === 4) {
+          state.t += 0.024;
+          if (state.t > 5.8) {
+            if (state.seqMode && state.step === 3) {
+              state.t = -2.2;
+              setStep(4, true);
+            } else if (state.seqMode && state.step === 4) {
+              setStep(1, true);
+            } else {
+              state.t = -2.2;
+            }
+          }
+          slider.value = state.t;
+        }
+
+        updateSliderBadge();
+        frameCounter++;
+        if (frameCounter % 4 === 0 && !handwritingTimer) {
+          updateNotebookUI(false);
+        }
+      }
+
+      updateScene3D();
+    }
+
+    // ============================================================================
+    // 14. WINDOW INITIALIZATION
+    // ============================================================================
+    window.onload = function () {
+      init3DStage();
+      setTheme(state.theme);
+      setLanguage(state.lang);
+
+      initMathKeyboard();
+      initUIEvents();
+
+      // Check initial hash route
+      const initialHash = window.location.hash.replace('#', '');
+      if (initialHash === 'fourier') {
+        switchModule('fourier');
+      } else {
+        switchModule('convolution');
+        setStep(4, false);
+      }
+
+      animateLoop();
+    };
+  </script>
+</body>
+</html>
