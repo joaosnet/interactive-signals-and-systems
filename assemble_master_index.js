@@ -205,7 +205,7 @@ replaceBetween(
 // 9. Slider Row
 replaceBetween(
   '<!-- Linha do Slider t + Botão Play/Pause + Modo Sequência 1->4 + Comutar -->',
-  '</section>\n\n      <!-- Área Rolável Principal',
+  '</section>\n\n      <!-- Área Rolável Principal: Caderno Analítico Manual + Exemplos + Editor com Teclado Matemático -->',
   `<!-- Linha do Slider t + Botão Play/Pause + Modo Sequência 1->4 + Comutar -->
         <div id="conv-slider-row" class="flex items-center gap-1.5">
           <button id="btn-play" type="button" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1 flex-shrink-0 text-white shadow-sm" style="background: var(--c-conv)" title="Play / Pause (Space)">
@@ -239,7 +239,10 @@ replaceBetween(
             </div>
             <input id="fourier-n-slider" type="range" min="1" max="25" step="1" value="7" class="w-full" />
           </div>
-        </div>`,
+        </div>
+      </section>
+
+      <!-- Main Scrollable Panel: Didactic Notebook + Presets Gallery + Math Keyboard Editor -->`,
   'Sliders row'
 );
 
