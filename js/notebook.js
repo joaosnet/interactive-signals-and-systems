@@ -35,11 +35,11 @@ function buildNotebookLinesFourier(calc) {
         latex: repLatex
       },
       {
-        label: isEn ? '1.2 Fundamental Period and Angular Frequency:' : '1.2 Período Fundamental e Frequência Angular:',
+        label: isEn ? '1.2 Fundamental Period and Frequency:' : '1.2 Período e Frequência Fundamental:',
         latex: `T_0 = ${T0Str}\\text{ s}, \\quad \\omega_0 = \\frac{2\\pi}{T_0} = ${w0Str}\\text{ rad/s}, \\quad f_0 = ${(1.0 / calc.T0).toFixed(2)}\\text{ Hz}`
       },
       {
-        label: isEn ? '1.3 Average Value (DC Component a₀):' : '1.3 Nível Médio Contínuo (Componente DC a₀):',
+        label: isEn ? '1.3 DC Level (Average a₀):' : '1.3 Nível Médio Contínuo a₀:',
         latex: `a_0 = \\frac{1}{T_0} \\int_{0}^{T_0} f(t)\\,dt = ${a0Str}`
       }
     ];
@@ -94,17 +94,17 @@ function buildNotebookLinesFourier(calc) {
 
     return [
       {
-        label: isEn ? '2.1 Symmetry Classification:' : '2.1 Análise de Paridade e Simetrias:',
+        label: isEn ? '2.1 Symmetry Classification:' : '2.1 Classificação de Simetria:',
         latex: symLatex
       },
       {
-        label: isEn ? '2.2 Harmonic Simplifications:' : '2.2 Simplificações nos Coeficientes:',
+        label: isEn ? '2.2 Harmonic Vanishing:' : '2.2 Coeficientes Nulos:',
         latex: symExpl
       },
       {
-        label: isEn ? '2.3 Dirichlet Conditions:' : '2.3 Verificação das Condições de Dirichlet:',
+        label: isEn ? '2.3 Dirichlet Conditions:' : '2.3 Condições de Dirichlet:',
         latex: isEn
-          ? '\\int_0^{T_0} |f(t)|\\,dt < \\infty \\quad (\\text{Absolutely integrable, bounded variations})'
+          ? '\\int_0^{T_0} |f(t)|\\,dt < \\infty \\quad (\\text{Abs. integrable in period})'
           : '\\int_0^{T_0} |f(t)|\\,dt < \\infty \\quad (\\text{Absolutamente integrável no período})'
       }
     ];
@@ -123,15 +123,15 @@ function buildNotebookLinesFourier(calc) {
 
     return [
       {
-        label: isEn ? '3.1 Harmonic Spectrum Synthesis Sample:' : '3.1 Amostra do Espectro Harmônico:',
+        label: isEn ? '3.1 Harmonic Spectrum Sample:' : '3.1 Amostra do Espectro Harmônico:',
         latex: `\\begin{aligned} ${sampleRows} \\end{aligned}`
       },
       {
-        label: isEn ? '3.2 Form Conversion Formulas:' : '3.2 Relação de Conversão entre as Formas:',
+        label: isEn ? '3.2 Form Conversions:' : '3.2 Relação entre Formas:',
         latex: 'C_n = \\sqrt{a_n^2 + b_n^2}, \\quad \\theta_n = \\operatorname{atan2}(-b_n, a_n), \\quad D_n = \\frac{a_n - j b_n}{2} = \\frac{C_n}{2}e^{j\\theta_n}'
       },
       {
-        label: isEn ? '3.3 Parseval\'s Power and Efficiency:' : '3.3 Teorema de Parseval e Eficiência de Energia:',
+        label: isEn ? '3.3 Parseval Power & Efficiency:' : '3.3 Potência e Eficiência de Parseval:',
         latex: `P_{\\text{total}} = ${calc.totalPower.toFixed(3)}\\text{ W}, \\; P_N = ${calc.harmonicPower.toFixed(3)}\\text{ W} \\implies \\eta = \\mathbf{${calc.efficiency.toFixed(1)}\\%}`
       }
     ];
@@ -140,15 +140,15 @@ function buildNotebookLinesFourier(calc) {
   // Step 4
   return [
     {
-      label: isEn ? '4.1 Truncated Fourier Reconstruction Formula:' : '4.1 Fórmula de Reconstrução Parcial S_N(t):',
+      label: isEn ? '4.1 Truncated Series S_N(t):' : '4.1 Série Truncada S_N(t):',
       latex: `S_N(t) = a_0 + \\sum_{n=1}^{${calc.harmonics.length}} C_n \\cos(n\\omega_0 t + \\theta_n)`
     },
     {
-      label: isEn ? '4.2 Real-Time Point Evaluation at t:' : '4.2 Avaliação Instantânea no Ponto t:',
+      label: isEn ? '4.2 Instantaneous Value at t:' : '4.2 Valor Instantâneo em t:',
       latex: `t = ${tNow.toFixed(2)} \\implies S_{${calc.harmonics.length}}(${tNow.toFixed(2)}) = ${recVal.toFixed(4)}, \\quad f(${tNow.toFixed(2)}) = ${origVal.toFixed(4)}`
     },
     {
-      label: isEn ? '4.3 Mean Square Error & Gibbs Phenomenon:' : '4.3 Erro Médio Quadrático (MSE) e Efeito Gibbs:',
+      label: isEn ? '4.3 Mean Squared Error (MSE):' : '4.3 Erro Médio Quadrático (MSE):',
       latex: `\\text{MSE}_N = \\frac{1}{T_0}\\int_0^{T_0} |f(t) - S_N(t)|^2 dt \\approx ${calc.mse.toFixed(5)}`
     }
   ];
@@ -175,19 +175,19 @@ function buildNotebookLinesConvolution(sig) {
     const valM = sig.fnMoving(tauNow);
     return [
       {
-        label: isEn ? '1.1 Definition of Convolution Integral:' : '1.1 Definição da Integral de Convolução:',
+        label: isEn ? '1.1 Convolution Integral:' : '1.1 Integral de Convolução:',
         latex: `y(t) = ${fSym}(t) \\ast ${mSym}(t) = \\int_{-\\infty}^{+\\infty} ${fSym}(\\tau)\\,${mSym}(t-\\tau)\\,d\\tau`
       },
       {
-        label: isEn ? '1.2 Independent Variable Substitution (t → τ):' : '1.2 Mudança de Variável Independente (t → τ):',
+        label: isEn ? '1.2 Domain Transformation (t → τ):' : '1.2 Mudança de Domínio (t → τ):',
         latex: `${fSym}(\\tau) = ${exprToLatex(sig.preset.exprX, '\\tau')}, \\quad \\tau \\in [${fAStr},\\, ${fBStr}]`
       },
       {
-        label: isEn ? '1.3 Moving Kernel in Auxiliary Domain τ:' : '1.3 Segundo Sinal no Domínio Auxiliar τ:',
+        label: isEn ? '1.3 Moving Kernel in τ:' : '1.3 Segundo Sinal no Domínio τ:',
         latex: `${mSym}(\\tau) = ${exprToLatex(sig.preset.exprH, '\\tau')}, \\quad \\tau \\in [${mAStr},\\, ${mBStr}]`
       },
       {
-        label: isEn ? `1.4 Laser Sweep at τ = ${tauNow.toFixed(2)}:` : `1.4 Amostragem do Feixe em τ = ${tauNow.toFixed(2)}:`,
+        label: isEn ? `1.4 Value at τ = ${tauNow.toFixed(2)}:` : `1.4 Valor no Instante τ = ${tauNow.toFixed(2)}:`,
         latex: `${fSym}(${tauNow.toFixed(2)}) = ${valF.toFixed(3)}, \\quad ${mSym}(${tauNow.toFixed(2)}) = ${valM.toFixed(3)}`
       }
     ];
@@ -198,21 +198,21 @@ function buildNotebookLinesConvolution(sig) {
     const negB = Number.isFinite(mA) ? String(-mA) : '+\\infty';
     return [
       {
-        label: isEn ? '2.1 Time-Inversion Choice for Moving Kernel:' : '2.1 Sinal que Sofre Reflexão Temporal:',
+        label: isEn ? '2.1 Time Reflection:' : '2.1 Reflexão Temporal:',
         latex: isEn
           ? `\\text{Keep } ${fSym}(\\tau) \\text{ fixed and mirror } ${mSym}(\\tau) \\to ${mSym}(-\\tau)`
           : `\\text{Mantemos } ${fSym}(\\tau) \\text{ fixo e espelhamos } ${mSym}(\\tau) \\to ${mSym}(-\\tau)`
       },
       {
-        label: isEn ? '2.2 Algebraic Substitution (τ → -τ):' : '2.2 Substituição Algébrica (τ → -τ):',
+        label: isEn ? '2.2 Argument Inversion (τ → -τ):' : '2.2 Inversão de Sinal (τ → -τ):',
         latex: `${mSym}(-\\tau) = ${exprToLatex(sig.preset.exprH, '(-\\tau)')}`
       },
       {
-        label: isEn ? '2.3 Inversion of Boundary Inequality:' : '2.3 Inversão dos Limites da Desigualdade:',
+        label: isEn ? '2.3 Domain Inversion:' : '2.3 Inversão do Suporte Temporal:',
         latex: `${mAStr} \\le -\\tau \\le ${mBStr} \\iff ${negA} \\le \\tau \\le ${negB}`
       },
       {
-        label: isEn ? '2.4 3D Spatial Rotation Phase:' : '2.4 Rotação Espacial no Eixo Vertical (τ = 0):',
+        label: isEn ? '2.4 Rotation Phase:' : '2.4 Rotação de Reflexão:',
         latex: `\\theta = ${degNow}^\\circ \\; (${(state.flipAngle / Math.PI).toFixed(2)}\\pi\\text{ rad})`
       }
     ];
@@ -225,15 +225,15 @@ function buildNotebookLinesConvolution(sig) {
     const symRight = Number.isFinite(mA) ? (mA === 0 ? 't' : `${-mA}+t`) : '+\\infty';
     return [
       {
-        label: isEn ? '3.1 Rigid Time Translation by t:' : '3.1 Deslocamento Temporal Rígido por t:',
+        label: isEn ? '3.1 Time Shift by t:' : '3.1 Translação Temporal por t:',
         latex: `${mSym}(-\\tau) \\to ${mSym}(t-\\tau) = ${exprToLatex(sig.preset.exprH, '(t-\\tau)')}`
       },
       {
-        label: isEn ? '3.2 Mobile Parameterized Boundaries in τ:' : '3.2 Dedução dos Limites Móveis em Função de t:',
+        label: isEn ? '3.2 Mobile Boundaries in τ:' : '3.2 Limites Móveis em Função de t:',
         latex: `${mAStr} \\le t - \\tau \\le ${mBStr} \\iff ${symLeft} \\le \\tau \\le ${symRight}`
       },
       {
-        label: isEn ? `3.3 Numerical Edge Positions (for t = ${tNow.toFixed(2)}):` : `3.3 Posição Numérica das Bordas (para t = ${tNow.toFixed(2)}):`,
+        label: isEn ? `3.3 Numerical Edge Positions (t = ${tNow.toFixed(2)}):` : `3.3 Posição dos Limites (t = ${tNow.toFixed(2)}):`,
         latex: `\\tau_{\\text{inf}} = ${bLeft}, \\quad \\tau_{\\text{sup}} = ${bRight}`
       }
     ];
@@ -253,21 +253,21 @@ function buildNotebookLinesConvolution(sig) {
 
   return [
     {
-      label: isEn ? `4.1 Active Regime for t = ${tNow.toFixed(2)}:` : `4.1 Região Ativa para t = ${tNow.toFixed(2)}:`,
+      label: isEn ? `4.1 Active Region for t = ${tNow.toFixed(2)}:` : `4.1 Região Ativa para t = ${tNow.toFixed(2)}:`,
       latex: `\\text{${isEn ? 'Current: ' : 'Intervalo: '}} ${activeRegion.range}`
     },
     {
-      label: isEn ? '4.2 Non-Zero Product Integration Limits in τ:' : '4.2 Limites de Integração da Interseção em τ:',
+      label: isEn ? '4.2 Product Integral in τ:' : '4.2 Integral do Produto em τ:',
       latex: hasOverlap
         ? `y(${tNow.toFixed(2)}) = \\int_{${lowStr}}^{${highStr}} ${fSym}(\\tau)\\,${mSym}(${tNow.toFixed(2)}-\\tau)\\,d\\tau`
         : (isEn ? `\\text{Empty intersection } (\\emptyset) \\implies y(${tNow.toFixed(2)}) = 0` : `\\text{Interseção vazia } (\\emptyset) \\implies y(${tNow.toFixed(2)}) = 0`)
     },
     {
-      label: isEn ? '4.3 Closed-Form Analytical Expression:' : '4.3 Expressão Analítica Deduzida:',
+      label: isEn ? '4.3 Analytical Expression:' : '4.3 Expressão Analítica Deduzida:',
       latex: `${isEn && activeRegion.latexEn ? activeRegion.latexEn : activeRegion.latex}`
     },
     {
-      label: isEn ? '4.4 Numerical Evaluation of Shaded Area:' : '4.4 Avaliação Numérica da Área Sombreada:',
+      label: isEn ? '4.4 Resulting Convolution y(t):' : '4.4 Resposta da Convolução y(t):',
       latex: `\\implies y(${tNow.toFixed(2)}) = ${yNow.toFixed(4)}`
     }
   ];

@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\i18n.js": {
-    "mtime": 1793375951.4864893,
-    "ast_hash": "6bb8203f1efe69b526053ccb393022c2",
+    "mtime": 1793382032.14079,
+    "ast_hash": "a22a6717f9bb181c07bf1aa314dbce7f",
     "semantic_hash": ""
   },
   "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\math-engine.js": {
@@ -45,8 +45,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\notebook.js": {
-    "mtime": 1793373967.191458,
-    "ast_hash": "905342dd5c02381cb78c216275a9cc36",
+    "mtime": 1793382105.9216735,
+    "ast_hash": "4fe0436a90ed3028ecf6e81db7845b31",
     "semantic_hash": ""
   },
   "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\presets.js": {
@@ -55,8 +55,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\stage-3d.js": {
-    "mtime": 1793379915.874487,
-    "ast_hash": "279cb9fae5a0b8e129a8548fe1e76143",
+    "mtime": 1793381810.2688498,
+    "ast_hash": "b22de6aa5bbf819720fe7701fd72785d",
     "semantic_hash": ""
   },
   "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\state.js": {
@@ -65,13 +65,13 @@
     "semantic_hash": ""
   },
   "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\ui.js": {
-    "mtime": 1793380665.3252215,
-    "ast_hash": "a2d7965c838148e10a0e793d1444b57b",
+    "mtime": 1793384269.5150118,
+    "ast_hash": "e1bea9683360db3439689ddc9fea106e",
     "semantic_hash": ""
   },
   "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\index.html": {
-    "mtime": 1793380247.8481994,
-    "ast_hash": "a672cdec9d820666033b14ed84f2c660",
+    "mtime": 1793384301.0778089,
+    "ast_hash": "75d30e4249ccdd609c60bcd4268fec85",
     "semantic_hash": ""
   },
   "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\README.md": {
@@ -102,6 +102,16 @@
   "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\assets\\og-banner.svg": {
     "mtime": 1793371094.8604505,
     "ast_hash": "6c5da638dd9e53ef4503e519d4740a03",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\.agents\\rules\\graphify.md": {
+    "mtime": 1793369106.46103,
+    "ast_hash": "a0e4d192b9e2e17256124dbfc8e24e6a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\.agents\\workflows\\graphify.md": {
+    "mtime": 1793369106.46304,
+    "ast_hash": "84de69efd46ab0b8430393bd4188f8f2",
     "semantic_hash": ""
   }
 }

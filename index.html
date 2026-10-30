@@ -268,7 +268,7 @@
         <div class="px-2.5 py-2 bg-[var(--bg-panel)] border-b border-[var(--border-subtle)] flex items-center gap-2 flex-shrink-0">
           <span id="hud-var-prefix" class="font-mono-code font-extrabold text-xs sm:text-sm flex-shrink-0" style="color: var(--c-x1)">x(t) =</span>
           <div class="flex-1 min-w-0 relative">
-            <math-field id="hud-mathfield" virtual-keyboard-mode="off" class="w-full px-2.5 py-1 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-control)] text-primary text-sm"></math-field>
+            <math-field id="hud-mathfield" virtual-keyboard-mode="auto" class="w-full px-2.5 py-1 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-control)] text-primary text-sm"></math-field>
             <input id="hud-free-input" type="text" class="hidden" aria-hidden="true" />
           </div>
         </div>
@@ -276,12 +276,12 @@
         <!-- Abas Enxutas: Teclado Completo vs Formas & Sliders -->
         <nav class="px-2.5 py-1 bg-[var(--bg-card)] flex items-center justify-between gap-1.5 border-b border-[var(--border-subtle)] text-[11px] flex-shrink-0" role="tablist">
           <div class="flex items-center gap-1">
-            <button id="hud-tab-free-btn" type="button" class="hud-tab-btn seg-btn active px-2.5 py-1 rounded-lg font-semibold border text-[11px] flex items-center gap-1" role="tab" aria-selected="true" aria-controls="hud-pane-free">
-              <span>⌨️</span>
+            <button id="hud-tab-free-btn" type="button" class="hud-tab-btn seg-btn active px-2.5 py-1 rounded-lg font-semibold border text-[11px] flex items-center gap-1.5" role="tab" aria-selected="true" aria-controls="hud-pane-free">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="14" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/><line x1="8" y1="16" x2="16" y2="16"/></svg>
               <span id="hud-lbl-tab-free">Teclado MathLive</span>
             </button>
-            <button id="hud-tab-param-btn" type="button" class="hud-tab-btn seg-btn px-2.5 py-1 rounded-lg font-semibold border text-[11px] flex items-center gap-1" role="tab" aria-selected="false" aria-controls="hud-pane-param">
-              <span>🎚️</span>
+            <button id="hud-tab-param-btn" type="button" class="hud-tab-btn seg-btn px-2.5 py-1 rounded-lg font-semibold border text-[11px] flex items-center gap-1.5" role="tab" aria-selected="false" aria-controls="hud-pane-param">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
               <span id="hud-lbl-tab-param">Formas &amp; Sliders</span>
             </button>
           </div>
@@ -437,7 +437,7 @@
       <!-- 1. Cabeçalho Principal: Barra Superior Rolável + Título + Configurações Animadas + Segmented Control -->
       <header class="p-2 sm:p-2.5 border-b border-[var(--border-subtle)] flex flex-col gap-2 flex-shrink-0 bg-[var(--bg-card)]">
 
-        <!-- Barra Superior Responsiva com Scroll Horizontal (Sem título "Acessibilidade") -->
+        <!-- Barra Superior Responsiva com Scroll Horizontal e Engrenagem no Final do Fluxo -->
         <div id="a11y-bar" role="region" aria-label="Barra de ferramentas e acessibilidade" aria-live="polite" class="a11y-scroll-bar flex flex-nowrap items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-1.5 border-b border-[var(--border-subtle)] text-[10px]">
           <div class="flex items-center gap-1 font-mono-code flex-shrink-0">
             <button id="btn-font-dec" type="button" class="a11y-btn ui-control px-1.5 py-0.5 rounded font-bold" title="Diminuir tamanho da fonte" aria-label="Diminuir tamanho da fonte">A−</button>
@@ -447,46 +447,46 @@
 
           <span class="text-mut opacity-40 select-none flex-shrink-0">|</span>
 
-          <!-- Botão Toggle de Tema com Animação de Transição -->
-          <button id="btn-theme-cycle" type="button" class="a11y-btn theme-cycle-btn ui-control px-2 py-0.5 rounded font-semibold flex items-center gap-1 flex-shrink-0" title="Alternar Tema Visual (Projetor / Escuro / Claro)">
-            <span id="theme-cycle-icon" class="theme-icon-anim inline-block text-xs">📽️</span>
+          <!-- Botão Toggle de Tema com Ícone SVG -->
+          <button id="btn-theme-cycle" type="button" class="a11y-btn theme-cycle-btn ui-control px-2 py-0.5 rounded font-semibold flex items-center gap-1.5 flex-shrink-0" title="Alternar Tema Visual (Projetor / Escuro / Claro)">
+            <span id="theme-cycle-icon" class="theme-icon-anim inline-flex items-center justify-center">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><circle cx="12" cy="10" r="3"/></svg>
+            </span>
             <span id="lbl-theme-cycle">Projetor</span>
           </button>
 
-          <!-- Alto Contraste e Redução de Movimento -->
+          <!-- Alto Contraste e Redução de Movimento com SVGs -->
           <button id="btn-a11y-contrast" type="button" class="a11y-btn ui-control px-1.5 py-0.5 rounded font-semibold flex items-center gap-1 flex-shrink-0" title="Alternar Alto Contraste" aria-label="Alternar Alto Contraste" aria-pressed="false">
-            <span aria-hidden="true" class="text-xs">◐</span>
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18V4c4.41 0 8 3.59 8 8s-3.59 8-8 8z"/></svg>
             <span id="lbl-a11y-contrast">Contraste</span>
           </button>
           <button id="btn-a11y-motion" type="button" class="a11y-btn ui-control px-1.5 py-0.5 rounded font-semibold flex items-center gap-1 flex-shrink-0" title="Reduzir/Pausar Movimento" aria-label="Reduzir/Pausar Movimento" aria-pressed="false">
-            <span aria-hidden="true" class="text-xs">⏸</span>
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="10" y1="15" x2="10" y2="9"/><line x1="14" y1="15" x2="14" y2="9"/></svg>
             <span id="lbl-a11y-motion">Movimento</span>
           </button>
 
-          <!-- Alternar Idioma na Barra -->
+          <!-- Alternar Idioma na Barra com SVG -->
           <button id="btn-lang-toggle" type="button" title="Switch Language / Alternar Idioma" class="a11y-btn ui-control px-2 py-0.5 rounded font-bold font-mono-code flex items-center gap-1 flex-shrink-0">
-            <span aria-hidden="true">🌐</span>
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             <span id="lang-btn-text">EN</span>
+          </button>
+
+          <span class="text-mut opacity-40 select-none flex-shrink-0">|</span>
+
+          <!-- Engrenagem Mecânica Técnica (Último Ícone da Barra no Fluxo de Rolagem) -->
+          <button id="btn-settings-toggle" type="button" popovertarget="settings-popover" title="Configurações e Personalização" aria-label="Configurações e Personalização" class="settings-gear-btn ui-control p-1 rounded-lg border text-sec flex items-center justify-center flex-shrink-0">
+            <svg class="settings-gear-icon w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
           </button>
         </div>
 
-        <!-- Barra de Título + Botão de Configurações com Animação Indicativa de Customização -->
-        <div class="flex items-center justify-between gap-1.5">
-          <div class="flex items-center gap-1.5 min-w-0">
-            <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background: var(--c-conv)"></div>
-            <span class="text-xs font-bold tracking-tight truncate" id="app-heading">Sinais &amp; Sistemas 3D</span>
-          </div>
-
-          <!-- Popover de Configurações, "Mostrar" e Atalhos -->
-          <div class="relative flex-shrink-0">
-            <button id="btn-settings-toggle" type="button" title="Personalizar Interface, Seções Visíveis, Tema e Idioma" class="settings-cta-btn ui-control px-2 py-1 rounded-lg border text-[10px] font-bold flex items-center gap-1">
-              <span class="settings-gear-icon inline-block text-xs">⚙️</span>
-              <span id="lbl-customize-btn">Personalizar</span>
-              <span class="settings-pulse-dot" aria-hidden="true"></span>
-            </button>
-
-            <div id="settings-popover" class="hidden absolute right-0 mt-1.5 w-72 ui-surface backdrop-blur-xl border rounded-xl p-3 shadow-2xl z-50 flex flex-col gap-2.5 text-xs">
-              <div id="lbl-settings-title" class="text-[10px] font-bold uppercase tracking-wider text-mut pb-1 border-b border-[var(--border-subtle)]">Personalizar &amp; Configurações</div>
+        <!-- Popover Nativo de Configurações (Modern Web Guidance) -->
+        <div id="settings-popover" popover="auto" class="settings-popover hidden ui-surface backdrop-blur-xl border rounded-xl p-3 shadow-2xl z-50 flex flex-col gap-2.5 text-xs">
+              <div id="lbl-settings-title" class="text-[10px] font-bold uppercase tracking-wider text-mut pb-1 border-b border-[var(--border-subtle)] flex items-center justify-between">
+                <span>Personalizar &amp; Configurações</span>
+              </div>
 
               <!-- Mostrar no Painel (Movido para dentro de Configurações) -->
               <div class="flex flex-col gap-1">
@@ -541,7 +541,11 @@
                 <div class="flex justify-between"><span>Alt R:</span><kbd id="lbl-sc-motion" class="font-mono-code font-bold">Movimento</kbd></div>
               </div>
             </div>
-          </div>
+
+        <!-- Barra de Título (Sem poluição de botões) -->
+        <div class="flex items-center gap-1.5 min-w-0 py-0.5">
+          <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background: var(--c-conv)"></div>
+          <span class="text-xs font-bold tracking-tight truncate" id="app-heading">Sinais &amp; Sistemas 3D</span>
         </div>
 
         <!-- SEGMENTED CONTROL: Pílula Deslizante de Alto Destaque -->

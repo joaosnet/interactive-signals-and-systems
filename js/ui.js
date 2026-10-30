@@ -253,7 +253,12 @@ export function updateThemeCycleButtonUI(animateIcon = false) {
   const isEn = state.lang === 'en';
   const th = state.theme || 'projector';
 
-  const iconMap = { projector: '📽️', dark: '🌙', light: '☀️' };
+  const svgIcons = {
+    projector: `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><circle cx="12" cy="10" r="3"/></svg>`,
+    dark: `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
+    light: `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`
+  };
+
   const labelMap = isEn
     ? { projector: 'Projector', dark: 'Dark', light: 'Light' }
     : { projector: 'Projetor', dark: 'Escuro', light: 'Claro' };
@@ -265,7 +270,7 @@ export function updateThemeCycleButtonUI(animateIcon = false) {
       iconEl.classList.add('theme-switching');
       setTimeout(() => iconEl.classList.remove('theme-switching'), 440);
     }
-    iconEl.textContent = iconMap[th] || '📽️';
+    iconEl.innerHTML = svgIcons[th] || svgIcons.projector;
   }
   if (lblEl) {
     lblEl.textContent = labelMap[th] || labelMap.projector;
@@ -474,8 +479,9 @@ export function renderPresetGallery() {
         </div>
         <div class="create-card-math text-[10px] text-secondary truncate mt-0.5"></div>
       </div>
-      <button type="button" class="ctrl-pill px-2.5 py-1.5 rounded-lg text-[10px] font-bold shrink-0" style="border-color: var(--c-x1); color: var(--c-x1)">
-        ✎ ${isEn ? 'Edit f(t)' : 'Editar f(t)'}
+      <button type="button" class="ctrl-pill px-2.5 py-1.5 rounded-lg text-[10px] font-bold shrink-0 flex items-center gap-1" style="border-color: var(--c-x1); color: var(--c-x1)">
+        <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+        <span>${isEn ? 'Edit f(t)' : 'Editar f(t)'}</span>
       </button>
     `;
     const mathEl = createCard.querySelector('.create-card-math');
@@ -566,11 +572,17 @@ export function renderPresetGallery() {
     <div class="grid grid-cols-2 gap-1.5">
       <button type="button" id="gallery-btn-edit-x" class="ctrl-pill px-2 py-1.5 rounded-lg text-left flex items-center justify-between gap-1 hover:border-emerald-400/60 transition-all">
         <span class="create-math-x text-[10px] truncate"></span>
-        <span class="text-[10px] font-bold shrink-0" style="color: var(--c-x1)">✎ x(t)</span>
+        <span class="text-[10px] font-bold shrink-0 flex items-center gap-1" style="color: var(--c-x1)">
+          <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          <span>x(t)</span>
+        </span>
       </button>
       <button type="button" id="gallery-btn-edit-h" class="ctrl-pill px-2 py-1.5 rounded-lg text-left flex items-center justify-between gap-1 hover:border-pink-400/60 transition-all">
         <span class="create-math-h text-[10px] truncate"></span>
-        <span class="text-[10px] font-bold shrink-0" style="color: var(--c-x2)">✎ h(t)</span>
+        <span class="text-[10px] font-bold shrink-0 flex items-center gap-1" style="color: var(--c-x2)">
+          <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          <span>h(t)</span>
+        </span>
       </button>
     </div>
   `;
@@ -1015,6 +1027,18 @@ export function openSignalHUD(targetSignal) {
       mf.value = latexStr;
     }
     isSyncingHudMathField = false;
+
+    // Foco e abertura imediata do teclado virtual MathLive completo
+    setTimeout(() => {
+      try {
+        mf.focus();
+        if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.show === 'function') {
+          window.mathVirtualKeyboard.show();
+        }
+      } catch (err) {
+        console.warn('[MathLive] Teclado virtual:', err);
+      }
+    }, 120);
   }
 
   updateParametricHUDPreview(false);
@@ -1030,6 +1054,12 @@ export function closeSignalHUD() {
 
   document.body.classList.remove('stage-focus-active');
   document.body.classList.remove('focus-hud-open');
+
+  if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.hide === 'function') {
+    try {
+      window.mathVirtualKeyboard.hide();
+    } catch (_) {}
+  }
 
   updateScene3D();
 }
@@ -1081,6 +1111,115 @@ export function pinSignalHUD() {
   renderPresetGallery();
   updateNotebookUI(true);
   closeSignalHUD();
+}
+
+/**
+ * Rolagem horizontal fluida da barra de ferramentas/acessibilidade
+ * Suporta roda do mouse (wheel -> scrollLeft) e clique-e-arrasto (drag-to-scroll).
+ */
+export function setupA11yBarScroll(a11yBar) {
+  if (!a11yBar) return;
+
+  // 1. Mouse Wheel: converte deltaY vertical em rolagem horizontal scrollLeft
+  a11yBar.addEventListener('wheel', (e) => {
+    if (a11yBar.scrollWidth > a11yBar.clientWidth) {
+      const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+      a11yBar.scrollLeft += delta * 0.9;
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // 2. Drag-to-scroll: clique e arraste com o mouse
+  let isDown = false;
+  let startX = 0;
+  let scrollLeft = 0;
+  let hasDragged = false;
+
+  a11yBar.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    isDown = true;
+    hasDragged = false;
+    startX = e.pageX - a11yBar.offsetLeft;
+    scrollLeft = a11yBar.scrollLeft;
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    const x = e.pageX - a11yBar.offsetLeft;
+    const walk = x - startX;
+    if (Math.abs(walk) > 4) {
+      hasDragged = true;
+      a11yBar.classList.add('grabbing');
+      a11yBar.scrollLeft = scrollLeft - walk;
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!isDown) return;
+    isDown = false;
+    a11yBar.classList.remove('grabbing');
+  });
+
+  // Intercepta e previne cliques acidentais em botões caso o usuário tenha arrastado a barra
+  a11yBar.addEventListener('click', (e) => {
+    if (hasDragged) {
+      e.preventDefault();
+      e.stopPropagation();
+      hasDragged = false;
+    }
+  }, true);
+}
+
+/**
+ * Configuração dos layouts do Teclado Virtual MathLive Completo
+ * Inclui layouts padrão ('numeric', 'functions', 'symbols', 'alphabetic')
+ * mais a camada dedicada de engenharia 'Sinais'.
+ */
+export function setupMathLiveVirtualKeyboard() {
+  if (typeof window === 'undefined') return;
+
+  const configureMVK = () => {
+    if (!window.mathVirtualKeyboard) return;
+    try {
+      window.mathVirtualKeyboard.layouts = [
+        {
+          label: 'Sinais',
+          tooltip: 'Sinais & Engenharia',
+          rows: [
+            [
+              { latex: 'u(t)', insert: 'u(t)' },
+              { latex: '\\operatorname{rect}(t)', insert: '\\operatorname{rect}(t)' },
+              { latex: '\\operatorname{tri}(t)', insert: '\\operatorname{tri}(t)' },
+              { latex: '\\delta(t)', insert: '\\delta(t)' },
+              { latex: '\\operatorname{sinc}(t)', insert: '\\operatorname{sinc}(t)' },
+              { latex: 'r(t)', insert: 'r(t)' }
+            ],
+            [
+              { latex: 'e^{-t}', insert: 'e^{-t}' },
+              { latex: 'e^{-2t}u(t)', insert: 'e^{-2t}u(t)' },
+              { latex: 't', insert: 't' },
+              { latex: '\\tau', insert: '\\tau' },
+              { latex: '\\omega_0', insert: '\\omega_0' },
+              { latex: '\\pi', insert: '\\pi' }
+            ]
+          ]
+        },
+        'numeric',
+        'functions',
+        'symbols',
+        'alphabetic'
+      ];
+    } catch (err) {
+      console.warn('[MathLive] Falha ao configurar layouts personalizados:', err);
+    }
+  };
+
+  if (window.mathVirtualKeyboard) {
+    configureMVK();
+  } else {
+    window.addEventListener('DOMContentLoaded', configureMVK, { once: true });
+    window.addEventListener('load', configureMVK, { once: true });
+  }
 }
 
 export function initUIEventListeners() {
@@ -1254,19 +1393,36 @@ export function initUIEventListeners() {
     }
   });
 
-  // 10. Popover de Configurações
+  // 10. Popover de Configurações (Popover API Nativo + Fallback Gracioso - Modern Web Guidance)
   const settingsBtn = document.getElementById('btn-settings-toggle');
   const settingsPopover = document.getElementById('settings-popover');
   if (settingsBtn && settingsPopover) {
-    settingsBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      settingsPopover.classList.toggle('hidden');
-    });
-    window.addEventListener('click', (e) => {
-      if (!settingsPopover.contains(e.target) && !settingsBtn.contains(e.target)) {
-        settingsPopover.classList.add('hidden');
-      }
-    });
+    const supportsPopover = 'popover' in HTMLElement.prototype;
+    if (supportsPopover) {
+      settingsPopover.classList.remove('hidden');
+      settingsPopover.addEventListener('beforetoggle', (e) => {
+        settingsBtn.classList.toggle('active', e.newState === 'open');
+      });
+    } else {
+      settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isHidden = settingsPopover.classList.contains('hidden');
+        settingsPopover.classList.toggle('hidden', !isHidden);
+        settingsBtn.classList.toggle('active', isHidden);
+      });
+      window.addEventListener('click', (e) => {
+        if (!settingsPopover.contains(e.target) && !settingsBtn.contains(e.target)) {
+          settingsPopover.classList.add('hidden');
+          settingsBtn.classList.remove('active');
+        }
+      });
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !settingsPopover.classList.contains('hidden')) {
+          settingsPopover.classList.add('hidden');
+          settingsBtn.classList.remove('active');
+        }
+      });
+    }
   }
 
   // Temas (Popover + Botão Ciclista Animado na Barra de Acessibilidade)
@@ -1329,10 +1485,12 @@ export function initUIEventListeners() {
     toggleReduceMotion();
   });
 
-  // Inicializa estado visual de Acessibilidade
+  // Inicializa estado visual de Acessibilidade e Rolagem Fluida
   setFontScale(state.fontScale);
   toggleHighContrast(state.a11yHighContrast);
   toggleReduceMotion(state.a11yReduceMotion);
+  setupA11yBarScroll(document.getElementById('a11y-bar'));
+  setupMathLiveVirtualKeyboard();
 
   // 11. Filtros de Personalização de Seções ("Mostrar no Painel" dentro de Configurações)
   ['notebook', 'regions', 'gallery'].forEach(secKey => {
@@ -1372,6 +1530,14 @@ export function initUIEventListeners() {
   // Campo Unificado MathLive (<math-field id="hud-mathfield">)
   const hudMathField = document.getElementById('hud-mathfield');
   if (hudMathField) {
+    hudMathField.addEventListener('focus', () => {
+      if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.show === 'function') {
+        try {
+          window.mathVirtualKeyboard.show();
+        } catch (_) {}
+      }
+    });
+
     hudMathField.addEventListener('input', () => {
       if (isSyncingHudMathField) return;
       const rawLatex = typeof hudMathField.getValue === 'function' ? hudMathField.getValue() : (hudMathField.value || '');
@@ -1398,6 +1564,17 @@ export function initUIEventListeners() {
     hudMkbSubtabs?.classList.remove('hidden');
     hudTabFreeBtn.setAttribute('aria-selected', 'true');
     hudTabParamBtn?.setAttribute('aria-selected', 'false');
+    const mf = document.getElementById('hud-mathfield');
+    if (mf) {
+      setTimeout(() => {
+        try {
+          mf.focus();
+          if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.show === 'function') {
+            window.mathVirtualKeyboard.show();
+          }
+        } catch (_) {}
+      }, 50);
+    }
   });
 
   hudTabParamBtn?.addEventListener('click', () => {
@@ -1409,6 +1586,11 @@ export function initUIEventListeners() {
     hudMkbSubtabs?.classList.add('hidden');
     hudTabParamBtn.setAttribute('aria-selected', 'true');
     hudTabFreeBtn?.setAttribute('aria-selected', 'false');
+    if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.hide === 'function') {
+      try {
+        window.mathVirtualKeyboard.hide();
+      } catch (_) {}
+    }
     updateParametricHUDPreview(false);
   });
 

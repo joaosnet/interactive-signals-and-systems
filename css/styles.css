@@ -611,52 +611,95 @@ body.a11y-high-contrast :focus-visible {
   transform: scale(0.95);
 }
 .theme-icon-anim {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.22s ease;
 }
 .theme-icon-anim.theme-switching {
-  transform: rotate(360deg) scale(1.28);
+  transform: rotate(360deg) scale(1.22);
 }
 
-/* Animated Settings / Customize CTA Button */
-.settings-cta-btn {
-  position: relative;
-  border-color: rgba(16, 185, 129, 0.45);
-  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35);
-  animation: settingsGlowPulse 3.2s infinite ease-in-out;
+/* Scroll Horizontal da Barra Superior sem Scrollbar Visível */
+.a11y-scroll-bar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  cursor: grab;
 }
-.settings-cta-btn:hover {
+.a11y-scroll-bar.grabbing {
+  cursor: grabbing;
+  user-select: none;
+}
+.a11y-scroll-bar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mechanical Gear Settings Button (Technical Precision - /taste) */
+.settings-gear-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border-color: var(--border-subtle);
+  background: var(--bg-control);
+  color: var(--text-secondary);
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, transform 0.15s ease;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.settings-gear-btn:hover {
   border-color: var(--c-conv);
-  transform: translateY(-1px);
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  transform: translateY(-0.5px);
 }
-.settings-gear-icon {
-  display: inline-block;
-  animation: gearGentleSpin 8s linear infinite;
+.settings-gear-btn:active {
+  transform: scale(0.94);
 }
-.settings-cta-btn:hover .settings-gear-icon {
-  animation-duration: 2s;
+.settings-gear-btn .settings-gear-icon {
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.settings-pulse-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background-color: var(--c-conv);
-  box-shadow: 0 0 6px var(--c-conv);
-  animation: dotBlink 1.8s ease-in-out infinite;
+.settings-gear-btn:hover .settings-gear-icon {
+  transform: rotate(60deg);
 }
-@keyframes settingsGlowPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35); }
-  50% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.0); }
+.settings-gear-btn.active .settings-gear-icon,
+[popovertarget="settings-popover"]:is(:popover-open, .active) .settings-gear-icon {
+  transform: rotate(180deg);
+  color: var(--c-conv);
 }
-@keyframes gearGentleSpin {
-  0% { transform: rotate(0deg); }
-  20% { transform: rotate(45deg); }
-  40% { transform: rotate(0deg); }
-  100% { transform: rotate(0deg); }
+
+/* Modern Popover API & @starting-style Top-Layer Transitions (/modern-web-guidance) */
+#settings-popover {
+  margin: 0;
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
-@keyframes dotBlink {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.8); }
+#settings-popover[popover] {
+  position: fixed;
+  inset: auto;
+  top: 44px;
+  left: 8px;
+  max-height: calc(100dvh - 56px);
+  overflow-y: auto;
+  width: min(300px, calc(100vw - 16px));
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+  transition: opacity 0.18s ease-out, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), display 0.18s allow-discrete, overlay 0.18s allow-discrete;
+}
+/* Tailwind .flex sobrescreve o display:none do UA; fecha o popover de fato (senão bloqueia cliques) */
+#settings-popover[popover]:not(:popover-open) {
+  display: none !important;
+}
+#settings-popover[popover]:popover-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+@starting-style {
+  #settings-popover[popover]:popover-open {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
 }
 
 /* Floating GitHub Contribute Button */
@@ -664,12 +707,13 @@ body.a11y-high-contrast :focus-visible {
   color: var(--text-primary);
   border-color: var(--border-strong);
   text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 .github-float-btn:hover {
   border-color: var(--c-x1);
   background-color: var(--bg-hover);
   transform: translateY(-1.5px);
-  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
+  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.28);
 }
 
 /* Interactive Clickable 3D Labels (x(τ), h(t-τ), f(t)) */

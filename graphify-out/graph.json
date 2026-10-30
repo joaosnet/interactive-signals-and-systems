@@ -243,7 +243,7 @@
       "source_file": "js/app.js",
       "source_location": "L1",
       "id": "js_app_js",
-      "community": 12,
+      "community": 11,
       "norm_label": "app.js"
     },
     {
@@ -252,7 +252,7 @@
       "source_file": "js/app.js",
       "source_location": "L25",
       "id": "js_app_animationloop",
-      "community": 12,
+      "community": 11,
       "norm_label": "animationloop()"
     },
     {
@@ -261,7 +261,7 @@
       "source_file": "js/app.js",
       "source_location": "L118",
       "id": "js_app_inithash",
-      "community": 12,
+      "community": 11,
       "norm_label": "inithash"
     },
     {
@@ -333,7 +333,7 @@
       "source_file": "js/math-engine.js",
       "source_location": "L1",
       "id": "js_math_engine_js",
-      "community": 1,
+      "community": 0,
       "norm_label": "math-engine.js"
     },
     {
@@ -360,7 +360,7 @@
       "source_file": "js/math-engine.js",
       "source_location": "L27",
       "id": "js_math_engine_replacebalancedcall",
-      "community": 1,
+      "community": 0,
       "norm_label": "replacebalancedcall()"
     },
     {
@@ -378,7 +378,7 @@
       "source_file": "js/math-engine.js",
       "source_location": "L86",
       "id": "js_math_engine_extractbracegroup",
-      "community": 1,
+      "community": 0,
       "norm_label": "extractbracegroup()"
     },
     {
@@ -387,7 +387,7 @@
       "source_file": "js/math-engine.js",
       "source_location": "L99",
       "id": "js_math_engine_latextoexpr",
-      "community": 1,
+      "community": 0,
       "norm_label": "latextoexpr()"
     },
     {
@@ -396,7 +396,7 @@
       "source_file": "js/math-engine.js",
       "source_location": "L198",
       "id": "js_math_engine_compilesignalexpr",
-      "community": 1,
+      "community": 0,
       "norm_label": "compilesignalexpr()"
     },
     {
@@ -405,7 +405,7 @@
       "source_file": "js/math-engine.js",
       "source_location": "L258",
       "id": "js_math_engine_integratesimpson",
-      "community": 1,
+      "community": 0,
       "norm_label": "integratesimpson()"
     },
     {
@@ -468,7 +468,7 @@
       "source_file": "js/notebook.js",
       "source_location": "L276",
       "id": "js_notebook_updatenotebookui",
-      "community": 12,
+      "community": 2,
       "norm_label": "updatenotebookui()"
     },
     {
@@ -477,7 +477,7 @@
       "source_file": "js/presets.js",
       "source_location": "L1",
       "id": "js_presets_js",
-      "community": 1,
+      "community": 0,
       "norm_label": "presets.js"
     },
     {
@@ -486,7 +486,7 @@
       "source_file": "js/presets.js",
       "source_location": "L7",
       "id": "js_presets_builtin_conv_presets",
-      "community": 1,
+      "community": 0,
       "norm_label": "builtin_conv_presets"
     },
     {
@@ -495,7 +495,7 @@
       "source_file": "js/presets.js",
       "source_location": "L164",
       "id": "js_presets_builtin_fourier_presets",
-      "community": 1,
+      "community": 0,
       "norm_label": "builtin_fourier_presets"
     },
     {
@@ -855,7 +855,7 @@
       "source_file": "js/ui.js",
       "source_location": "L13",
       "id": "js_ui_switchmodule",
-      "community": 0,
+      "community": 10,
       "norm_label": "switchmodule()"
     },
     {
@@ -864,7 +864,7 @@
       "source_file": "js/ui.js",
       "source_location": "L102",
       "id": "js_ui_setstep",
-      "community": 12,
+      "community": 11,
       "norm_label": "setstep()"
     },
     {
@@ -873,7 +873,7 @@
       "source_file": "js/ui.js",
       "source_location": "L154",
       "id": "js_ui_updatesliderbadge",
-      "community": 12,
+      "community": 11,
       "norm_label": "updatesliderbadge()"
     },
     {
@@ -891,7 +891,7 @@
       "source_file": "js/ui.js",
       "source_location": "L178",
       "id": "js_ui_updatesteplabels",
-      "community": 0,
+      "community": 10,
       "norm_label": "updatesteplabels()"
     },
     {
@@ -934,7 +934,7 @@
       "label": "applyTheme()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L275",
+      "source_location": "L280",
       "id": "js_ui_applytheme",
       "community": 11,
       "norm_label": "applytheme()"
@@ -943,16 +943,16 @@
       "label": "applyLanguage()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L287",
+      "source_location": "L292",
       "id": "js_ui_applylanguage",
-      "community": 0,
+      "community": 10,
       "norm_label": "applylanguage()"
     },
     {
       "label": "toggleSectionVisibility()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L443",
+      "source_location": "L448",
       "id": "js_ui_togglesectionvisibility",
       "community": 11,
       "norm_label": "togglesectionvisibility()"
@@ -961,7 +961,7 @@
       "label": "renderPresetGallery()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L458",
+      "source_location": "L463",
       "id": "js_ui_renderpresetgallery",
       "community": 10,
       "norm_label": "renderpresetgallery()"
@@ -970,7 +970,7 @@
       "label": "syncInputsWithPreset()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L650",
+      "source_location": "L662",
       "id": "js_ui_syncinputswithpreset",
       "community": 10,
       "norm_label": "syncinputswithpreset()"
@@ -979,16 +979,16 @@
       "label": "setActiveMathField()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L670",
+      "source_location": "L682",
       "id": "js_ui_setactivemathfield",
-      "community": 0,
+      "community": 10,
       "norm_label": "setactivemathfield()"
     },
     {
       "label": "mutateActiveExpr()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L674",
+      "source_location": "L686",
       "id": "js_ui_mutateactiveexpr",
       "community": 10,
       "norm_label": "mutateactiveexpr()"
@@ -997,7 +997,7 @@
       "label": "setHUDExpressionLive()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L691",
+      "source_location": "L703",
       "id": "js_ui_sethudexpressionlive",
       "community": 10,
       "norm_label": "sethudexpressionlive()"
@@ -1006,52 +1006,52 @@
       "label": "generateParametricExpr()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L732",
+      "source_location": "L744",
       "id": "js_ui_generateparametricexpr",
-      "community": 11,
+      "community": 10,
       "norm_label": "generateparametricexpr()"
     },
     {
       "label": "generateParametricPreview()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L800",
+      "source_location": "L812",
       "id": "js_ui_generateparametricpreview",
-      "community": 11,
+      "community": 10,
       "norm_label": "generateparametricpreview()"
     },
     {
       "label": "updateHUDTitle()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L881",
+      "source_location": "L893",
       "id": "js_ui_updatehudtitle",
-      "community": 0,
+      "community": 10,
       "norm_label": "updatehudtitle()"
     },
     {
       "label": "updateParametricHUDPreview()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L919",
+      "source_location": "L931",
       "id": "js_ui_updateparametrichudpreview",
-      "community": 0,
+      "community": 10,
       "norm_label": "updateparametrichudpreview()"
     },
     {
       "label": "openSignalHUD()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L956",
+      "source_location": "L968",
       "id": "js_ui_opensignalhud",
-      "community": 0,
+      "community": 10,
       "norm_label": "opensignalhud()"
     },
     {
       "label": "closeSignalHUD()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L1024",
+      "source_location": "L1048",
       "id": "js_ui_closesignalhud",
       "community": 10,
       "norm_label": "closesignalhud()"
@@ -1060,7 +1060,7 @@
       "label": "applySignalHUD()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L1037",
+      "source_location": "L1067",
       "id": "js_ui_applysignalhud",
       "community": 10,
       "norm_label": "applysignalhud()"
@@ -1069,16 +1069,34 @@
       "label": "pinSignalHUD()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L1045",
+      "source_location": "L1075",
       "id": "js_ui_pinsignalhud",
       "community": 10,
       "norm_label": "pinsignalhud()"
     },
     {
+      "label": "setupA11yBarScroll()",
+      "file_type": "code",
+      "source_file": "js/ui.js",
+      "source_location": "L1121",
+      "id": "js_ui_setupa11ybarscroll",
+      "community": 11,
+      "norm_label": "setupa11ybarscroll()"
+    },
+    {
+      "label": "setupMathLiveVirtualKeyboard()",
+      "file_type": "code",
+      "source_file": "js/ui.js",
+      "source_location": "L1189",
+      "id": "js_ui_setupmathlivevirtualkeyboard",
+      "community": 11,
+      "norm_label": "setupmathlivevirtualkeyboard()"
+    },
+    {
       "label": "initUIEventListeners()",
       "file_type": "code",
       "source_file": "js/ui.js",
-      "source_location": "L1086",
+      "source_location": "L1236",
       "id": "js_ui_inituieventlisteners",
       "community": 11,
       "norm_label": "inituieventlisteners()"
@@ -1190,6 +1208,42 @@
       "id": "sinais_e_sistemas_forma_interativa_readme_license",
       "community": 4,
       "norm_label": "license"
+    },
+    {
+      "label": "graphify.md",
+      "file_type": "document",
+      "source_file": ".agents/rules/graphify.md",
+      "source_location": "L1",
+      "id": "agents_rules_graphify_md",
+      "community": 12,
+      "norm_label": "graphify.md"
+    },
+    {
+      "label": "graphify",
+      "file_type": "document",
+      "source_file": ".agents/rules/graphify.md",
+      "source_location": "L6",
+      "id": "rules_graphify_graphify",
+      "community": 12,
+      "norm_label": "graphify"
+    },
+    {
+      "label": "graphify.md",
+      "file_type": "document",
+      "source_file": ".agents/workflows/graphify.md",
+      "source_location": "L1",
+      "id": "agents_workflows_graphify_md",
+      "community": 13,
+      "norm_label": "graphify.md"
+    },
+    {
+      "label": "Workflow: graphify",
+      "file_type": "document",
+      "source_file": ".agents/workflows/graphify.md",
+      "source_location": "L6",
+      "id": "workflows_graphify_workflow_graphify",
+      "community": 13,
+      "norm_label": "workflow: graphify"
     },
     {
       "label": "http",
@@ -2027,9 +2081,9 @@
       "source_file": "js/math-engine.js",
       "source_location": "L86",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_math_engine_js",
-      "target": "js_math_engine_extractbracegroup",
-      "confidence_score": 1.0
+      "target": "js_math_engine_extractbracegroup"
     },
     {
       "relation": "contains",
@@ -2037,9 +2091,9 @@
       "source_file": "js/math-engine.js",
       "source_location": "L99",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_math_engine_js",
-      "target": "js_math_engine_latextoexpr",
-      "confidence_score": 1.0
+      "target": "js_math_engine_latextoexpr"
     },
     {
       "relation": "contains",
@@ -2395,9 +2449,9 @@
       "source_file": "js/math-engine.js",
       "source_location": "L126",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_math_engine_latextoexpr",
-      "target": "js_math_engine_extractbracegroup",
-      "confidence_score": 1.0
+      "target": "js_math_engine_extractbracegroup"
     },
     {
       "relation": "calls",
@@ -2406,9 +2460,9 @@
       "source_file": "js/math-engine.js",
       "source_location": "L201",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_math_engine_compilesignalexpr",
-      "target": "js_math_engine_latextoexpr",
-      "confidence_score": 1.0
+      "target": "js_math_engine_latextoexpr"
     },
     {
       "relation": "imports",
@@ -2417,9 +2471,9 @@
       "source_file": "js/ui.js",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_ui_js",
-      "target": "js_math_engine_latextoexpr",
-      "confidence_score": 1.0
+      "target": "js_math_engine_latextoexpr"
     },
     {
       "relation": "calls",
@@ -2998,9 +3052,9 @@
       "source_file": "js/stage-3d.js",
       "source_location": "L301",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_stage_3d_js",
-      "target": "js_stage_3d_interactivecurves2d",
-      "confidence_score": 1.0
+      "target": "js_stage_3d_interactivecurves2d"
     },
     {
       "relation": "contains",
@@ -3008,9 +3062,9 @@
       "source_file": "js/stage-3d.js",
       "source_location": "L303",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_stage_3d_js",
-      "target": "js_stage_3d_disttosegmentsq",
-      "confidence_score": 1.0
+      "target": "js_stage_3d_disttosegmentsq"
     },
     {
       "relation": "contains",
@@ -3018,9 +3072,9 @@
       "source_file": "js/stage-3d.js",
       "source_location": "L313",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_stage_3d_js",
-      "target": "js_stage_3d_findhitsignalcurve",
-      "confidence_score": 1.0
+      "target": "js_stage_3d_findhitsignalcurve"
     },
     {
       "relation": "contains",
@@ -3314,9 +3368,9 @@
       "source_file": "js/stage-3d.js",
       "source_location": "L320",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_stage_3d_findhitsignalcurve",
-      "target": "js_stage_3d_disttosegmentsq",
-      "confidence_score": 1.0
+      "target": "js_stage_3d_disttosegmentsq"
     },
     {
       "relation": "calls",
@@ -3940,9 +3994,9 @@
       "source_file": "js/ui.js",
       "source_location": "L250",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_ui_js",
-      "target": "js_ui_updatethemecyclebuttonui",
-      "confidence_score": 1.0
+      "target": "js_ui_updatethemecyclebuttonui"
     },
     {
       "relation": "contains",
@@ -4020,9 +4074,9 @@
       "source_file": "js/ui.js",
       "source_location": "L691",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_ui_js",
-      "target": "js_ui_sethudexpressionlive",
-      "confidence_score": 1.0
+      "target": "js_ui_sethudexpressionlive"
     },
     {
       "relation": "contains",
@@ -4103,6 +4157,26 @@
       "confidence_score": 1.0,
       "source": "js_ui_js",
       "target": "js_ui_pinsignalhud"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "js/ui.js",
+      "source_location": "L1120",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "js_ui_js",
+      "target": "js_ui_setupa11ybarscroll"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "js/ui.js",
+      "source_location": "L1178",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "js_ui_js",
+      "target": "js_ui_setupmathlivevirtualkeyboard"
     },
     {
       "relation": "contains",
@@ -4275,9 +4349,9 @@
       "source_file": "js/ui.js",
       "source_location": "L282",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_ui_applytheme",
-      "target": "js_ui_updatethemecyclebuttonui",
-      "confidence_score": 1.0
+      "target": "js_ui_updatethemecyclebuttonui"
     },
     {
       "relation": "calls",
@@ -4286,9 +4360,9 @@
       "source_file": "js/ui.js",
       "source_location": "L302",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_ui_applylanguage",
-      "target": "js_ui_updatethemecyclebuttonui",
-      "confidence_score": 1.0
+      "target": "js_ui_updatethemecyclebuttonui"
     },
     {
       "relation": "calls",
@@ -4330,9 +4404,9 @@
       "source_file": "js/ui.js",
       "source_location": "L727",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_ui_sethudexpressionlive",
-      "target": "js_ui_renderpresetgallery",
-      "confidence_score": 1.0
+      "target": "js_ui_renderpresetgallery"
     },
     {
       "relation": "calls",
@@ -4374,9 +4448,9 @@
       "source_file": "js/ui.js",
       "source_location": "L726",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_ui_sethudexpressionlive",
-      "target": "js_ui_syncinputswithpreset",
-      "confidence_score": 1.0
+      "target": "js_ui_syncinputswithpreset"
     },
     {
       "relation": "calls",
@@ -4429,9 +4503,9 @@
       "source_file": "js/ui.js",
       "source_location": "L679",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_ui_mutateactiveexpr",
-      "target": "js_ui_sethudexpressionlive",
-      "confidence_score": 1.0
+      "target": "js_ui_sethudexpressionlive"
     },
     {
       "relation": "calls",
@@ -4440,9 +4514,9 @@
       "source_file": "js/ui.js",
       "source_location": "L952",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_ui_updateparametrichudpreview",
-      "target": "js_ui_sethudexpressionlive",
-      "confidence_score": 1.0
+      "target": "js_ui_sethudexpressionlive"
     },
     {
       "relation": "calls",
@@ -4451,9 +4525,9 @@
       "source_file": "js/ui.js",
       "source_location": "L1040",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_ui_applysignalhud",
-      "target": "js_ui_sethudexpressionlive",
-      "confidence_score": 1.0
+      "target": "js_ui_sethudexpressionlive"
     },
     {
       "relation": "calls",
@@ -4462,9 +4536,9 @@
       "source_file": "js/ui.js",
       "source_location": "L1049",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "js_ui_pinsignalhud",
-      "target": "js_ui_sethudexpressionlive",
-      "confidence_score": 1.0
+      "target": "js_ui_sethudexpressionlive"
     },
     {
       "relation": "calls",
@@ -4553,6 +4627,28 @@
       "confidence_score": 1.0,
       "source": "js_ui_pinsignalhud",
       "target": "js_ui_closesignalhud"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "js/ui.js",
+      "source_location": "L1492",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "js_ui_inituieventlisteners",
+      "target": "js_ui_setupa11ybarscroll"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "js/ui.js",
+      "source_location": "L1493",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "js_ui_inituieventlisteners",
+      "target": "js_ui_setupmathlivevirtualkeyboard"
     },
     {
       "relation": "contains",
@@ -4663,8 +4759,28 @@
       "confidence_score": 1.0,
       "source": "sinais_e_sistemas_forma_interativa_readme_running_locally",
       "target": "sinais_e_sistemas_forma_interativa_readme_codeblock_2"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/rules/graphify.md",
+      "source_location": "L6",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "agents_rules_graphify_md",
+      "target": "rules_graphify_graphify"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/workflows/graphify.md",
+      "source_location": "L6",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "agents_workflows_graphify_md",
+      "target": "workflows_graphify_workflow_graphify"
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "dc512f3fa1b1cd451b7013ca1eb81dc674bc4ded"
+  "built_at_commit": "bc359e86b16eda18ac428e2b0e03ddb438be877c"
 }
