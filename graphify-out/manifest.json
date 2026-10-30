@@ -1,0 +1,107 @@
+{
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\manifest.json": {
+    "mtime": 1793371070.7026346,
+    "ast_hash": "a53badce4a7e4e8e8960f4ac17845e99",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\package.json": {
+    "mtime": 1793376844.0819254,
+    "ast_hash": "a2938e97e7385f5e36dd705b68f5bfb0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\server.js": {
+    "mtime": 1793376953.7021005,
+    "ast_hash": "bec3308b01e3eb2f78b72b743d3005bf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\archive\\assemble_master_index.js": {
+    "mtime": 1793224912.3749568,
+    "ast_hash": "60fca5e217f796c57b08a04a1acd9b6b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\archive\\create_perfect_index.js": {
+    "mtime": 1793221508.6817877,
+    "ast_hash": "1f98aaa2e339233ace97f5e99c4d98b8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\app.js": {
+    "mtime": 1793375140.2228286,
+    "ast_hash": "13c418af752e71db8e033c90df02729d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\audio.js": {
+    "mtime": 1793373700.7233171,
+    "ast_hash": "b16bc82121c085cf9e4f4ebecee56944",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\i18n.js": {
+    "mtime": 1793375951.4864893,
+    "ast_hash": "6bb8203f1efe69b526053ccb393022c2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\math-engine.js": {
+    "mtime": 1793379748.2981863,
+    "ast_hash": "6399ed2396971fd345ea0522aeb6ec4c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\notebook.js": {
+    "mtime": 1793373967.191458,
+    "ast_hash": "905342dd5c02381cb78c216275a9cc36",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\presets.js": {
+    "mtime": 1793373140.3081353,
+    "ast_hash": "698e06acdb9199b691a4e4f443966818",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\stage-3d.js": {
+    "mtime": 1793379915.874487,
+    "ast_hash": "279cb9fae5a0b8e129a8548fe1e76143",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\state.js": {
+    "mtime": 1793375902.5029647,
+    "ast_hash": "679ec5089aa56ed3d6e5d834eacbdcce",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\js\\ui.js": {
+    "mtime": 1793380665.3252215,
+    "ast_hash": "a2d7965c838148e10a0e793d1444b57b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\index.html": {
+    "mtime": 1793380247.8481994,
+    "ast_hash": "a672cdec9d820666033b14ed84f2c660",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\README.md": {
+    "mtime": 1793371529.7182055,
+    "ast_hash": "e4b03b60d7de7dd186ee677a8eef3343",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\robots.txt": {
+    "mtime": 1793371060.3708587,
+    "ast_hash": "09442d35a02c8842c92e74b92933a371",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\archive\\Analisador de Fourier 3D Interativo.html": {
+    "mtime": 1778029860.0,
+    "ast_hash": "b22e24d10d4eba2504c776dd3b86606a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\archive\\convolu_o_3d_interativa.html": {
+    "mtime": 1793209371.219146,
+    "ast_hash": "0bffca7bfa80452cab4e76f55741fc97",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\assets\\favicon.svg": {
+    "mtime": 1793371077.96665,
+    "ast_hash": "0ba112ac9b4efd4a04d83a16300c2164",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\joaod\\Documents\\2026\\Sinais e Sistemas forma interativa\\assets\\og-banner.svg": {
+    "mtime": 1793371094.8604505,
+    "ast_hash": "6c5da638dd9e53ef4503e519d4740a03",
+    "semantic_hash": ""
+  }
+}

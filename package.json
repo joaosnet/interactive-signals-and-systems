@@ -1,5 +1,5 @@
 {
   "name": "interactive-signals-and-systems",
   "version": "1.0.0",
-  "type": "commonjs"
+  "type": "module"
 }

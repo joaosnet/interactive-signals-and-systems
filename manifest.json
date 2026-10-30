@@ -1,0 +1,17 @@
+{
+  "name": "3D Signals & Systems Lab — Convolution & Fourier Analysis",
+  "short_name": "Signals 3D",
+  "description": "Laboratório interativo 3D para Convolução Contínua e Análise de Séries de Fourier em tempo real.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#00449e",
+  "icons": [
+    {
+      "src": "assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
