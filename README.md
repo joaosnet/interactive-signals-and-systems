@@ -25,6 +25,9 @@ Browser lab for continuous-time convolution and Fourier series decomposition. Re
   - Compact Polar: $f(t) \approx a_0 + \sum_{n=1}^{N} C_n \cos(n\omega_0 t + \theta_n)$
   - Trigonometric: $f(t) \approx a_0 + \sum_{n=1}^{N} \left[ a_n \cos(n\omega_0 t) + b_n \sin(n\omega_0 t) \right]$
   - Complex Exponential Bilateral: $f(t) \approx \sum_{n=-N}^{N} D_n e^{j n \omega_0 t}$
+- **Eugene Khutoryansky Visual Dynamics**:
+  - Continuous sinusoidal wave propagation in 3D time-frequency coordinates with zero render lags.
+  - Crest alignment with discrete spectrum stems when camera turns to lateral 2D Spectrum view.
 - **3D spatial decomposition**:
   - Front plane ($z = 0$): Periodic input signal $f(t)$ across $2.5 T_0$.
   - Origin ($z = 0$): DC component $a_0 = \frac{1}{T_0} \int_0^{T_0} f(t) dt$.
@@ -36,18 +39,27 @@ Browser lab for continuous-time convolution and Fourier series decomposition. Re
 - **Web Audio Synthesizer**: Audibly hear the synthesized waveform timbre in real time or isolate individual overtones.
 - **Harmonic isolation**: Click on any table row $n$ to highlight its wave and spectrum stem in 3D while dimming the others.
 
+### 3. Continuous Fourier Transform — CTFT (`#ctft`)
+- **Direct & Inverse CTFT**: $X(\omega) = \int_{-\infty}^{+\infty} x(t) e^{-j\omega t} dt$ and $x(t) = \frac{1}{2\pi} \int_{-\infty}^{+\infty} X(\omega) e^{j\omega t} d\omega$.
+- **3D Space Representation**: Front plane ($z = 0$) shows real-time pulse $x(t)$, while back plane ($z = Z_{\max}$) renders continuous magnitude spectrum $|X(\omega)|$.
+- **Eugene Khutoryansky Bridge ($T_0 \to \infty$)**: Live harmonic density slider illustrating how discrete Fourier series lines $T_0 D_n$ collapse into continuous envelope $X(\omega)$ as period $T_0$ approaches infinity.
+- **Rayleigh-Parseval Energy Conservation**: Real-time energy balance $\int_{-\infty}^{+\infty} |x(t)|^2 dt = \frac{1}{2\pi} \int_{-\infty}^{+\infty} |X(\omega)|^2 d\omega$.
+- **Canonical Pairs**: Rectangular pulse $\operatorname{rect}(t/\tau_0) \leftrightarrow \tau_0 \operatorname{sinc}(\omega \tau_0 / 2\pi)$, causal exponential $e^{-\alpha t} u(t) \leftrightarrow \frac{1}{\alpha + j\omega}$, triangular pulse $\operatorname{tri}(t/\tau_0) \leftrightarrow \frac{\tau_0}{2} \operatorname{sinc}^2(\omega \tau_0 / 4\pi)$, and bilateral exponential $e^{-\alpha |t|} \leftrightarrow \frac{2\alpha}{\alpha^2 + \omega^2}$.
+- **UFPA 4-Step Analytical Derivation**: Step 1 (Signal & Definition), Step 2 (Transform Pair & Integrals), Step 3 (Continuous Spectrum), and Step 4 (Parseval & Khutoryansky Bridge).
+
 ---
 
 ## Design & Usability
 
-- **Segmented Control Navigation**: Prominent top pill slider with clear icons and mathematical formulas to switch between Convolution and Fourier in 1 click.
+- **Segmented Control Navigation**: Prominent top pill slider with clear icons and mathematical formulas to switch between Convolution, Fourier Series, and CTFT in 1 click.
+- **Mobile First & Android AAA Experience**: Fixed 3D canvas stage (`~42dvh`) with touch orbit, collapsible bottom-sheet UI with native drag handle, and docked MathLive virtual keyboard with quick-access mathematical chips (`u(t)`, `rect(t)`, `tri(t)`, `δ(t)`, `sinc(t)`).
 - **Orthographic & 3D Camera Views**: Instant toggle between `3D Free Orbit`, `2D Time (Frontal)`, `2D Spectrum (Lateral)`, and `Top Plan`.
 - **Customizable UI ("View what you want")**: Toggle visibility filters for `[Passo a Passo]`, `[Tabela]`, `[Exemplos]`, and `[Editor de Sinais]` with auto-save.
 - **Zen Focus Mode (`Z`)**: Collapse sidebar to dedicate 100% of the screen to the 3D stage with a floating minimal dock.
 - **Projector mode by default**: Pure white background (`#ffffff`), pitch black text (`#000000`), 1.55x line weight, and saturated high-contrast curves (`#00449e`, `#be123c`, `#047857`) for classrooms, lecture halls, and HDMI beamers.
 - **Dark & Light modes**: Dark Technical mode (`#090b10`) and editorial light theme switchable in Settings (`⚙️`).
 - **Bilingual (EN / PT-BR)**: Automatic browser detection with manual toggle `[ EN | PT-BR ]`.
-- **Keyboard shortcuts**: Space (Play/Pause), 1-4 (Steps), Tab (Switch module), Z (Zen mode), M (Audio), ←/→ (fine time adjust).
+- **Keyboard shortcuts**: Space (Play/Pause), 1-4 (Steps), Tab (Cycle Convolution → Fourier → CTFT), Z (Zen mode), M (Audio), ←/→ (fine time/frequency/parameter adjust).
 - **SEO & PWA**: JSON-LD Structured Data (`LearningResource` & `WebApplication`), Open Graph, Twitter Cards, `sitemap.xml`, `robots.txt`, and offline PWA `manifest.json`.
 
 ---
@@ -58,17 +70,17 @@ Modular native ES6 architecture (zero build step, GitHub Pages ready):
 ```
 ├── index.html          # Semantic HTML shell, SEO Meta & Schema.org JSON-LD
 ├── css/
-│   └── styles.css      # Design system, themes (projector/dark/light), Zen mode
+│   └── styles.css      # Design system, themes (projector/dark/light), Zen mode, mobile bottom-sheet
 ├── js/
 │   ├── app.js          # Entry point & 120 FPS animation loop
 │   ├── state.js        # Reactive state & localStorage persistence
 │   ├── i18n.js         # Bilingual dictionary (PT-BR / EN) & tooltips
-│   ├── math-engine.js  # Signal compiler, support detector, Fourier 3-forms
-│   ├── presets.js      # Textbook and exam problem presets
-│   ├── stage-3d.js     # Canvas 2D + Three.js projection, camera presets, spectrum wall
+│   ├── math-engine.js  # Signal compiler, support detector, Fourier 3-forms, CTFT engine
+│   ├── presets.js      # Textbook and exam problem presets (Convolution, Fourier, CTFT)
+│   ├── stage-3d.js     # Canvas 2D + Three.js projection, camera presets, Khutoryansky 3D dynamics
 │   ├── notebook.js     # Didactic resolution notebook & handwriting animation
 │   ├── audio.js        # Web Audio API real-time harmonic synthesizer
-│   └── ui.js           # Segmented control, popovers, virtual math keyboard
+│   └── ui.js           # Segmented control, popovers, virtual math keyboard & mobile touch chips
 ├── assets/
 │   ├── favicon.svg     # Vector favicon
 │   └── og-banner.svg   # 1200x630 vector social sharing banner
@@ -90,6 +102,7 @@ python -m http.server 3000
 Deep links:
 - `http://localhost:3000/#convolution`
 - `http://localhost:3000/#fourier`
+- `http://localhost:3000/#ctft`
 
 ---
 

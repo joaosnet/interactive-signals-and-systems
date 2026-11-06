@@ -73,13 +73,21 @@
   </script>
 
   <!-- External Styles & Fonts -->
+  <script>
+    if (typeof console !== 'undefined' && console.warn) {
+      const _origWarn = console.warn;
+      console.warn = function(...args) {
+        if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
+        _origWarn.apply(console, args);
+      };
+    }
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive-static.css">
   <script defer src="https://unpkg.com/mathlive"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
@@ -220,6 +228,7 @@
         <div class="flex items-center p-0.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[10px]">
           <button id="zen-btn-conv" type="button" class="px-2 py-0.5 rounded-md font-bold seg-btn active">x ∗ h</button>
           <button id="zen-btn-fourier" type="button" class="px-2 py-0.5 rounded-md font-bold seg-btn">∑ Cₙ</button>
+          <button id="zen-btn-ctft" type="button" class="px-2 py-0.5 rounded-md font-bold seg-btn">X(ω)</button>
         </div>
         <button type="button" class="play-toggle-btn px-2 py-1 rounded-lg text-white font-semibold text-xs flex items-center gap-1 shadow" style="background: var(--c-conv)">
           <svg class="icon-play w-3 h-3 hidden" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -238,123 +247,81 @@
       <!-- Stage Focus Backdrop (Escurece o fundo 3D quando o HUD está aberto) -->
       <div id="stage-focus-backdrop" class="hidden" aria-hidden="true"></div>
 
-      <!-- Floating Signal Focus HUD (Enxuto, Sem Redundâncias, com MathLive <math-field> + Teclado Completo) -->
-      <section id="signal-focus-hud" class="hidden ui-surface backdrop-blur-xl border rounded-2xl shadow-2xl z-30" role="dialog" aria-labelledby="hud-title" aria-modal="true">
-        <!-- Header Compacto -->
-        <header class="px-2.5 py-2 border-b border-[var(--border-subtle)] bg-[var(--bg-card)] flex items-center justify-between gap-2 flex-shrink-0 rounded-t-2xl">
-          <div class="flex items-center gap-1.5 min-w-0">
-            <div id="hud-target-dot" class="w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse" style="background: var(--c-x1)"></div>
-            <h3 id="hud-title" class="text-xs font-bold truncate text-primary">Definir Sinal</h3>
-            <!-- Pílulas de Alternância Rápida de Sinal -->
-            <div id="hud-signal-switcher" class="flex items-center p-0.5 rounded-lg bg-[var(--bg-control)] border border-[var(--border-subtle)] text-[10px] ml-1" role="tablist">
-              <button id="hud-pill-x" type="button" class="hud-sig-pill px-2 py-0.5 rounded-md font-bold seg-btn active" style="color: var(--c-x1)" data-target="x">x(t)</button>
-              <button id="hud-pill-h" type="button" class="hud-sig-pill px-2 py-0.5 rounded-md font-bold seg-btn" style="color: var(--c-x2)" data-target="h">h(t)</button>
-              <button id="hud-pill-fourier" type="button" class="hud-sig-pill px-2 py-0.5 rounded-md font-bold seg-btn hidden" style="color: var(--c-x1)" data-target="fourier">f(t)</button>
+      <!-- Floating Signal Focus HUD (Tela Única, Zero Redundâncias, Osciloscópio 2D & Construtor Aditivo) -->
+      <section id="signal-focus-hud" class="hidden ui-surface backdrop-blur-xl border rounded-2xl shadow-2xl z-30" role="dialog" aria-label="Editor de Sinais" aria-modal="true">
+        <!-- 1. Header Compacto e Tátil (Alça de Arrasto Mobile + Seletor de Sinal + Salvar + Fechar) -->
+        <header id="hud-drag-header" class="px-3 py-2 border-b border-[var(--border-subtle)] bg-[var(--bg-card)] flex items-center justify-between gap-2 flex-shrink-0 rounded-t-2xl select-none">
+          <div class="flex items-center gap-2 min-w-0">
+            <div id="hud-target-dot" class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background: var(--c-x1)"></div>
+            <!-- Pílulas de Alternância Direta de Sinal (Sem Título Redundante) -->
+            <div id="hud-signal-switcher" class="flex items-center p-0.5 rounded-lg bg-[var(--bg-control)] border border-[var(--border-subtle)] text-[11px]" role="tablist">
+              <button id="hud-pill-x" type="button" class="hud-sig-pill px-2.5 py-0.5 rounded-md font-bold seg-btn active" style="color: var(--c-x1)" data-target="x">x(t)</button>
+              <button id="hud-pill-h" type="button" class="hud-sig-pill px-2.5 py-0.5 rounded-md font-bold seg-btn" style="color: var(--c-x2)" data-target="h">h(t)</button>
+              <button id="hud-pill-fourier" type="button" class="hud-sig-pill px-2.5 py-0.5 rounded-md font-bold seg-btn hidden" style="color: var(--c-x1)" data-target="fourier">f(t)</button>
+              <button id="hud-pill-ctft" type="button" class="hud-sig-pill px-2.5 py-0.5 rounded-md font-bold seg-btn hidden" style="color: var(--c-x1)" data-target="ctft">x(t)</button>
             </div>
           </div>
 
           <div class="flex items-center gap-1.5 flex-shrink-0">
-            <!-- Controle de Período T0 dentro do HUD quando em Fourier -->
+            <!-- Controle de Período T0 quando em Fourier -->
             <div id="hud-fourier-t0-wrap" class="hidden items-center gap-1 text-[10px] font-mono-code bg-[var(--bg-control)] px-2 py-0.5 rounded-lg border border-[var(--border-subtle)]">
               <span class="text-sec font-bold">T₀=</span>
-              <input id="hud-fourier-t0-input" type="number" step="0.5" min="0.5" max="10" value="3.0" class="w-12 bg-transparent font-bold text-primary outline-none text-center" />
+              <input id="hud-fourier-t0-input" type="number" step="0.5" min="0.5" max="16" value="3.0" class="w-11 bg-transparent font-bold text-primary outline-none text-center tabular-nums" />
             </div>
-            <span id="hud-support-badge" class="hidden sm:inline-block font-mono-code font-bold px-1.5 py-0.5 rounded text-[10px] bg-[var(--bg-control)] text-accent"></span>
-            <button id="hud-btn-close" type="button" class="ui-control w-6 h-6 rounded-lg border text-xs text-mut hover:text-primary flex items-center justify-center font-bold" title="Fechar (Esc)" aria-label="Fechar HUD">✕</button>
+            <!-- Ação Salvar na Galeria movida para o cabeçalho (Elimina rodapé redundante) -->
+            <button id="hud-btn-pin" type="button" class="ui-control px-2.5 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1" style="color: var(--c-x1)" title="Salvar na galeria de sinais personalizados">
+              <span id="hud-lbl-btn-pin">+ Salvar</span>
+            </button>
+            <button id="hud-btn-close" type="button" class="ui-control w-6 h-6 rounded-lg border text-xs text-mut hover:text-primary flex items-center justify-center font-bold" title="Fechar (Esc)" aria-label="Fechar Editor">✕</button>
           </div>
         </header>
 
-        <!-- Barra Unificada de Equação: MathLive <math-field> Interativo (Edição + Visualização em Tempo Real) -->
-        <div class="px-2.5 py-2 bg-[var(--bg-panel)] border-b border-[var(--border-subtle)] flex items-center gap-2 flex-shrink-0">
+        <!-- 2. Linha de Equação Natural: Focar no <math-field> abre o teclado MathLive automaticamente -->
+        <div class="px-3 py-2 bg-[var(--bg-panel)] border-b border-[var(--border-subtle)] flex items-center gap-2 flex-shrink-0">
           <span id="hud-var-prefix" class="font-mono-code font-extrabold text-xs sm:text-sm flex-shrink-0" style="color: var(--c-x1)">x(t) =</span>
-          <div class="flex-1 min-w-0 relative">
-            <math-field id="hud-mathfield" virtual-keyboard-mode="auto" class="w-full px-2.5 py-1 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-control)] text-primary text-sm"></math-field>
+          <div class="flex-1 min-w-0 relative flex items-center gap-1.5">
+            <math-field id="hud-mathfield" virtual-keyboard-mode="manual" class="w-full px-2.5 py-1 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-control)] text-primary text-sm"></math-field>
+            <button type="button" id="hud-key-backspace" class="ui-control px-2 py-1 rounded-lg border text-xs font-semibold flex-shrink-0" title="Apagar último caractere">⌫</button>
+            <button type="button" id="hud-key-clear" class="ui-control px-2 py-1 rounded-lg border text-[10px] font-semibold text-mut hover:text-primary flex-shrink-0" title="Limpar expressão">Limpar</button>
             <input id="hud-free-input" type="text" class="hidden" aria-hidden="true" />
           </div>
         </div>
 
-        <!-- Abas Enxutas: Teclado Completo vs Formas & Sliders -->
-        <nav class="px-2.5 py-1 bg-[var(--bg-card)] flex items-center justify-between gap-1.5 border-b border-[var(--border-subtle)] text-[11px] flex-shrink-0" role="tablist">
-          <div class="flex items-center gap-1">
-            <button id="hud-tab-free-btn" type="button" class="hud-tab-btn seg-btn active px-2.5 py-1 rounded-lg font-semibold border text-[11px] flex items-center gap-1.5" role="tab" aria-selected="true" aria-controls="hud-pane-free">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="14" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/><line x1="8" y1="16" x2="16" y2="16"/></svg>
-              <span id="hud-lbl-tab-free">Teclado MathLive</span>
-            </button>
-            <button id="hud-tab-param-btn" type="button" class="hud-tab-btn seg-btn px-2.5 py-1 rounded-lg font-semibold border text-[11px] flex items-center gap-1.5" role="tab" aria-selected="false" aria-controls="hud-pane-param">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
-              <span id="hud-lbl-tab-param">Formas &amp; Sliders</span>
-            </button>
-          </div>
-          <!-- Sub-abas do Teclado quando na aba Teclado -->
-          <div id="hud-mkb-subtabs" class="flex items-center gap-1 text-[10px]">
-            <button type="button" data-hud-mkb="signals" id="hud-subtab-signals" class="hud-mkb-subtab seg-btn active px-2 py-0.5 rounded font-semibold">Sinais</button>
-            <button type="button" data-hud-mkb="algebra" id="hud-subtab-algebra" class="hud-mkb-subtab seg-btn px-2 py-0.5 rounded font-semibold">Álgebra &amp; 123</button>
-          </div>
-        </nav>
-
-        <!-- Corpo Enxuto -->
-        <div class="hud-body-scroll overflow-y-auto custom-scroll p-2.5 space-y-2 flex-1">
-          <!-- Aba 1: Teclado Completo (Sempre visível ao abrir a aba, sem botões redundantes) -->
-          <div id="hud-pane-free" class="space-y-1.5" role="tabpanel" aria-labelledby="hud-tab-free-btn">
-            <!-- Sub-painel: Sinais & Funções de Engenharia -->
-            <div id="hud-mkb-pane-signals" class="grid grid-cols-4 sm:grid-cols-6 gap-1">
-              <button type="button" class="hud-key-btn mkb-key mkb-accent" data-insert="u(t)" data-katex="u(t)"></button>
-              <button type="button" class="hud-key-btn mkb-key mkb-accent" data-insert="u(t-1)" data-katex="u(t-1)"></button>
-              <button type="button" class="hud-key-btn mkb-key mkb-accent" data-insert="(u(t)-u(t-2))" data-katex="p_{[0,2]}(t)"></button>
-              <button type="button" class="hud-key-btn mkb-key mkb-accent" data-insert="e^(-t)*u(t)" data-katex="e^{-t}u(t)"></button>
-              <button type="button" class="hud-key-btn mkb-key mkb-fn" data-insert="rect(t)" data-katex="\mathrm{rect}(t)"></button>
-              <button type="button" class="hud-key-btn mkb-key mkb-fn" data-insert="tri(t)" data-katex="\mathrm{tri}(t)"></button>
-
-              <button type="button" class="hud-key-btn mkb-key mkb-fn" data-insert="sinc(t)" data-katex="\mathrm{sinc}(t)"></button>
-              <button type="button" class="hud-key-btn mkb-key mkb-fn" data-insert="r(t)" data-katex="r(t)"></button>
-              <button type="button" class="hud-key-btn mkb-key mkb-fn" data-insert="delta(t)" data-katex="\delta(t)"></button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="sin(pi*t)" data-katex="\sin(\pi t)"></button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="cos(pi*t)" data-katex="\cos(\pi t)"></button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="sign(t)" data-katex="\mathrm{sgn}(t)"></button>
-
-              <button type="button" class="hud-key-btn mkb-key" data-insert="t" data-katex="t"></button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="pi" data-katex="\pi"></button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="e^(-2*t)*u(t)" data-katex="e^{-2t}u(t)"></button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="abs(t)" data-katex="|t|"></button>
-              <button type="button" id="hud-key-backspace" class="mkb-key mkb-action font-semibold">⌫</button>
-              <button type="button" id="hud-key-clear" class="mkb-key mkb-action font-semibold">Limpar</button>
+        <!-- 3. Corpo Único Enxuto: Osciloscópio 2D em Tempo Real + Construtor Paramétrico Aditivo -->
+        <div class="hud-body-scroll overflow-y-auto custom-scroll p-3 space-y-2.5 flex-1">
+          <!-- Mini-Osciloscópio 2D e Barra de Telemetria Tabular -->
+          <div id="hud-oscilloscope-wrap" class="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-panel)] overflow-hidden">
+            <div class="px-2.5 py-1 border-b border-[var(--border-subtle)] bg-[var(--bg-card)] flex items-center justify-between gap-2 text-[10px] font-mono-code tabular-nums">
+              <span id="hud-status-pill" class="inline-flex items-center gap-1 font-bold text-emerald-400">
+                <span id="hud-status-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span id="hud-status-text">Sinal válido</span>
+              </span>
+              <div class="flex items-center gap-2.5 text-sec">
+                <span id="hud-osc-support" class="font-semibold">Suporte: t ∈ [-0.50, 0.50]</span>
+                <span id="hud-osc-energy" class="font-bold text-primary">E = 1.00 J</span>
+              </div>
             </div>
-
-            <!-- Sub-painel: Álgebra, Cálculo & Números (Estilo MathLive Completo) -->
-            <div id="hud-mkb-pane-algebra" class="hidden grid grid-cols-6 gap-1">
-              <button type="button" class="hud-key-btn mkb-key mkb-fn" data-insert="t" data-katex="t"></button>
-              <button type="button" class="hud-key-btn mkb-key mkb-fn" data-insert="pi" data-katex="\pi"></button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="7">7</button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="8">8</button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="9">9</button>
-              <button type="button" class="hud-key-btn mkb-key mkb-accent" data-insert="/">÷</button>
-
-              <button type="button" class="hud-key-btn mkb-key mkb-fn" data-insert="^2" data-katex="x^2"></button>
-              <button type="button" class="hud-key-btn mkb-key mkb-fn" data-insert="^" data-katex="x^y"></button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="4">4</button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="5">5</button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="6">6</button>
-              <button type="button" class="hud-key-btn mkb-key mkb-accent" data-insert="*">·</button>
-
-              <button type="button" class="hud-key-btn mkb-key mkb-fn" data-insert="sqrt(" data-katex="\sqrt{x}"></button>
-              <button type="button" class="hud-key-btn mkb-key mkb-fn" data-insert="e^(" data-katex="e^x"></button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="1">1</button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="2">2</button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="3">3</button>
-              <button type="button" class="hud-key-btn mkb-key mkb-accent" data-insert="-">−</button>
-
-              <button type="button" class="hud-key-btn mkb-key" data-insert="(">(</button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert=")">)</button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert="0">0</button>
-              <button type="button" class="hud-key-btn mkb-key" data-insert=".">.</button>
-              <button type="button" class="hud-key-btn mkb-action mkb-key font-semibold" data-action="backspace">⌫</button>
-              <button type="button" class="hud-key-btn mkb-key mkb-accent" data-insert="+">+</button>
+            <div class="relative w-full h-[68px] bg-[var(--bg-canvas)]">
+              <canvas id="hud-oscilloscope-canvas" class="w-full h-full block"></canvas>
             </div>
           </div>
 
-          <!-- Aba 2: Formas Canônicas & Sliders em Tempo Real -->
-          <div id="hud-pane-param" class="hidden space-y-2" role="tabpanel" aria-labelledby="hud-tab-param-btn">
-            <div class="grid grid-cols-3 sm:grid-cols-6 gap-1" id="hud-shapes-list">
+          <!-- Seção Paramétrica Direta (Colapsa suavemente no mobile quando o teclado MathLive está aberto) -->
+          <div id="hud-parametric-section" class="space-y-2 transition-all">
+            <!-- Barra de Modo de Construção: Substituir (=) | Somar (+) | Subtrair (−) -->
+            <div class="flex items-center justify-between gap-1.5">
+              <div class="flex items-center p-0.5 rounded-lg bg-[var(--bg-control)] border border-[var(--border-subtle)] text-[10px]" role="group" aria-label="Modo de Construção de Bloco">
+                <button type="button" id="hud-mode-replace" class="hud-mode-btn seg-btn active px-2 py-0.5 rounded-md font-bold" data-mode="replace" title="Substituir expressão pelo bloco">= Substituir</button>
+                <button type="button" id="hud-mode-add" class="hud-mode-btn seg-btn px-2 py-0.5 rounded-md font-bold" data-mode="add" title="Somar bloco à expressão">+ Somar</button>
+                <button type="button" id="hud-mode-sub" class="hud-mode-btn seg-btn px-2 py-0.5 rounded-md font-bold" data-mode="sub" title="Subtrair bloco da expressão">− Subtrair</button>
+              </div>
+              <button type="button" id="hud-btn-commit-block" class="hidden ui-control px-2.5 py-0.5 rounded-lg border border-emerald-500/50 text-[10px] font-bold text-emerald-400 hover:bg-emerald-500/10 transition-all">
+                + Aplicar Bloco
+              </button>
+            </div>
+
+            <!-- Pílulas de Formas Canônicas (Incluindo Pulso Chave [t₁,t₂] da UFPA) -->
+            <div class="grid grid-cols-4 sm:grid-cols-7 gap-1" id="hud-shapes-list">
               <button type="button" class="hud-shape-pill active p-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] flex flex-col items-center justify-center gap-0.5 text-center transition-all" data-shape="rect">
                 <span class="font-bold text-[11px] text-primary">rect</span>
                 <span class="text-[9px] text-mut hud-shape-name" id="hud-lbl-shape-rect">Retângulo</span>
@@ -363,13 +330,17 @@
                 <span class="font-bold text-[11px] text-primary">tri</span>
                 <span class="text-[9px] text-mut hud-shape-name" id="hud-lbl-shape-tri">Triângulo</span>
               </button>
+              <button type="button" class="hud-shape-pill p-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] flex flex-col items-center justify-center gap-0.5 text-center transition-all" data-shape="pulse">
+                <span class="font-bold text-[11px] text-primary">[t₁,t₂]</span>
+                <span class="text-[9px] text-mut hud-shape-name" id="hud-lbl-shape-pulse">Chave</span>
+              </button>
               <button type="button" class="hud-shape-pill p-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] flex flex-col items-center justify-center gap-0.5 text-center transition-all" data-shape="u">
                 <span class="font-bold text-[11px] text-primary">u(t)</span>
                 <span class="text-[9px] text-mut hud-shape-name" id="hud-lbl-shape-step">Degrau</span>
               </button>
               <button type="button" class="hud-shape-pill p-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] flex flex-col items-center justify-center gap-0.5 text-center transition-all" data-shape="exp">
                 <span class="font-bold text-[11px] text-primary">e^(−αt)</span>
-                <span class="text-[9px] text-mut hud-shape-name" id="hud-lbl-shape-exp">Exponencial</span>
+                <span class="text-[9px] text-mut hud-shape-name" id="hud-lbl-shape-exp">Exp.</span>
               </button>
               <button type="button" class="hud-shape-pill p-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] flex flex-col items-center justify-center gap-0.5 text-center transition-all" data-shape="ramp">
                 <span class="font-bold text-[11px] text-primary">r(t)</span>
@@ -381,12 +352,12 @@
               </button>
             </div>
 
-            <!-- Sliders com Aplicação Instantânea na Cena 3D -->
+            <!-- Sliders com Aplicação Instantânea na Cena 3D e Osciloscópio 2D -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
               <div class="flex flex-col gap-0.5">
                 <div class="flex items-center justify-between text-[10px]">
                   <span id="hud-lbl-slider-a" class="font-semibold text-sec">Amplitude A</span>
-                  <span id="hud-badge-a" class="font-mono-code font-bold px-1.5 py-0.2 rounded bg-[var(--bg-control)] text-primary">A = 1.00</span>
+                  <span id="hud-badge-a" class="font-mono-code font-bold tabular-nums px-1.5 py-0.2 rounded bg-[var(--bg-control)] text-primary">A = 1.00</span>
                 </div>
                 <input id="hud-slider-a" type="range" min="-3.0" max="3.0" step="0.1" value="1.0" class="w-full" />
               </div>
@@ -394,7 +365,7 @@
               <div id="hud-row-w" class="flex flex-col gap-0.5">
                 <div class="flex items-center justify-between text-[10px]">
                   <span id="hud-lbl-slider-w" class="font-semibold text-sec">Largura W</span>
-                  <span id="hud-badge-w" class="font-mono-code font-bold px-1.5 py-0.2 rounded bg-[var(--bg-control)] text-primary">W = 2.00</span>
+                  <span id="hud-badge-w" class="font-mono-code font-bold tabular-nums px-1.5 py-0.2 rounded bg-[var(--bg-control)] text-primary">W = 2.00</span>
                 </div>
                 <input id="hud-slider-w" type="range" min="0.5" max="6.0" step="0.25" value="2.0" class="w-full" />
               </div>
@@ -402,7 +373,7 @@
               <div class="flex flex-col gap-0.5">
                 <div class="flex items-center justify-between text-[10px]">
                   <span id="hud-lbl-slider-t0" class="font-semibold text-sec">Deslocamento t₀</span>
-                  <span id="hud-badge-t0" class="font-mono-code font-bold px-1.5 py-0.2 rounded bg-[var(--bg-control)] text-primary">t₀ = 0.00</span>
+                  <span id="hud-badge-t0" class="font-mono-code font-bold tabular-nums px-1.5 py-0.2 rounded bg-[var(--bg-control)] text-primary">t₀ = 0.00</span>
                 </div>
                 <input id="hud-slider-t0" type="range" min="-3.0" max="3.0" step="0.25" value="0.0" class="w-full" />
               </div>
@@ -410,29 +381,23 @@
               <div id="hud-row-alpha" class="flex flex-col gap-0.5">
                 <div class="flex items-center justify-between text-[10px]">
                   <span id="hud-lbl-slider-alpha" class="font-semibold text-sec">Decaimento α</span>
-                  <span id="hud-badge-alpha" class="font-mono-code font-bold px-1.5 py-0.2 rounded bg-[var(--bg-control)] text-primary">α = 1.00</span>
+                  <span id="hud-badge-alpha" class="font-mono-code font-bold tabular-nums px-1.5 py-0.2 rounded bg-[var(--bg-control)] text-primary">α = 1.00</span>
                 </div>
                 <input id="hud-slider-alpha" type="range" min="0.2" max="3.0" step="0.1" value="1.0" class="w-full" />
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Rodapé Enxuto (Apenas Salvar na Galeria e Concluir) -->
-        <footer class="px-2.5 py-2 border-t border-[var(--border-subtle)] bg-[var(--bg-card)] flex items-center justify-between gap-2 flex-shrink-0 rounded-b-2xl">
-          <button id="hud-btn-pin" type="button" class="ui-control px-2.5 py-1 rounded-lg border text-xs font-semibold" style="color: var(--c-x1)">
-            <span id="hud-lbl-btn-pin">+ Salvar na Galeria</span>
-          </button>
-          <button id="hud-btn-apply" type="button" class="px-3.5 py-1 rounded-lg text-white font-bold text-xs shadow-md transition-all flex items-center gap-1" style="background: var(--c-conv)">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            <span id="hud-lbl-btn-apply">Concluir</span>
-          </button>
-        </footer>
       </section>
     </main>
 
     <!-- PAINEL DE CONTROLE E CADERNO ANALÍTICO -->
     <aside id="ui-panel" class="ui-surface z-30" role="complementary" aria-label="Controles e Resolução Analítica">
+
+      <!-- Sheet Drag Handle (Mobile Android) -->
+      <div class="sheet-drag-handle-bar md:hidden flex justify-center py-2 bg-[var(--bg-card)] border-b border-[var(--border-subtle)] cursor-grab active:cursor-grabbing">
+        <div class="w-10 h-1.5 rounded-full bg-[var(--border-strong)] opacity-70"></div>
+      </div>
 
       <!-- 1. Cabeçalho Principal: Barra Superior Rolável + Título + Configurações Animadas + Segmented Control -->
       <header class="p-2 sm:p-2.5 border-b border-[var(--border-subtle)] flex flex-col gap-2 flex-shrink-0 bg-[var(--bg-card)]">
@@ -549,14 +514,18 @@
         </div>
 
         <!-- SEGMENTED CONTROL: Pílula Deslizante de Alto Destaque -->
-        <nav id="module-switcher" class="p-1 rounded-xl bg-[var(--bg-control)] border border-[var(--border-strong)] grid grid-cols-2 gap-1" role="tablist">
-          <button id="mod-btn-conv" type="button" role="tab" class="module-pill-btn active py-1.5 px-2 rounded-lg border text-left flex flex-col justify-center">
-            <span class="text-xs font-bold leading-tight" id="mod-conv-title">Convolução 3D</span>
-            <span class="text-[9px] font-mono-code opacity-75 truncate" id="mod-conv-sub">y(t) = x(t) ∗ h(t)</span>
+        <nav id="module-switcher" class="p-1 rounded-xl bg-[var(--bg-control)] border border-[var(--border-strong)] grid grid-cols-3 gap-1" role="tablist">
+          <button id="mod-btn-conv" type="button" role="tab" class="module-pill-btn active py-1.5 px-1.5 rounded-lg border text-left flex flex-col justify-center">
+            <span class="text-xs font-bold leading-tight" id="mod-conv-title">Convolução</span>
+            <span class="text-[9px] font-mono-code opacity-75 truncate" id="mod-conv-sub">x(t) ∗ h(t)</span>
           </button>
-          <button id="mod-btn-fourier" type="button" role="tab" class="module-pill-btn py-1.5 px-2 rounded-lg border text-left flex flex-col justify-center">
-            <span class="text-xs font-bold leading-tight" id="mod-fourier-title">Série de Fourier 3D</span>
-            <span class="text-[9px] font-mono-code opacity-75 truncate" id="mod-fourier-sub">f(t) ≈ a₀ + ∑ Cₙ cos(nω₀t + θₙ)</span>
+          <button id="mod-btn-fourier" type="button" role="tab" class="module-pill-btn py-1.5 px-1.5 rounded-lg border text-left flex flex-col justify-center">
+            <span class="text-xs font-bold leading-tight" id="mod-fourier-title">Série Fourier</span>
+            <span class="text-[9px] font-mono-code opacity-75 truncate" id="mod-fourier-sub">∑ Cₙ cos</span>
+          </button>
+          <button id="mod-btn-ctft" type="button" role="tab" class="module-pill-btn py-1.5 px-1.5 rounded-lg border text-left flex flex-col justify-center">
+            <span class="text-xs font-bold leading-tight" id="mod-ctft-title">Transformada</span>
+            <span class="text-[9px] font-mono-code opacity-75 truncate" id="mod-ctft-sub">X(ω) = ∫ x e^{-jωt}</span>
           </button>
         </nav>
       </header>

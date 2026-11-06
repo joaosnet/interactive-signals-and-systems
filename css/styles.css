@@ -785,39 +785,41 @@ math-field#hud-mathfield::part(menu-toggle) {
    ========================================================================== */
 
 #stage-focus-backdrop {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 24;
-  background: rgba(0, 0, 0, 0.52);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  z-index: 55;
+  background: rgba(0, 0, 0, 0.24);
   transition: opacity 0.22s ease;
   pointer-events: auto;
 }
 body.theme-projector #stage-focus-backdrop {
-  background: rgba(15, 23, 42, 0.42);
+  background: rgba(15, 23, 42, 0.18);
 }
 body.theme-light #stage-focus-backdrop {
-  background: rgba(15, 23, 42, 0.35);
+  background: rgba(15, 23, 42, 0.16);
 }
 #stage-focus-backdrop.hidden {
   display: none !important;
 }
 
 #signal-focus-hud {
-  position: absolute;
-  bottom: 12px;
+  position: fixed;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  width: min(530px, calc(100% - 20px));
-  max-height: calc(100% - 24px);
+  width: min(540px, calc(100vw - 32px));
+  max-height: min(85vh, 640px);
   display: flex;
   flex-direction: column;
-  z-index: 30;
+  z-index: 60;
   border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--border-strong);
-  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow:
+    0 24px 64px -12px rgba(0, 0, 0, 0.52),
+    0 4px 16px -2px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px var(--border-strong);
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 #signal-focus-hud.hidden {
   display: none !important;
@@ -826,7 +828,7 @@ body.theme-light #stage-focus-backdrop {
 @keyframes hudEntrance {
   from {
     opacity: 0;
-    transform: translate(-50%, 18px) scale(0.97);
+    transform: translate(-50%, 16px) scale(0.975);
   }
   to {
     opacity: 1;
@@ -834,7 +836,7 @@ body.theme-light #stage-focus-backdrop {
   }
 }
 #signal-focus-hud:not(.hidden) {
-  animation: hudEntrance 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: hudEntrance 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 body.theme-projector #signal-focus-hud {
@@ -842,13 +844,53 @@ body.theme-projector #signal-focus-hud {
 }
 
 .hud-body-scroll {
-  max-height: 52dvh;
+  max-height: 54dvh;
+}
+
+/* Cascata Rápida (<350ms, 30ms stagger) do Caderno Didático */
+@keyframes notebookCascadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.notebook-cascade-in {
+  opacity: 0;
+  animation: notebookCascadeIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--line-idx, 0) * 30ms);
+}
+
+/* Precisão Óptica e Números Tabulares (Impeccable / Taste) */
+#t-readout-badge,
+#zen-t-readout,
+#fourier-n-badge,
+#hud-badge-a,
+#hud-badge-w,
+#hud-badge-t0,
+#hud-badge-alpha,
+#hud-osc-support,
+#hud-osc-energy,
+#live-step-metrics,
+.tabular-nums {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Resposta Tátil Imediata (Emil Kowalski) */
+.ui-control:active,
+.seg-btn:active,
+.hud-shape-pill:active,
+.step-card:active {
+  transform: scale(0.97);
 }
 
 /* Shape Selector Pills */
 .hud-shape-pill {
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.14s cubic-bezier(0.22, 1, 0.36, 1);
   user-select: none;
 }
 .hud-shape-pill:hover {
@@ -865,44 +907,64 @@ body.theme-projector #signal-focus-hud {
   font-weight: 600;
 }
 
-/* Preview Cards */
-.hud-preview-card {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.18);
-  border-color: var(--border-subtle);
-}
-body.theme-projector .hud-preview-card {
-  background: #ffffff;
-  border-color: var(--border-subtle);
-}
-
-/* Trigger Buttons */
-.hud-trigger-btn {
-  cursor: pointer;
-  background-color: var(--bg-control);
-  transition: all 0.15s ease;
-  user-select: none;
-}
-.hud-trigger-btn:hover {
-  transform: translateY(-1px);
-}
-
-.hud-tpl-btn {
-  cursor: pointer;
-  background-color: var(--bg-control);
-  transition: all 0.12s ease;
-}
-.hud-tpl-btn:hover {
-  background-color: var(--bg-hover);
-}
-
+/* Mobile Android Layout & Bottom Sheet Snap States (< 768px) */
 @media (max-width: 767px) {
+  #stage-wrapper {
+    height: 42dvh !important;
+    min-height: 210px !important;
+    max-height: 52dvh !important;
+  }
+  body.sheet-snap-peek #stage-wrapper {
+    height: 62dvh !important;
+    max-height: 65dvh !important;
+  }
+  body.sheet-snap-expanded #stage-wrapper {
+    height: 26dvh !important;
+    min-height: 170px !important;
+  }
   body.stage-focus-active #stage-wrapper {
-    height: 72dvh !important;
-    min-height: 440px !important;
+    height: 42dvh !important;
+    min-height: 210px !important;
+  }
+  #ui-panel {
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.28);
+    background-color: var(--bg-panel);
+  }
+  .sheet-drag-handle-bar {
+    touch-action: none;
+    cursor: grab;
   }
   #signal-focus-hud {
-    bottom: 8px;
-    width: calc(100% - 12px);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    max-height: 82dvh;
+    border-radius: 20px 20px 0 0;
+    border-bottom: none;
+    transform: none;
+    z-index: 60;
+  }
+  /* Quando o teclado virtual MathLive está visível no mobile, colapsa suavemente os sliders para manter a fórmula e o osciloscópio 2D visíveis */
+  body.mathlive-kb-visible #hud-parametric-section {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    margin-top: 0 !important;
+    pointer-events: none;
+  }
+  @keyframes hudEntrance {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
 

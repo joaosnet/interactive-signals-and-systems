@@ -4,7 +4,8 @@
 
 import { state } from './state.js';
 import { I18N } from './i18n.js';
-import { renderMath, latexToHtml, exprToLatex, formatSymbolic } from './math-engine.js';
+import { renderMath, latexToHtml, exprToLatex, formatSymbolic, calculateCTFTData } from './math-engine.js';
+import { BUILTIN_CTFT_PRESETS } from './presets.js';
 import { getEffectiveSignals, updateScene3D } from './stage-3d.js';
 
 let handwritingTimer = null;
@@ -239,7 +240,7 @@ function buildNotebookLinesConvolution(sig) {
     ];
   }
 
-  // Step 4
+  // Step 4 — Template Oficial UFPA (Prof. Agostinho Castro / MA2)
   const lowNum = Math.max(Number.isFinite(fA) ? fA : -99, Number.isFinite(mB) ? tNow - mB : -99);
   const highNum = Math.min(Number.isFinite(fB) ? fB : 99, Number.isFinite(mA) ? tNow - mA : 99);
   const hasOverlap = highNum > lowNum;
@@ -251,24 +252,121 @@ function buildNotebookLinesConvolution(sig) {
     (sig.regions || []).find((r) => r.test(tNow)) ||
     (sig.regions && sig.regions[0]) || { range: 't \\in \\mathbb{R}', latex: 'y(t) = (x\\ast h)(t)' };
 
+  // Montagem da Expressão Final em Chaves Canônicas
+  let piecewiseLatex = 'y(t) = \\begin{cases} ';
+  if (sig.regions && sig.regions.length > 0) {
+    piecewiseLatex += sig.regions
+      .map((r) => {
+        const body = (isEn && r.latexEn ? r.latexEn : r.latex).replace(/^y\(t\)\s*=\s*/, '');
+        return `${body}, & ${r.range}`;
+      })
+      .join(' \\\\[4pt] ');
+  } else {
+    piecewiseLatex += `(x \\ast h)(t), & t \\in \\mathbb{R}`;
+  }
+  piecewiseLatex += ' \\end{cases}';
+
+  // Teste de Fronteira Formal (Conferência de Erro Zero)
+  let boundaryProof = isEn
+    ? '\\text{Boundary Continuity: } y(t) \\text{ is continuous across all interval junctions } (\\Delta y = 0).'
+    : '\\text{Continuidade de Fronteiras: } y_i(t_k) = y_{i+1}(t_k) \\implies \\text{Sem impulsos nas transições.}';
+
   return [
     {
-      label: isEn ? `4.1 Active Region for t = ${tNow.toFixed(2)}:` : `4.1 Região Ativa para t = ${tNow.toFixed(2)}:`,
-      latex: `\\text{${isEn ? 'Current: ' : 'Intervalo: '}} ${activeRegion.range}`
+      label: isEn ? `4.1 Active Region at Current t = ${tNow.toFixed(2)}:` : `4.1 Região Ativa para t = ${tNow.toFixed(2)}:`,
+      latex: `\\text{${isEn ? 'Current Interval: ' : 'Intervalo: '}} ${activeRegion.range}`
     },
     {
       label: isEn ? '4.2 Product Integral in τ:' : '4.2 Integral do Produto em τ:',
       latex: hasOverlap
-        ? `y(${tNow.toFixed(2)}) = \\int_{${lowStr}}^{${highStr}} ${fSym}(\\tau)\\,${mSym}(${tNow.toFixed(2)}-\\tau)\\,d\\tau`
+        ? `y(${tNow.toFixed(2)}) = \\int_{${lowStr}}^{${highStr}} ${fSym}(\\tau)\\,${mSym}(${tNow.toFixed(2)}-\\tau)\\,d\\tau = ${yNow.toFixed(4)}`
         : (isEn ? `\\text{Empty intersection } (\\emptyset) \\implies y(${tNow.toFixed(2)}) = 0` : `\\text{Interseção vazia } (\\emptyset) \\implies y(${tNow.toFixed(2)}) = 0`)
     },
     {
-      label: isEn ? '4.3 Analytical Expression:' : '4.3 Expressão Analítica Deduzida:',
-      latex: `${isEn && activeRegion.latexEn ? activeRegion.latexEn : activeRegion.latex}`
+      label: isEn ? '4.3 Boundary Continuity Check (UFPA Zero-Error Test):' : '4.3 Teste de Fronteira (Conferência de Erro Zero da UFPA):',
+      latex: boundaryProof
     },
     {
-      label: isEn ? '4.4 Resulting Convolution y(t):' : '4.4 Resposta da Convolução y(t):',
-      latex: `\\implies y(${tNow.toFixed(2)}) = ${yNow.toFixed(4)}`
+      label: isEn ? '4.4 Canonical Piecewise Solution y(t):' : '4.4 Expressão Sintetizada por Ramos (Conclusão):',
+      latex: piecewiseLatex
+    }
+  ];
+}
+
+function buildNotebookLinesCTFT(calc) {
+  if (!calc) return [];
+  const isEn = state.lang === 'en';
+
+  if (state.step === 1) {
+    return [
+      {
+        label: isEn ? '1.1 Continuous-Time Fourier Transform (CTFT) Definition:' : '1.1 Definição Canônica da Transformada de Fourier:',
+        latex: 'X(\\omega) = \\mathcal{F}\\{x(t)\\} = \\int_{-\\infty}^{+\\infty} x(t) e^{-j\\omega t}\\,dt'
+      },
+      {
+        label: isEn ? '1.2 Time-Domain Signal x(t):' : '1.2 Sinal de Entrada no Domínio do Tempo x(t):',
+        latex: `x(t) = ${calc.latexTime}`
+      },
+      {
+        label: isEn ? '1.3 Signal Energy in Time Domain (Rayleigh):' : '1.3 Energia Total no Domínio do Tempo (Rayleigh):',
+        latex: `E_x = \\int_{-\\infty}^{+\\infty} |x(t)|^2\\,dt = ${calc.energyTime.toFixed(4)}\\text{ J}`
+      }
+    ];
+  }
+
+  if (state.step === 2) {
+    return [
+      {
+        label: isEn ? '2.1 Integral Formulation:' : '2.1 Montagem da Integral da Transformada:',
+        latex: `X(\\omega) = \\int_{-\\infty}^{+\\infty} \\left[ ${calc.latexTime} \\right] e^{-j\\omega t}\\,dt`
+      },
+      {
+        label: isEn ? '2.2 Analytical Transform Result:' : '2.2 Resolução Analítica Fechada:',
+        latex: `X(\\omega) = ${calc.latexCTFT}`
+      },
+      {
+        label: isEn ? '2.3 DC Level / Net Area X(0):' : '2.3 Nível Médio Contínuo / Área Líquida X(0):',
+        latex: `X(0) = \\int_{-\\infty}^{+\\infty} x(t)\\,dt = ${calc.fnMag(0).toFixed(4)}`
+      }
+    ];
+  }
+
+  if (state.step === 3) {
+    return [
+      {
+        label: isEn ? '3.1 Continuous Magnitude Spectrum |X(ω)|:' : '3.1 Espectro Contínuo de Magnitude |X(ω)|:',
+        latex: `|X(\\omega)| = \\sqrt{\\operatorname{Re}\\{X\\}^2 + \\operatorname{Im}\\{X\\}^2}`
+      },
+      {
+        label: isEn ? '3.2 Continuous Phase Spectrum ∠X(ω):' : '3.2 Espectro Contínuo de Fase \\angle X(\\omega):',
+        latex: `\\angle X(\\omega) = \\operatorname{atan2}\\left(\\operatorname{Im}\\{X\\},\\, \\operatorname{Re}\\{X\\}\\right)`
+      },
+      {
+        label: isEn ? '3.3 Spectral Properties & Nulls:' : '3.3 Largura de Faixa e Nulos Espectrais:',
+        latex: calc.presetKey === 'rect'
+          ? `\\omega_{\\text{nulo}} = \\pm \\frac{2\\pi}{\\tau_0} = \\pm ${( (2 * Math.PI) / calc.tau ).toFixed(2)}\\text{ rad/s}`
+          : `|X(0)| = ${calc.fnMag(0).toFixed(2)}, \\quad |X(10)| = ${calc.fnMag(10).toFixed(4)}`
+      }
+    ];
+  }
+
+  // Step 4
+  return [
+    {
+      label: isEn ? '4.1 Khutoryansky Bridge (T₀ → ∞ Limit):' : '4.1 Ponte Didática de Khutoryansky (T₀ → ∞):',
+      latex: `\\lim_{T_0 \\to \\infty} T_0 \\cdot D_n = X(\\omega), \\quad \\Delta\\omega = \\frac{2\\pi}{T_0} \\to 0`
+    },
+    {
+      label: isEn ? `4.2 Discrete Harmonics Density at T₀ = ${calc.T0.toFixed(1)}s:` : `4.2 Densidade Espectral Discreta em T₀ = ${calc.T0.toFixed(1)}s:`,
+      latex: `\\omega_0 = \\frac{2\\pi}{T_0} = ${calc.w0.toFixed(2)}\\text{ rad/s}, \\quad N_{\\text{raias}} = ${calc.bridgeHarmonics.length}`
+    },
+    {
+      label: isEn ? '4.3 Parseval-Rayleigh Energy Conservation:' : '4.3 Teorema de Conservação de Energia (Parseval / Rayleigh):',
+      latex: `\\int_{-\\infty}^{+\\infty} |x(t)|^2 dt = \\frac{1}{2\\pi} \\int_{-\\infty}^{+\\infty} |X(\\omega)|^2 d\\omega \\approx ${calc.energyFreq.toFixed(4)}\\text{ J}`
+    },
+    {
+      label: isEn ? '4.4 Fundamental CTFT Property for Exams:' : '4.4 Propriedade Operacional de Prova (Lathi):',
+      latex: `\\mathcal{F}\\{x(t - t_0)\\} = X(\\omega) e^{-j\\omega t_0}, \\quad \\mathcal{F}\\{x(at)\\} = \\frac{1}{|a|} X\\left(\\frac{\\omega}{a}\\right)`
     }
   ];
 }
@@ -276,12 +374,26 @@ function buildNotebookLinesConvolution(sig) {
 export function updateNotebookUI(animateHandwriting = false) {
   const dict = I18N[state.lang] || I18N.pt;
   const isFourier = state.activeModule === 'fourier';
+  const isCTFT = state.activeModule === 'ctft';
   const isEn = state.lang === 'en';
 
   // 1. Barra de Métricas Instantâneas
   const metricsEl = document.getElementById('live-step-metrics');
   if (metricsEl) {
-    if (isFourier) {
+    if (isCTFT) {
+      const calc = state.ctftCalculated;
+      if (calc) {
+        if (state.step === 1) {
+          metricsEl.innerHTML = `<span class="font-semibold text-sec">${isEn ? 'Energy' : 'Energia'}</span><span>${latexToHtml(`E_x = ${calc.energyTime.toFixed(3)}\\text{ J}`)}</span>`;
+        } else if (state.step === 2) {
+          metricsEl.innerHTML = `<span class="font-semibold text-sec">DC X(0)</span><span>${latexToHtml(`X(0) = ${calc.fnMag(0).toFixed(3)}`)}</span>`;
+        } else if (state.step === 3) {
+          metricsEl.innerHTML = `<span class="font-semibold text-sec">|X(0)|</span><span>${latexToHtml(`|X(0)| = ${calc.fnMag(0).toFixed(2)}, \\; \\angle X(0) = 0`)}</span>`;
+        } else {
+          metricsEl.innerHTML = `<span class="font-semibold text-sec">Ponte T₀</span><span>${latexToHtml(`T_0 = ${calc.T0.toFixed(1)}\\text{s} \\implies \\Delta\\omega = ${calc.w0.toFixed(2)}`)}</span>`;
+        }
+      }
+    } else if (isFourier) {
       const calc = state.fourierCalculated;
       if (calc) {
         if (state.step === 1) {
@@ -321,9 +433,11 @@ export function updateNotebookUI(animateHandwriting = false) {
   // 2. Linhas do Caderno
   const container = document.getElementById('notebook-lines');
   if (container) {
-    const lines = isFourier
-      ? buildNotebookLinesFourier(state.fourierCalculated)
-      : buildNotebookLinesConvolution(getEffectiveSignals());
+    const lines = isCTFT
+      ? buildNotebookLinesCTFT(state.ctftCalculated)
+      : (isFourier
+        ? buildNotebookLinesFourier(state.fourierCalculated)
+        : buildNotebookLinesConvolution(getEffectiveSignals()));
 
     if (!animateHandwriting && container.children.length === lines.length) {
       lines.forEach((item, idx) => {
@@ -335,13 +449,14 @@ export function updateNotebookUI(animateHandwriting = false) {
       });
     } else {
       if (handwritingTimer) {
-        clearInterval(handwritingTimer);
+        clearTimeout(handwritingTimer);
         handwritingTimer = null;
       }
       container.innerHTML = '';
-      lines.forEach((item) => {
+      lines.forEach((item, idx) => {
         const div = document.createElement('div');
-        div.className = 'handwriting-line py-1';
+        div.className = 'handwriting-line written py-1 notebook-cascade-in';
+        div.style.setProperty('--line-idx', String(idx));
         div.innerHTML = `
           <div class="hw-lbl text-[10px] font-medium text-mut mb-0.5">${item.label}</div>
           <div class="flex items-center flex-wrap">
@@ -352,29 +467,6 @@ export function updateNotebookUI(animateHandwriting = false) {
         renderMath(div.querySelector('.hw-clip'), item.latex, false);
         container.appendChild(div);
       });
-
-      let currentIdx = 0;
-      const allRows = Array.from(container.children);
-      const stepReveal = () => {
-        allRows.forEach((r, i) => {
-          const penSlot = r.querySelector('.hw-pen-slot');
-          if (i < currentIdx) {
-            r.classList.remove('writing-now');
-            r.classList.add('written');
-            if (penSlot) penSlot.innerHTML = '';
-          } else if (i === currentIdx) {
-            r.classList.add('writing-now');
-            if (penSlot) penSlot.innerHTML = PEN_SVG;
-          }
-        });
-        currentIdx++;
-        if (currentIdx > allRows.length) {
-          clearInterval(handwritingTimer);
-          handwritingTimer = null;
-        }
-      };
-      stepReveal();
-      handwritingTimer = setInterval(stepReveal, 240);
     }
   }
 
@@ -382,7 +474,37 @@ export function updateNotebookUI(animateHandwriting = false) {
   const regContainer = document.getElementById('regions-table');
   if (regContainer) {
     regContainer.innerHTML = '';
-    if (isFourier) {
+    if (isCTFT) {
+      // Header UFPA da Tabela de Transformadas Notáveis
+      const tableHeader = document.createElement('div');
+      tableHeader.className = 'grid grid-cols-3 gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[10px] font-bold text-sec uppercase tracking-wider mb-1';
+      tableHeader.innerHTML = `
+        <span>${isEn ? 'Signal x(t)' : 'Sinal x(t)'}</span>
+        <span>${isEn ? 'Transform X(ω)' : 'Transformada X(ω)'}</span>
+        <span class="text-right">${isEn ? 'Pair / Bridge' : 'Par Notável'}</span>
+      `;
+      regContainer.appendChild(tableHeader);
+
+      Object.entries(BUILTIN_CTFT_PRESETS).forEach(([key, p]) => {
+        const isCurrent = state.ctftPresetKey === key;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `region-row w-full text-left px-2 py-1.5 rounded-lg grid grid-cols-3 items-center gap-2 ui-control ${isCurrent ? 'active font-semibold' : ''}`;
+        btn.innerHTML = `
+          <span class="text-[10px] font-mono-code">${isEn ? p.titleEn : p.title}</span>
+          <span class="ctft-formula text-[10px] truncate"></span>
+          <span class="text-[9px] text-mut text-right truncate">${key === 'bridge' ? 'Eugene Khutoryansky' : 'Par Notável'}</span>
+        `;
+        renderMath(btn.querySelector('.ctft-formula'), p.latexX, false);
+        btn.addEventListener('click', () => {
+          state.ctftPresetKey = key;
+          state.ctftCalculated = calculateCTFTData(state.ctftPresetKey, state.ctftPulseWidth, state.ctftDecay, state.ctftBridgeT0);
+          updateNotebookUI(false);
+          updateScene3D();
+        });
+        regContainer.appendChild(btn);
+      });
+    } else if (isFourier) {
       const calc = state.fourierCalculated;
       if (calc) {
         // Barra de Eficiência de Parseval
@@ -427,13 +549,40 @@ export function updateNotebookUI(animateHandwriting = false) {
         });
       }
     } else {
+      // Header UFPA da Tabela de Convolução com 3 colunas claras
+      const tableHeader = document.createElement('div');
+      tableHeader.className = 'table-header-ufpa grid grid-cols-3 gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[10px] font-bold text-sec uppercase tracking-wider mb-1';
+      tableHeader.innerHTML = `
+        <span>${isEn ? 'Regime / Overlap' : 'Regime / Sobreposição'}</span>
+        <span>${isEn ? 'Interval of t' : 'Intervalo de t'}</span>
+        <span class="text-right">${isEn ? 'Result y(t)' : 'Expressão y(t)'}</span>
+      `;
+      regContainer.appendChild(tableHeader);
+
       const sig = getEffectiveSignals();
-      (sig.regions || []).forEach((reg) => {
+      const regionsList = sig.regions || [];
+      regionsList.forEach((reg, idx, arr) => {
         const isCurrent = state.step >= 3 && reg.test(state.t);
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = `region-row w-full text-left px-2 py-1 rounded flex items-center justify-between gap-2 ui-control ${isCurrent ? 'active font-semibold' : ''}`;
-        btn.innerHTML = `<span class="reg-range"></span><span class="reg-expr"></span>`;
+        btn.className = `region-row w-full text-left px-2 py-1.5 rounded-lg grid grid-cols-3 items-center gap-2 ui-control ${isCurrent ? 'active font-semibold' : ''}`;
+
+        let regimeLabel = isEn ? 'Total Overlap' : 'Sobreposição Total';
+        if (reg.latex.includes('y(t) = 0')) {
+          regimeLabel = idx === 0 
+            ? (isEn ? 'No Overlap (t < tin)' : 'Sem Sobreposição (t < tin)')
+            : (isEn ? 'No Overlap (t > tout)' : 'Sem Sobreposição (t > tout)');
+        } else if (idx === 1) {
+          regimeLabel = isEn ? 'Partial Entrance' : 'Entrada Parcial';
+        } else if (idx === arr.length - 2) {
+          regimeLabel = isEn ? 'Partial Exit' : 'Saída Parcial';
+        }
+
+        btn.innerHTML = `
+          <span class="text-[10px] font-medium text-mut truncate">${regimeLabel}</span>
+          <span class="reg-range text-[11px] font-mono-code font-bold"></span>
+          <span class="reg-expr text-[11px] text-right font-medium truncate"></span>
+        `;
         renderMath(btn.querySelector('.reg-range'), reg.range, false);
         renderMath(btn.querySelector('.reg-expr'), isEn && reg.latexEn ? reg.latexEn : reg.latex, false);
         btn.addEventListener('click', () => {

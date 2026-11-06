@@ -3,7 +3,8 @@
 // ============================================================================
 
 import { state } from './state.js';
-import { init3DStage, updateScene3D } from './stage-3d.js';
+import { init3DStage, updateScene3D, getEffectiveSignals } from './stage-3d.js';
+import { calculateCTFTData } from './math-engine.js';
 import { updateNotebookUI } from './notebook.js';
 import {
   switchModule,
@@ -21,15 +22,61 @@ import {
 
 let frameCounter = 0;
 let step2PauseFrames = 0;
+let lastFrameTime = performance.now();
 
-function animationLoop() {
+function computeBoundarySlowdownFactor(tVal) {
+  try {
+    const sig = getEffectiveSignals();
+    if (!sig || !sig.supportFixed || !sig.supportMoving) return 1.0;
+    const [fA, fB] = sig.supportFixed;
+    const [mA, mB] = sig.supportMoving;
+    const critPts = [fA + mA, fA + mB, fB + mA, fB + mB].filter(Number.isFinite);
+    for (let i = 0; i < critPts.length; i++) {
+      if (Math.abs(tVal - critPts[i]) < 0.14) {
+        return 0.45;
+      }
+    }
+  } catch (_) {}
+  return 1.0;
+}
+
+function animationLoop(now = performance.now()) {
   requestAnimationFrame(animationLoop);
+
+  const dt = Math.min(0.05, Math.max(0.004, (now - lastFrameTime) / 1000));
+  lastFrameTime = now;
 
   if (state.isPlaying) {
     const spd = state.animSpeed || 1.0;
     const tSlider = document.getElementById('t-slider');
 
-    if (state.activeModule === 'fourier') {
+    if (state.activeModule === 'ctft') {
+      if (state.step === 4) {
+        // Ponte de Khutoryansky viva: expansão contínua T0 de 2.0s até 22.0s
+        state.ctftBridgeT0 = (state.ctftBridgeT0 || 4.0) + 0.055 * spd;
+        if (state.ctftBridgeT0 > 22.0) {
+          state.ctftBridgeT0 = 2.0;
+        }
+        state.ctftCalculated = calculateCTFTData(
+          state.ctftPresetKey,
+          state.ctftPulseWidth,
+          state.ctftDecay,
+          state.ctftBridgeT0,
+          state.ctftExpr
+        );
+        if (tSlider) tSlider.value = state.ctftBridgeT0;
+      } else {
+        // Sonda de frequência ativa varrendo w de -12 a +12 rad/s
+        state.t += 0.06 * spd;
+        if (state.t > 12.0) state.t = -12.0;
+        if (tSlider) tSlider.value = state.t;
+      }
+      updateSliderBadge();
+      frameCounter++;
+      if (frameCounter % 6 === 0) {
+        updateNotebookUI(false);
+      }
+    } else if (state.activeModule === 'fourier') {
       const T0 = state.fourierT0 || 3.0;
       state.t += 0.02 * spd;
       if (state.t > T0 * 1.5) {
@@ -37,11 +84,6 @@ function animationLoop() {
       }
       if (tSlider) tSlider.value = state.t;
       updateSliderBadge();
-
-      frameCounter++;
-      if (frameCounter % 4 === 0) {
-        updateNotebookUI(false);
-      }
     } else {
       if (state.step === 1) {
         state.tauSweep += 0.035 * spd;
@@ -69,7 +111,8 @@ function animationLoop() {
         }
         if (tSlider) tSlider.value = state.flipAngle;
       } else if (state.step === 3) {
-        state.t += 0.022 * spd;
+        const slowFactor = computeBoundarySlowdownFactor(state.t);
+        state.t += 0.022 * spd * slowFactor;
         if (state.t > 5.8) {
           if (state.seqMode) {
             state.t = -2.0;
@@ -80,7 +123,8 @@ function animationLoop() {
         }
         if (tSlider) tSlider.value = state.t;
       } else if (state.step === 4) {
-        state.t += 0.02 * spd;
+        const slowFactor = computeBoundarySlowdownFactor(state.t);
+        state.t += 0.02 * spd * slowFactor;
         if (state.t > 5.8) {
           if (state.seqMode) {
             state.t = -2.0;
@@ -100,7 +144,7 @@ function animationLoop() {
     }
   }
 
-  updateScene3D();
+  updateScene3D(dt);
 }
 
 // Inicialização após o DOM carregar
@@ -116,7 +160,9 @@ window.addEventListener('DOMContentLoaded', () => {
   initUIEventListeners();
 
   const initHash = window.location.hash.toLowerCase();
-  if (initHash.includes('fourier')) {
+  if (initHash.includes('ctft')) {
+    switchModule('ctft');
+  } else if (initHash.includes('fourier')) {
     switchModule('fourier');
   } else {
     switchModule('convolution');

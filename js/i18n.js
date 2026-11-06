@@ -13,6 +13,8 @@ export const I18N = {
     modConvSub: 'y(t) = ∫ x(τ) h(t - τ) dτ',
     modFourierTitle: 'Série de Fourier 3D',
     modFourierSub: 'f(t) ≈ a₀ + ∑ Cₙ cos(nω₀t + θₙ)',
+    modCTFTTitle: 'Transformada CTFT',
+    modCTFTSub: 'X(ω) = ∫ x(t) e^{-jωt} dt',
 
     // Vistas de Câmera 3D/2D
     view3D: '3D Livre',
@@ -66,6 +68,10 @@ export const I18N = {
     stepFourier2: 'Simetria',
     stepFourier3: 'Harmônicas',
     stepFourier4: 'Síntese S_N',
+    stepCTFT1: 'Sinal & Definição',
+    stepCTFT2: 'Par Notável',
+    stepCTFT3: 'Espectro |X(ω)|',
+    stepCTFT4: 'Ponte T₀ → ∞',
 
     // Caderno Analítico
     notebookTitle: 'Dedução Analítica Passo a Passo',
@@ -179,6 +185,8 @@ export const I18N = {
     modConvSub: 'y(t) = ∫ x(τ) h(t - τ) dτ',
     modFourierTitle: '3D Fourier Series',
     modFourierSub: 'f(t) ≈ a₀ + ∑ Cₙ cos(nω₀t + θₙ)',
+    modCTFTTitle: '3D Fourier Transform',
+    modCTFTSub: 'X(ω) = ∫ x(t) e^{-jωt} dt',
 
     // Camera Views
     view3D: '3D Free',
@@ -232,6 +240,10 @@ export const I18N = {
     stepFourier2: 'Symmetry',
     stepFourier3: 'Harmonics',
     stepFourier4: 'Synthesis S_N',
+    stepCTFT1: 'Signal & Definition',
+    stepCTFT2: 'Transform Pair',
+    stepCTFT3: 'Spectrum |X(ω)|',
+    stepCTFT4: 'Bridge T₀ → ∞',
 
     // Analytical Notebook
     notebookTitle: 'Step-by-Step Analytical Derivation',

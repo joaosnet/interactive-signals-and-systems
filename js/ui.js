@@ -4,8 +4,8 @@
 
 import { state, saveStatePreferences, saveCustomPreset, removeCustomPreset } from './state.js';
 import { I18N } from './i18n.js';
-import { renderMath, exprToLatex, latexToExpr, calculateFourierData } from './math-engine.js';
-import { BUILTIN_CONV_PRESETS, BUILTIN_FOURIER_PRESETS } from './presets.js';
+import { renderMath, exprToLatex, latexToExpr, calculateFourierData, calculateCTFTData, validateSignalExpression } from './math-engine.js';
+import { BUILTIN_CONV_PRESETS, BUILTIN_FOURIER_PRESETS, BUILTIN_CTFT_PRESETS } from './presets.js';
 import { updateScene3D, setCameraPreset } from './stage-3d.js';
 import { updateNotebookUI } from './notebook.js';
 import { toggleAudio, updateAudioSynth } from './audio.js';
@@ -13,43 +13,42 @@ import { toggleAudio, updateAudioSynth } from './audio.js';
 export function switchModule(moduleName) {
   state.activeModule = moduleName;
   const isFourier = moduleName === 'fourier';
+  const isCTFT = moduleName === 'ctft';
+  const isConv = moduleName === 'convolution';
 
   // Sincroniza hash da URL
-  window.history.replaceState(null, '', isFourier ? '#fourier' : '#convolution');
+  window.history.replaceState(null, '', isCTFT ? '#ctft' : (isFourier ? '#fourier' : '#convolution'));
 
   // Atualiza Segmented Control Principal
   const btnConv = document.getElementById('mod-btn-conv');
   const btnFourier = document.getElementById('mod-btn-fourier');
+  const btnCTFT = document.getElementById('mod-btn-ctft');
   if (btnConv && btnFourier) {
-    btnConv.classList.toggle('active', !isFourier);
+    btnConv.classList.toggle('active', isConv);
     btnFourier.classList.toggle('active', isFourier);
+    if (btnCTFT) btnCTFT.classList.toggle('active', isCTFT);
   }
 
   // Sincroniza Dock do Modo Zen
   const zenBtnConv = document.getElementById('zen-btn-conv');
   const zenBtnFourier = document.getElementById('zen-btn-fourier');
+  const zenBtnCTFT = document.getElementById('zen-btn-ctft');
   if (zenBtnConv && zenBtnFourier) {
-    zenBtnConv.classList.toggle('active', !isFourier);
+    zenBtnConv.classList.toggle('active', isConv);
     zenBtnFourier.classList.toggle('active', isFourier);
+    if (zenBtnCTFT) zenBtnCTFT.classList.toggle('active', isCTFT);
   }
 
   // Controles específicos de cada módulo
   const convSliders = document.getElementById('conv-slider-row');
   const fourierSliders = document.getElementById('fourier-slider-row');
   if (convSliders && fourierSliders) {
-    convSliders.classList.toggle('hidden', isFourier);
+    convSliders.classList.toggle('hidden', !isConv);
     fourierSliders.classList.toggle('hidden', !isFourier);
   }
 
-  const convInputs = document.getElementById('conv-inputs-block');
-  const fourierInputs = document.getElementById('fourier-inputs-block');
-  if (convInputs && fourierInputs) {
-    convInputs.classList.toggle('hidden', isFourier);
-    fourierInputs.classList.toggle('hidden', !isFourier);
-  }
-
   const btnCommute = document.getElementById('btn-commute');
-  if (btnCommute) btnCommute.classList.toggle('hidden', isFourier);
+  if (btnCommute) btnCommute.classList.toggle('hidden', !isConv);
 
   const btnAudio = document.getElementById('btn-audio-toggle');
   if (btnAudio) btnAudio.classList.toggle('hidden', !isFourier);
@@ -60,13 +59,16 @@ export function switchModule(moduleName) {
   const dict = I18N[state.lang] || I18N.pt;
   const regTitle = document.getElementById('regions-title');
   if (regTitle) {
-    regTitle.textContent = isFourier ? dict.regionsFourierTitle : dict.regionsTitle;
+    regTitle.textContent = isCTFT ? 'Pares Notáveis & Ponte de Khutoryansky' : (isFourier ? dict.regionsFourierTitle : dict.regionsTitle);
   }
 
   // Atualiza passos (1 a 4) com os rótulos de cada módulo
   updateStepLabels();
 
-  if (isFourier) {
+  if (isCTFT) {
+    state.ctftCalculated = calculateCTFTData(state.ctftPresetKey, state.ctftPulseWidth, state.ctftDecay, state.ctftBridgeT0);
+    if (state.activeMathField) setActiveMathField('ctft');
+  } else if (isFourier) {
     state.fourierCalculated = calculateFourierData(state.fourierExpr, state.fourierT0, state.fourierN);
     if (state.activeMathField) setActiveMathField('fourier');
     updateAudioSynth();
@@ -76,17 +78,21 @@ export function switchModule(moduleName) {
 
   // Sincroniza HUD de Modo Foco se estiver aberto
   if (state.focusHUDActive) {
-    state.focusHUDTarget = isFourier ? 'fourier' : 'x';
+    state.focusHUDTarget = isCTFT ? 'ctft' : (isFourier ? 'fourier' : 'x');
     const pillX = document.getElementById('hud-pill-x');
     const pillH = document.getElementById('hud-pill-h');
     const pillFourier = document.getElementById('hud-pill-fourier');
+    const pillCTFT = document.getElementById('hud-pill-ctft');
     if (pillX && pillH && pillFourier) {
-      pillX.classList.toggle('hidden', isFourier);
-      pillH.classList.toggle('hidden', isFourier);
+      pillX.classList.toggle('hidden', !isConv);
+      pillH.classList.toggle('hidden', !isConv);
       pillFourier.classList.toggle('hidden', !isFourier);
-      pillX.classList.toggle('active', !isFourier);
+      if (pillCTFT) pillCTFT.classList.toggle('hidden', !isCTFT);
+
+      pillX.classList.toggle('active', isConv);
       pillH.classList.remove('active');
       pillFourier.classList.toggle('active', isFourier);
+      if (pillCTFT) pillCTFT.classList.toggle('active', isCTFT);
     }
     updateHUDTitle();
     updateParametricHUDPreview();
@@ -112,11 +118,38 @@ export function setStep(stepNum, restartAnim = true) {
   const slider = document.getElementById('t-slider');
   const titleEl = document.getElementById('slider-param-title');
 
-  if (state.activeModule === 'fourier') {
+  if (state.activeModule === 'ctft') {
+    if (stepNum === 4) {
+      if (titleEl) titleEl.textContent = 'Período da Ponte T₀ (T₀ → ∞)';
+      if (slider) {
+        slider.min = '2.0';
+        slider.max = '25.0';
+        slider.step = '0.5';
+        slider.value = state.ctftBridgeT0;
+      }
+    } else if (stepNum === 3) {
+      if (titleEl) titleEl.textContent = 'Frequência de Teste ω';
+      if (slider) {
+        slider.min = '-15.0';
+        slider.max = '15.0';
+        slider.step = '0.2';
+        slider.value = state.t;
+      }
+    } else {
+      if (titleEl) titleEl.textContent = 'Largura do Sinal τ₀';
+      if (slider) {
+        slider.min = '0.5';
+        slider.max = '5.0';
+        slider.step = '0.25';
+        slider.value = state.ctftPulseWidth;
+      }
+    }
+  } else if (state.activeModule === 'fourier') {
     if (titleEl) titleEl.textContent = dict.sliderEvalPoint;
     if (slider) {
       slider.min = '-4.0';
       slider.max = '4.0';
+      slider.step = '0.02';
       slider.value = state.t;
     }
   } else {
@@ -125,6 +158,7 @@ export function setStep(stepNum, restartAnim = true) {
       if (slider) {
         slider.min = '-3.5';
         slider.max = '5.5';
+        slider.step = '0.02';
         if (restartAnim) state.tauSweep = -3.0;
         slider.value = state.tauSweep;
       }
@@ -133,6 +167,7 @@ export function setStep(stepNum, restartAnim = true) {
       if (slider) {
         slider.min = '0';
         slider.max = '3.1416';
+        slider.step = '0.02';
         if (restartAnim) state.flipAngle = 0;
         slider.value = state.flipAngle;
       }
@@ -141,6 +176,7 @@ export function setStep(stepNum, restartAnim = true) {
       if (slider) {
         slider.min = '-2.0';
         slider.max = '5.8';
+        slider.step = '0.02';
         state.flipAngle = Math.PI;
         slider.value = state.t;
       }
@@ -155,7 +191,11 @@ export function updateSliderBadge() {
   const badge = document.getElementById('t-readout-badge');
   const zenBadge = document.getElementById('zen-t-readout');
   let txt = '';
-  if (state.activeModule === 'fourier') {
+  if (state.activeModule === 'ctft') {
+    if (state.step === 4) txt = `T₀ = ${state.ctftBridgeT0.toFixed(1)} s`;
+    else if (state.step === 3) txt = `ω = ${state.t.toFixed(2)} rad/s`;
+    else txt = `τ₀ = ${state.ctftPulseWidth.toFixed(2)} s`;
+  } else if (state.activeModule === 'fourier') {
     txt = `t = ${state.t.toFixed(2)}`;
   } else {
     if (state.step === 1) txt = `τ = ${state.tauSweep.toFixed(2)}`;
@@ -178,11 +218,12 @@ export function updatePlayButtonUI() {
 export function updateStepLabels() {
   const dict = I18N[state.lang] || I18N.pt;
   const isFourier = state.activeModule === 'fourier';
+  const isCTFT = state.activeModule === 'ctft';
   for (let s = 1; s <= 4; s++) {
     const tagEl = document.getElementById('step-tag-' + s);
     const lblEl = document.getElementById('step-lbl-' + s);
     if (tagEl) tagEl.textContent = dict['stepTag' + s];
-    if (lblEl) lblEl.textContent = isFourier ? dict['stepFourier' + s] : dict['stepConv' + s];
+    if (lblEl) lblEl.textContent = isCTFT ? dict['stepCTFT' + s] : (isFourier ? dict['stepFourier' + s] : dict['stepConv' + s]);
   }
 }
 
@@ -286,6 +327,10 @@ export function applyTheme(th, animateIcon = false) {
   });
   updateThemeCycleButtonUI(animateIcon);
   saveStatePreferences();
+  if (state.focusHUDActive) {
+    const valRes = validateSignalExpression(hudBaseExpression || 'rect(t)');
+    renderHUDOscilloscope(valRes, state.focusHUDTarget || 'x');
+  }
   updateScene3D();
 }
 
@@ -376,23 +421,23 @@ export function applyLanguage(lang) {
     'filter-pill-gallery': isEn ? 'Presets' : 'Exemplos',
 
     // Floating Signal Focus HUD
-    'hud-lbl-tab-free': isEn ? 'MathLive Keyboard' : 'Teclado MathLive',
-    'hud-lbl-tab-param': isEn ? 'Shapes & Sliders' : 'Formas & Sliders',
-    'hud-subtab-signals': isEn ? 'Signals' : 'Sinais',
-    'hud-subtab-algebra': isEn ? 'Algebra & 123' : 'Álgebra & 123',
     'hud-lbl-shape-rect': dict.hudShapeRect,
     'hud-lbl-shape-tri': dict.hudShapeTri,
+    'hud-lbl-shape-pulse': isEn ? 'Switch' : 'Chave',
     'hud-lbl-shape-step': dict.hudShapeStep,
-    'hud-lbl-shape-exp': dict.hudShapeExp,
+    'hud-lbl-shape-exp': isEn ? 'Exp.' : 'Exp.',
     'hud-lbl-shape-ramp': dict.hudShapeRamp,
     'hud-lbl-shape-sin': dict.hudShapeSin,
     'hud-lbl-slider-a': dict.hudSliderA,
     'hud-lbl-slider-w': dict.hudSliderW,
     'hud-lbl-slider-t0': dict.hudSliderT0,
     'hud-lbl-slider-alpha': dict.hudSliderAlpha,
-    'hud-lbl-btn-pin': isEn ? '+ Save to Gallery' : '+ Salvar na Galeria',
-    'hud-lbl-btn-apply': isEn ? 'Done' : 'Concluir',
-    'hud-key-clear': isEn ? 'Clear' : 'Limpar'
+    'hud-lbl-btn-pin': isEn ? '+ Save' : '+ Salvar',
+    'hud-key-clear': isEn ? 'Clear' : 'Limpar',
+    'hud-mode-replace': isEn ? '= Replace' : '= Substituir',
+    'hud-mode-add': isEn ? '+ Add' : '+ Somar',
+    'hud-mode-sub': isEn ? '− Subtract' : '− Subtrair',
+    'hud-btn-commit-block': isEn ? '+ Apply Block' : '+ Aplicar Bloco'
   };
 
   Object.entries(elMap).forEach(([id, txt]) => {
@@ -465,7 +510,64 @@ export function renderPresetGallery() {
   if (!gallery) return;
   gallery.innerHTML = '';
   const isEn = state.lang === 'en';
+  const isCTFT = state.activeModule === 'ctft';
   const isFourier = state.activeModule === 'fourier';
+
+  if (isCTFT) {
+    // Card de Criação / Edição Direta de x(t) para CTFT
+    const createCard = document.createElement('div');
+    createCard.className = 'preset-create-card col-span-2 rounded-xl p-2.5 cursor-pointer flex items-center justify-between gap-2';
+    createCard.innerHTML = `
+      <div class="flex flex-col min-w-0">
+        <div class="flex items-center gap-1.5">
+          <span class="text-[11px] font-bold" style="color: var(--c-x1)">${isEn ? '+ Create / Edit Aperiodic Signal x(t)' : '+ Criar / Editar Sinal Aperiódico x(t)'}</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30">MathLive</span>
+        </div>
+        <div class="create-card-math text-[10px] text-secondary truncate mt-0.5"></div>
+      </div>
+      <button type="button" id="gallery-btn-edit-ctft" class="ctrl-pill px-2.5 py-1.5 rounded-lg text-[10px] font-bold shrink-0 flex items-center gap-1" style="border-color: var(--c-x1); color: var(--c-x1)">
+        <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+        <span>${isEn ? 'Edit x(t)' : 'Editar x(t)'}</span>
+      </button>
+    `;
+    const mathEl = createCard.querySelector('.create-card-math');
+    if (mathEl) {
+      renderMath(mathEl, `x(t) = ${exprToLatex(state.ctftExpr || 'rect(t/2)', 't')}`, false);
+    }
+    createCard.addEventListener('click', () => openSignalHUD('ctft'));
+    gallery.appendChild(createCard);
+
+    const allCTFT = Object.values(BUILTIN_CTFT_PRESETS);
+    allCTFT.forEach(p => {
+      const isActive = state.ctftPresetKey === p.id;
+      const card = document.createElement('div');
+      card.className = `preset-pill rounded-lg p-2 cursor-pointer flex flex-col justify-between gap-1 relative ${isActive ? 'active' : ''}`;
+      const pTitle = isEn ? (p.titleEn || p.title) : p.title;
+      const pSub = isEn ? (p.subtitleEn || p.subtitle) : p.subtitle;
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between gap-1">
+          <span class="text-[11px] font-bold truncate text-primary">${pTitle}</span>
+          <span class="text-[9px] font-mono-code font-semibold" style="color: var(--c-conv)">CTFT</span>
+        </div>
+        <div class="text-[10px] text-mut truncate">${pSub}</div>
+        <div class="preset-math text-[10px] pt-0.5 truncate"></div>
+      `;
+      const mathPreview = card.querySelector('.preset-math');
+      if (mathPreview && p.latexX) {
+        renderMath(mathPreview, `${p.latexX} \\longleftrightarrow ${p.latexCTFT}`, false);
+      }
+      card.addEventListener('click', () => {
+        state.ctftPresetKey = p.id;
+        state.ctftCalculated = calculateCTFTData(p.id, p.tau0 || 2.0, p.a || 1.0, p.defaultT0 || 4.0);
+        renderPresetGallery();
+        updateNotebookUI(true);
+        updateScene3D();
+      });
+      gallery.appendChild(card);
+    });
+    return;
+  }
 
   if (isFourier) {
     // Card de Criação / Edição Direta de f(t)
@@ -697,8 +799,157 @@ export function mutateActiveExpr(mutatorFn) {
 // ============================================================================
 
 let hudCurrentShape = 'rect';
-let hudCurrentTab = 'free'; // 'free' | 'param'
 let isSyncingHudMathField = false;
+let hudBaseExpression = 'rect(t)';
+let lastValidOscResult = null;
+
+export function renderHUDOscilloscope(valRes, target = 'x') {
+  const canvas = document.getElementById('hud-oscilloscope-canvas');
+  const statusPill = document.getElementById('hud-status-pill');
+  const statusDot = document.getElementById('hud-status-dot');
+  const statusText = document.getElementById('hud-status-text');
+  const supportEl = document.getElementById('hud-osc-support');
+  const energyEl = document.getElementById('hud-osc-energy');
+
+  const isValid = Boolean(valRes && (valRes.valid || valRes.isValid));
+  const isAllZero = Boolean(valRes && (valRes.isAllZero || (valRes.energy !== undefined && valRes.energy < 1e-4)));
+
+  if (statusPill && statusDot && statusText) {
+    if (isValid) {
+      statusPill.className = 'inline-flex items-center gap-1 font-bold text-emerald-400';
+      statusDot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400';
+      statusText.textContent = isAllZero ? 'Sinal nulo (0)' : 'Sinal válido';
+    } else {
+      statusPill.className = 'inline-flex items-center gap-1 font-bold text-amber-400';
+      statusDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse';
+      statusText.textContent = 'Digitando fórmula...';
+    }
+  }
+
+  const drawRes = isValid ? valRes : lastValidOscResult;
+  if (isValid) {
+    lastValidOscResult = valRes;
+  }
+
+  if (drawRes) {
+    const [sMin, sMax] = drawRes.support || [-1, 1];
+    const drawAllZero = Boolean(drawRes.isAllZero || (drawRes.energy !== undefined && drawRes.energy < 1e-4));
+    if (supportEl) {
+      supportEl.textContent = drawAllZero
+        ? 'Suporte: ∅'
+        : `Suporte: [${sMin.toFixed(2)}, ${sMax.toFixed(2)}]`;
+    }
+    if (energyEl) {
+      energyEl.textContent = `E = ${(drawRes.energy || 0).toFixed(2)} J`;
+    }
+  }
+
+  if (!canvas || !drawRes || typeof drawRes.fn !== 'function') return;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(240, rect.width || 360);
+  const h = Math.max(54, rect.height || 68);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (canvas.width !== Math.floor(w * dpr) || canvas.height !== Math.floor(h * dpr)) {
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
+  }
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.save();
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const isLight = state.theme === 'light' || state.theme === 'projector';
+  const gridCol = isLight ? 'rgba(100, 116, 139, 0.22)' : 'rgba(148, 163, 184, 0.16)';
+  const axisCol = isLight ? 'rgba(15, 23, 42, 0.45)' : 'rgba(148, 163, 184, 0.4)';
+  const curveCol = target === 'h'
+    ? (isLight ? '#e11d48' : '#fb7185')
+    : (isLight ? '#0284c7' : '#38bdf8');
+  const fillCol = target === 'h'
+    ? 'rgba(251, 113, 133, 0.18)'
+    : 'rgba(56, 189, 248, 0.18)';
+
+  const T_MIN = -4.0;
+  const T_MAX = 4.0;
+  const samples = 160;
+  let maxAbs = 1.2;
+  const pts = [];
+  for (let i = 0; i <= samples; i++) {
+    const tVal = T_MIN + (i / samples) * (T_MAX - T_MIN);
+    let yVal = 0;
+    try {
+      yVal = drawRes.fn(tVal);
+      if (!Number.isFinite(yVal)) yVal = 0;
+    } catch (_) {
+      yVal = 0;
+    }
+    if (Math.abs(yVal) > maxAbs) maxAbs = Math.min(4.0, Math.abs(yVal) * 1.15);
+    pts.push({ t: tVal, y: yVal });
+  }
+
+  const toX = (tVal) => ((tVal - T_MIN) / (T_MAX - T_MIN)) * (w - 20) + 10;
+  const toY = (yVal) => h * 0.58 - (yVal / maxAbs) * (h * 0.38);
+  const yZero = toY(0);
+
+  // Shaded support window
+  if (!drawRes.isAllZero && drawRes.support) {
+    const sx1 = Math.max(10, toX(drawRes.support[0]));
+    const sx2 = Math.min(w - 10, toX(drawRes.support[1]));
+    if (sx2 > sx1) {
+      ctx.fillStyle = isLight ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.09)';
+      ctx.fillRect(sx1, 4, sx2 - sx1, h - 8);
+    }
+  }
+
+  // Vertical ticks
+  ctx.strokeStyle = gridCol;
+  ctx.lineWidth = 1;
+  for (let tv = -3; tv <= 3; tv += 1) {
+    const x = toX(tv);
+    ctx.beginPath();
+    ctx.moveTo(x, 4);
+    ctx.lineTo(x, h - 4);
+    ctx.stroke();
+  }
+
+  // Zero axes
+  ctx.strokeStyle = axisCol;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(6, yZero);
+  ctx.lineTo(w - 6, yZero);
+  ctx.moveTo(toX(0), 4);
+  ctx.lineTo(toX(0), h - 4);
+  ctx.stroke();
+
+  // Area fill under curve
+  ctx.beginPath();
+  ctx.moveTo(toX(pts[0].t), yZero);
+  for (let i = 0; i < pts.length; i++) {
+    ctx.lineTo(toX(pts[i].t), toY(pts[i].y));
+  }
+  ctx.lineTo(toX(pts[pts.length - 1].t), yZero);
+  ctx.closePath();
+  ctx.fillStyle = fillCol;
+  ctx.fill();
+
+  // Main signal waveform
+  ctx.beginPath();
+  for (let i = 0; i < pts.length; i++) {
+    const px = toX(pts[i].t);
+    const py = toY(pts[i].y);
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.strokeStyle = curveCol;
+  ctx.lineWidth = 2.2;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  ctx.restore();
+}
 
 export function setHUDExpressionLive(exprString, syncMathField = true) {
   const cleanExpr = (exprString || '').trim() || '0';
@@ -721,8 +972,20 @@ export function setHUDExpressionLive(exprString, syncMathField = true) {
     }
   }
 
-  const target = state.focusHUDTarget || (state.activeModule === 'fourier' ? 'fourier' : 'x');
-  if (target === 'fourier') {
+  const target = state.focusHUDTarget || (state.activeModule === 'ctft' ? 'ctft' : (state.activeModule === 'fourier' ? 'fourier' : 'x'));
+  const valRes = validateSignalExpression(cleanExpr);
+  renderHUDOscilloscope(valRes, target);
+
+  // Proteção não-destrutiva: mantém o último sinal 3D válido se a expressão estiver incompleta
+  if (!valRes.valid && !valRes.isValid) {
+    return;
+  }
+
+  if (target === 'ctft') {
+    state.ctftExpr = cleanExpr;
+    state.ctftPresetKey = 'custom_ctft';
+    state.ctftCalculated = calculateCTFTData('custom_ctft', state.ctftPulseWidth, state.ctftDecay, state.ctftBridgeT0, state.ctftExpr);
+  } else if (target === 'fourier') {
     state.fourierExpr = cleanExpr;
     state.fourierPresetKey = 'custom_fourier';
     state.fourierCalculated = calculateFourierData(state.fourierExpr, state.fourierT0, state.fourierN);
@@ -779,6 +1042,10 @@ export function generateParametricExpr(shape, A, W, t0, alpha) {
     case 'tri': {
       const inner = rW === 1.0 ? s0 : `${s0} / ${rW}`;
       return `${ampMult(rA)}tri(${inner})`;
+    }
+    case 'pulse': {
+      const tEnd = round(rt0 + rW, 2);
+      return `${ampMult(rA)}(${stepTerm(rt0)} - ${stepTerm(tEnd)})`;
     }
     case 'u':
     case 'step': {
@@ -854,6 +1121,13 @@ export function generateParametricPreview(shape, A, W, t0, alpha) {
       support = `t \\in [${a},\\, ${b}]`;
       break;
     }
+    case 'pulse': {
+      const tEnd = round(rt0 + rW, 2);
+      const tEndL = formatShiftLatex(tEnd);
+      latex = `${ampLatex(rA)}\\left[u(${s0L}) - u(${tEndL})\\right]`;
+      support = `t \\in [${rt0.toFixed(2)},\\, ${tEnd.toFixed(2)}]`;
+      break;
+    }
     case 'u':
     case 'step': {
       latex = `${ampLatex(rA)}u(${s0L})`;
@@ -891,12 +1165,9 @@ export function generateParametricPreview(shape, A, W, t0, alpha) {
 }
 
 export function updateHUDTitle() {
-  const dict = I18N[state.lang] || I18N.pt;
-  const titleEl = document.getElementById('hud-title');
   const dotEl = document.getElementById('hud-target-dot');
   const varPrefixEl = document.getElementById('hud-var-prefix');
   const fourierT0Wrap = document.getElementById('hud-fourier-t0-wrap');
-  if (!titleEl) return;
 
   const target = state.focusHUDTarget || 'x';
   if (fourierT0Wrap) {
@@ -905,27 +1176,38 @@ export function updateHUDTitle() {
   }
 
   if (target === 'fourier') {
-    titleEl.textContent = dict.hudTitleFourier;
     if (dotEl) dotEl.style.backgroundColor = 'var(--c-x1)';
     if (varPrefixEl) {
       varPrefixEl.textContent = 'f(t) =';
       varPrefixEl.style.color = 'var(--c-x1)';
     }
   } else if (target === 'h') {
-    titleEl.textContent = dict.hudTitleH;
     if (dotEl) dotEl.style.backgroundColor = 'var(--c-x2)';
     if (varPrefixEl) {
       varPrefixEl.textContent = 'h(t) =';
       varPrefixEl.style.color = 'var(--c-x2)';
     }
   } else {
-    titleEl.textContent = dict.hudTitleX;
     if (dotEl) dotEl.style.backgroundColor = 'var(--c-x1)';
     if (varPrefixEl) {
       varPrefixEl.textContent = 'x(t) =';
       varPrefixEl.style.color = 'var(--c-x1)';
     }
   }
+}
+
+export function combineParametricExpression(baseExpr, blockExpr, mode) {
+  if (mode === 'replace' || !baseExpr || baseExpr.trim() === '0') {
+    return blockExpr;
+  }
+  const cleanBase = baseExpr.trim();
+  if (mode === 'add') {
+    return `${cleanBase} + ${blockExpr}`;
+  }
+  if (mode === 'sub') {
+    return `${cleanBase} - (${blockExpr})`;
+  }
+  return blockExpr;
 }
 
 export function updateParametricHUDPreview(commitLive = false) {
@@ -953,26 +1235,26 @@ export function updateParametricHUDPreview(commitLive = false) {
     rowAlpha.style.display = (hudCurrentShape === 'exp') ? 'flex' : 'none';
   }
 
-  const { expr, support } = generateParametricPreview(hudCurrentShape, aVal, wVal, t0Val, alphaVal);
-
-  const supportBadge = document.getElementById('hud-support-badge');
-  if (supportBadge) {
-    renderMath(supportBadge, support, false);
-  }
+  const { expr } = generateParametricPreview(hudCurrentShape, aVal, wVal, t0Val, alphaVal);
 
   if (commitLive) {
-    setHUDExpressionLive(expr, true);
+    const mode = state.hudBuildMode || 'replace';
+    const nextExpr = combineParametricExpression(hudBaseExpression, expr, mode);
+    setHUDExpressionLive(nextExpr, true);
   }
 }
 
 export function openSignalHUD(targetSignal) {
   const isFourier = state.activeModule === 'fourier';
+  const isCTFT = state.activeModule === 'ctft';
   let target = targetSignal;
   if (!target) {
-    target = isFourier ? 'fourier' : 'x';
+    target = isCTFT ? 'ctft' : (isFourier ? 'fourier' : 'x');
   }
 
-  if (target === 'fourier' && state.activeModule !== 'fourier') {
+  if (target === 'ctft' && state.activeModule !== 'ctft') {
+    switchModule('ctft');
+  } else if (target === 'fourier' && state.activeModule !== 'fourier') {
     switchModule('fourier');
   } else if ((target === 'x' || target === 'h') && state.activeModule !== 'convolution') {
     switchModule('convolution');
@@ -984,24 +1266,38 @@ export function openSignalHUD(targetSignal) {
   const backdrop = document.getElementById('stage-focus-backdrop');
   const hud = document.getElementById('signal-focus-hud');
   if (backdrop) backdrop.classList.remove('hidden');
-  if (hud) hud.classList.remove('hidden');
+  if (hud) {
+    hud.classList.remove('hidden');
+    hud.style.transform = '';
+  }
 
   document.body.classList.add('stage-focus-active');
   document.body.classList.add('focus-hud-open');
+  document.body.classList.remove('mathlive-kb-visible');
+
+  // Garante que o teclado virtual NÃO abra sozinho ao abrir o HUD
+  if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.hide === 'function') {
+    try {
+      window.mathVirtualKeyboard.hide();
+    } catch (_) {}
+  }
 
   const pillX = document.getElementById('hud-pill-x');
   const pillH = document.getElementById('hud-pill-h');
   const pillFourier = document.getElementById('hud-pill-fourier');
+  const pillCTFT = document.getElementById('hud-pill-ctft');
 
-  const currModuleIsFourier = state.activeModule === 'fourier';
+  const currMod = state.activeModule;
   if (pillX && pillH && pillFourier) {
-    pillX.classList.toggle('hidden', currModuleIsFourier);
-    pillH.classList.toggle('hidden', currModuleIsFourier);
-    pillFourier.classList.toggle('hidden', !currModuleIsFourier);
+    pillX.classList.toggle('hidden', currMod !== 'convolution');
+    pillH.classList.toggle('hidden', currMod !== 'convolution');
+    pillFourier.classList.toggle('hidden', currMod !== 'fourier');
+    if (pillCTFT) pillCTFT.classList.toggle('hidden', currMod !== 'ctft');
 
     pillX.classList.toggle('active', target === 'x');
     pillH.classList.toggle('active', target === 'h');
     pillFourier.classList.toggle('active', target === 'fourier');
+    if (pillCTFT) pillCTFT.classList.toggle('active', target === 'ctft');
   }
 
   const hudT0Input = document.getElementById('hud-fourier-t0-input');
@@ -1011,36 +1307,35 @@ export function openSignalHUD(targetSignal) {
 
   updateHUDTitle();
 
-  const currentExpr = target === 'fourier' ? state.fourierExpr : (target === 'h' ? state.exprH : state.exprX);
+  const currentExpr = target === 'ctft'
+    ? (state.ctftExpr || 'rect(t/2)')
+    : (target === 'fourier'
+      ? state.fourierExpr
+      : (target === 'h' ? state.exprH : state.exprX));
+
+  hudBaseExpression = currentExpr || 'rect(t)';
   const freeInput = document.getElementById('hud-free-input');
   if (freeInput) {
-    freeInput.value = currentExpr || 'rect(t)';
+    freeInput.value = hudBaseExpression;
   }
 
   const mf = document.getElementById('hud-mathfield');
   if (mf) {
     isSyncingHudMathField = true;
-    const latexStr = exprToLatex(currentExpr || 'rect(t)', 't');
+    const latexStr = exprToLatex(hudBaseExpression, 't');
     if (typeof mf.setValue === 'function') {
       mf.setValue(latexStr, { silenceNotifications: true });
     } else {
       mf.value = latexStr;
     }
     isSyncingHudMathField = false;
-
-    // Foco e abertura imediata do teclado virtual MathLive completo
-    setTimeout(() => {
-      try {
-        mf.focus();
-        if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.show === 'function') {
-          window.mathVirtualKeyboard.show();
-        }
-      } catch (err) {
-        console.warn('[MathLive] Teclado virtual:', err);
-      }
-    }, 120);
+    try {
+      mf.blur();
+    } catch (_) {}
   }
 
+  const valRes = validateSignalExpression(hudBaseExpression);
+  renderHUDOscilloscope(valRes, target);
   updateParametricHUDPreview(false);
   updateScene3D();
 }
@@ -1050,10 +1345,14 @@ export function closeSignalHUD() {
   const backdrop = document.getElementById('stage-focus-backdrop');
   const hud = document.getElementById('signal-focus-hud');
   if (backdrop) backdrop.classList.add('hidden');
-  if (hud) hud.classList.add('hidden');
+  if (hud) {
+    hud.classList.add('hidden');
+    hud.style.transform = '';
+  }
 
   document.body.classList.remove('stage-focus-active');
   document.body.classList.remove('focus-hud-open');
+  document.body.classList.remove('mathlive-kb-visible');
 
   if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.hide === 'function') {
     try {
@@ -1184,7 +1483,7 @@ export function setupMathLiveVirtualKeyboard() {
       window.mathVirtualKeyboard.layouts = [
         {
           label: 'Sinais',
-          tooltip: 'Sinais & Engenharia',
+          tooltip: 'Sinais & Engenharia (UFPA)',
           rows: [
             [
               { latex: 'u(t)', insert: 'u(t)' },
@@ -1204,10 +1503,7 @@ export function setupMathLiveVirtualKeyboard() {
             ]
           ]
         },
-        'numeric',
-        'functions',
-        'symbols',
-        'alphabetic'
+        'default'
       ];
     } catch (err) {
       console.warn('[MathLive] Falha ao configurar layouts personalizados:', err);
@@ -1222,17 +1518,129 @@ export function setupMathLiveVirtualKeyboard() {
   }
 }
 
+/**
+ * Gestos físicos de arrasto e flick com velocidade (Emil Kowalski)
+ * para o painel inferior no mobile (.sheet-drag-handle-bar) e para o cabeçalho do HUD.
+ */
+export function setupMobileSheetGestures() {
+  if (typeof window === 'undefined') return;
+
+  // 1. Gaveta Inferior Mobile (#ui-panel via .sheet-drag-handle-bar)
+  const handleBar = document.querySelector('.sheet-drag-handle-bar');
+  const stageWrapper = document.getElementById('stage-wrapper');
+  if (handleBar && stageWrapper) {
+    let startY = 0;
+    let lastY = 0;
+    let lastTime = 0;
+    let velocityY = 0;
+    let dragging = false;
+
+    const applySheetSnap = (snap) => {
+      state.mobileSheetSnap = snap;
+      document.body.classList.remove('sheet-snap-peek', 'sheet-snap-expanded');
+      if (snap === 'peek') document.body.classList.add('sheet-snap-peek');
+      else if (snap === 'expanded') document.body.classList.add('sheet-snap-expanded');
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 260);
+    };
+
+    handleBar.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      startY = e.clientY;
+      lastY = e.clientY;
+      lastTime = performance.now();
+      velocityY = 0;
+      handleBar.setPointerCapture?.(e.pointerId);
+    });
+
+    handleBar.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const now = performance.now();
+      const dt = Math.max(1, now - lastTime);
+      velocityY = ((e.clientY - lastY) / dt) * 1000; // px/s
+      lastY = e.clientY;
+      lastTime = now;
+    });
+
+    const endDrag = (e) => {
+      if (!dragging) return;
+      dragging = false;
+      const dy = (e.clientY || lastY) - startY;
+      const cur = state.mobileSheetSnap || 'default';
+      if (velocityY < -420 || dy < -50) {
+        applySheetSnap(cur === 'peek' ? 'default' : 'expanded');
+      } else if (velocityY > 420 || dy > 50) {
+        applySheetSnap(cur === 'expanded' ? 'default' : 'peek');
+      }
+    };
+
+    handleBar.addEventListener('pointerup', endDrag);
+    handleBar.addEventListener('pointercancel', endDrag);
+  }
+
+  // 2. Arrasto para Baixo (Dismiss com Flick) no Cabeçalho do HUD (#hud-drag-header)
+  const hudHeader = document.getElementById('hud-drag-header');
+  const hudEl = document.getElementById('signal-focus-hud');
+  if (hudHeader && hudEl) {
+    let startY = 0;
+    let lastY = 0;
+    let lastTime = 0;
+    let velocityY = 0;
+    let draggingHud = false;
+
+    hudHeader.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('button') || e.target.closest('input')) return;
+      draggingHud = true;
+      startY = e.clientY;
+      lastY = e.clientY;
+      lastTime = performance.now();
+      velocityY = 0;
+      hudHeader.setPointerCapture?.(e.pointerId);
+    });
+
+    hudHeader.addEventListener('pointermove', (e) => {
+      if (!draggingHud) return;
+      const now = performance.now();
+      const dt = Math.max(1, now - lastTime);
+      velocityY = ((e.clientY - lastY) / dt) * 1000;
+      lastY = e.clientY;
+      lastTime = now;
+      const dy = Math.max(0, e.clientY - startY);
+      if (window.innerWidth < 768) {
+        hudEl.style.transform = `translateY(${dy * 0.65}px)`;
+      }
+    });
+
+    const finishHudDrag = (e) => {
+      if (!draggingHud) return;
+      draggingHud = false;
+      const dy = (e.clientY || lastY) - startY;
+      if (velocityY > 520 || dy > 95) {
+        closeSignalHUD();
+      } else {
+        hudEl.style.transform = '';
+      }
+    };
+
+    hudHeader.addEventListener('pointerup', finishHudDrag);
+    hudHeader.addEventListener('pointercancel', finishHudDrag);
+  }
+}
+
 export function initUIEventListeners() {
   // 1. Segmented Control Switcher
   const btnConv = document.getElementById('mod-btn-conv');
   const btnFourier = document.getElementById('mod-btn-fourier');
+  const btnCTFT = document.getElementById('mod-btn-ctft');
   if (btnConv) btnConv.addEventListener('click', () => switchModule('convolution'));
   if (btnFourier) btnFourier.addEventListener('click', () => switchModule('fourier'));
+  if (btnCTFT) btnCTFT.addEventListener('click', () => switchModule('ctft'));
 
   const zenBtnConv = document.getElementById('zen-btn-conv');
   const zenBtnFourier = document.getElementById('zen-btn-fourier');
+  const zenBtnCTFT = document.getElementById('zen-btn-ctft');
   if (zenBtnConv) zenBtnConv.addEventListener('click', () => switchModule('convolution'));
   if (zenBtnFourier) zenBtnFourier.addEventListener('click', () => switchModule('fourier'));
+  if (zenBtnCTFT) zenBtnCTFT.addEventListener('click', () => switchModule('ctft'));
 
   // 2. Vistas de Câmera 3D/2D
   ['3d', '2d-time', '2d-spec', 'top'].forEach(presetName => {
@@ -1277,7 +1685,17 @@ export function initUIEventListeners() {
   if (tSlider) {
     tSlider.addEventListener('input', (e) => {
       const val = parseFloat(e.target.value);
-      if (state.activeModule === 'fourier') {
+      if (state.activeModule === 'ctft') {
+        if (state.step === 4) {
+          state.ctftBridgeT0 = val;
+          state.ctftCalculated = calculateCTFTData(state.ctftPresetKey, state.ctftPulseWidth, state.ctftDecay, state.ctftBridgeT0);
+        } else if (state.step === 3) {
+          state.t = val;
+        } else {
+          state.ctftPulseWidth = val;
+          state.ctftCalculated = calculateCTFTData(state.ctftPresetKey, state.ctftPulseWidth, state.ctftDecay, state.ctftBridgeT0);
+        }
+      } else if (state.activeModule === 'fourier') {
         state.t = val;
       } else {
         if (state.step === 1) state.tauSweep = val;
@@ -1485,12 +1903,13 @@ export function initUIEventListeners() {
     toggleReduceMotion();
   });
 
-  // Inicializa estado visual de Acessibilidade e Rolagem Fluida
+  // Inicializa estado visual de Acessibilidade, Gestos e Teclado MathLive
   setFontScale(state.fontScale);
   toggleHighContrast(state.a11yHighContrast);
   toggleReduceMotion(state.a11yReduceMotion);
   setupA11yBarScroll(document.getElementById('a11y-bar'));
   setupMathLiveVirtualKeyboard();
+  setupMobileSheetGestures();
 
   // 11. Filtros de Personalização de Seções ("Mostrar no Painel" dentro de Configurações)
   ['notebook', 'regions', 'gallery'].forEach(secKey => {
@@ -1513,106 +1932,132 @@ export function initUIEventListeners() {
   document.getElementById('hud-pill-x')?.addEventListener('click', () => openSignalHUD('x'));
   document.getElementById('hud-pill-h')?.addEventListener('click', () => openSignalHUD('h'));
   document.getElementById('hud-pill-fourier')?.addEventListener('click', () => openSignalHUD('fourier'));
+  document.getElementById('hud-pill-ctft')?.addEventListener('click', () => openSignalHUD('ctft'));
 
-  // Fechamento do HUD
+  // Fechamento e Salvamento no Cabeçalho do HUD
   document.getElementById('hud-btn-close')?.addEventListener('click', () => closeSignalHUD());
   document.getElementById('stage-focus-backdrop')?.addEventListener('click', () => closeSignalHUD());
-
-  // Ações do Rodapé do HUD
-  document.getElementById('hud-btn-apply')?.addEventListener('click', () => applySignalHUD());
   document.getElementById('hud-btn-pin')?.addEventListener('click', () => pinSignalHUD());
 
-  // Renderiza KaTeX em todas as teclas matemáticas do HUD
-  document.querySelectorAll('#signal-focus-hud [data-katex]').forEach(btn => {
-    renderMath(btn, btn.getAttribute('data-katex'), false);
-  });
-
-  // Campo Unificado MathLive (<math-field id="hud-mathfield">)
+  // Ciclo Natural de Foco do <math-field id="hud-mathfield">:
+  // O teclado virtual MathLive abre SOMENTE quando o usuário foca/toca na fórmula
   const hudMathField = document.getElementById('hud-mathfield');
   if (hudMathField) {
-    hudMathField.addEventListener('focus', () => {
-      if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.show === 'function') {
+    const handleMathFieldFocus = () => {
+      document.body.classList.add('mathlive-kb-visible');
+      if (window.mathVirtualKeyboard) {
         try {
-          window.mathVirtualKeyboard.show();
+          if (typeof window.mathVirtualKeyboard.show === 'function') {
+            window.mathVirtualKeyboard.show();
+          } else {
+            window.mathVirtualKeyboard.visible = true;
+          }
+        } catch (err) {
+          console.warn('[MathLive] Erro ao abrir teclado:', err);
+        }
+      }
+    };
+
+    const handleMathFieldBlur = () => {
+      document.body.classList.remove('mathlive-kb-visible');
+      if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.hide === 'function') {
+        try {
+          window.mathVirtualKeyboard.hide();
         } catch (_) {}
       }
-    });
+    };
+
+    hudMathField.addEventListener('focusin', handleMathFieldFocus);
+    hudMathField.addEventListener('focus', handleMathFieldFocus);
+    hudMathField.addEventListener('pointerdown', handleMathFieldFocus);
+    hudMathField.addEventListener('click', handleMathFieldFocus);
+    hudMathField.addEventListener('focusout', handleMathFieldBlur);
+    hudMathField.addEventListener('blur', handleMathFieldBlur);
 
     hudMathField.addEventListener('input', () => {
       if (isSyncingHudMathField) return;
       const rawLatex = typeof hudMathField.getValue === 'function' ? hudMathField.getValue() : (hudMathField.value || '');
       const parsedExpr = latexToExpr(rawLatex);
       if (parsedExpr) {
+        hudBaseExpression = parsedExpr;
         setHUDExpressionLive(parsedExpr, false);
       }
     });
   }
 
-  // Abas do HUD: Teclado MathLive vs Formas & Sliders
-  const hudTabFreeBtn = document.getElementById('hud-tab-free-btn');
-  const hudTabParamBtn = document.getElementById('hud-tab-param-btn');
-  const hudPaneFree = document.getElementById('hud-pane-free');
-  const hudPaneParam = document.getElementById('hud-pane-param');
-  const hudMkbSubtabs = document.getElementById('hud-mkb-subtabs');
-
-  hudTabFreeBtn?.addEventListener('click', () => {
-    hudCurrentTab = 'free';
-    hudTabFreeBtn.classList.add('active');
-    hudTabParamBtn?.classList.remove('active');
-    hudPaneFree?.classList.remove('hidden');
-    hudPaneParam?.classList.add('hidden');
-    hudMkbSubtabs?.classList.remove('hidden');
-    hudTabFreeBtn.setAttribute('aria-selected', 'true');
-    hudTabParamBtn?.setAttribute('aria-selected', 'false');
-    const mf = document.getElementById('hud-mathfield');
-    if (mf) {
-      setTimeout(() => {
+  // Interagir com o construtor paramétrico fecha o teclado virtual automaticamente
+  const hudParamSection = document.getElementById('hud-parametric-section');
+  if (hudParamSection) {
+    hudParamSection.addEventListener('pointerdown', () => {
+      document.body.classList.remove('mathlive-kb-visible');
+      if (hudMathField && document.activeElement === hudMathField) {
         try {
-          mf.focus();
-          if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.show === 'function') {
-            window.mathVirtualKeyboard.show();
-          }
+          hudMathField.blur();
         } catch (_) {}
-      }, 50);
+      }
+      if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.hide === 'function') {
+        try {
+          window.mathVirtualKeyboard.hide();
+        } catch (_) {}
+      }
+    });
+  }
+
+  // Botões de Apagar e Limpar na Linha de Equação do HUD
+  document.getElementById('hud-key-backspace')?.addEventListener('click', () => {
+    if (hudMathField) {
+      if (typeof hudMathField.executeCommand === 'function') {
+        hudMathField.executeCommand(['deleteBackward']);
+      } else {
+        const val = hudMathField.value || '';
+        hudMathField.value = val.slice(0, -1);
+      }
+      const rawLatex = typeof hudMathField.getValue === 'function' ? hudMathField.getValue() : (hudMathField.value || '');
+      const parsedExpr = latexToExpr(rawLatex) || '0';
+      hudBaseExpression = parsedExpr;
+      setHUDExpressionLive(parsedExpr, false);
     }
   });
 
-  hudTabParamBtn?.addEventListener('click', () => {
-    hudCurrentTab = 'param';
-    hudTabParamBtn.classList.add('active');
-    hudTabFreeBtn?.classList.remove('active');
-    hudPaneParam?.classList.remove('hidden');
-    hudPaneFree?.classList.add('hidden');
-    hudMkbSubtabs?.classList.add('hidden');
-    hudTabParamBtn.setAttribute('aria-selected', 'true');
-    hudTabFreeBtn?.setAttribute('aria-selected', 'false');
-    if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.hide === 'function') {
-      try {
-        window.mathVirtualKeyboard.hide();
-      } catch (_) {}
+  document.getElementById('hud-key-clear')?.addEventListener('click', () => {
+    hudBaseExpression = '0';
+    if (hudMathField) {
+      if (typeof hudMathField.setValue === 'function') {
+        hudMathField.setValue('');
+      } else {
+        hudMathField.value = '';
+      }
+      setHUDExpressionLive('0', false);
     }
-    updateParametricHUDPreview(false);
   });
 
-  // Sub-abas do Teclado MathLive Completo (Sinais vs Álgebra & 123)
-  const subtabSignals = document.getElementById('hud-subtab-signals');
-  const subtabAlgebra = document.getElementById('hud-subtab-algebra');
-  const paneSignals = document.getElementById('hud-mkb-pane-signals');
-  const paneAlgebra = document.getElementById('hud-mkb-pane-algebra');
-
-  subtabSignals?.addEventListener('click', () => {
-    subtabSignals.classList.add('active');
-    subtabAlgebra?.classList.remove('active');
-    paneSignals?.classList.remove('hidden');
-    paneAlgebra?.classList.add('hidden');
+  // Seletor de Modo de Construção (= Substituir | + Somar | − Subtrair)
+  const commitBlockBtn = document.getElementById('hud-btn-commit-block');
+  document.querySelectorAll('.hud-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.hud-mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const mode = btn.getAttribute('data-mode') || 'replace';
+      state.hudBuildMode = mode;
+      const freeInput = document.getElementById('hud-free-input');
+      if (freeInput && freeInput.value.trim()) {
+        hudBaseExpression = freeInput.value.trim();
+      }
+      if (commitBlockBtn) {
+        commitBlockBtn.classList.toggle('hidden', mode === 'replace');
+      }
+    });
   });
 
-  subtabAlgebra?.addEventListener('click', () => {
-    subtabAlgebra.classList.add('active');
-    subtabSignals?.classList.remove('active');
-    paneAlgebra?.classList.remove('hidden');
-    paneSignals?.classList.add('hidden');
-  });
+  if (commitBlockBtn) {
+    commitBlockBtn.addEventListener('click', () => {
+      updateParametricHUDPreview(true);
+      const freeInput = document.getElementById('hud-free-input');
+      if (freeInput && freeInput.value.trim()) {
+        hudBaseExpression = freeInput.value.trim();
+      }
+    });
+  }
 
   // Pílulas de Formas Canônicas (aplicam em tempo real)
   document.querySelectorAll('.hud-shape-pill').forEach(pill => {
@@ -1621,6 +2066,10 @@ export function initUIEventListeners() {
       pill.classList.add('active');
       hudCurrentShape = pill.getAttribute('data-shape') || 'rect';
       updateParametricHUDPreview(true);
+      if ((state.hudBuildMode || 'replace') === 'replace') {
+        const freeInput = document.getElementById('hud-free-input');
+        if (freeInput) hudBaseExpression = freeInput.value.trim();
+      }
     });
   });
 
@@ -1628,6 +2077,10 @@ export function initUIEventListeners() {
   ['hud-slider-a', 'hud-slider-w', 'hud-slider-t0', 'hud-slider-alpha'].forEach(sliderId => {
     document.getElementById(sliderId)?.addEventListener('input', () => {
       updateParametricHUDPreview(true);
+      if ((state.hudBuildMode || 'replace') === 'replace') {
+        const freeInput = document.getElementById('hud-free-input');
+        if (freeInput) hudBaseExpression = freeInput.value.trim();
+      }
     });
   });
 
@@ -1635,30 +2088,10 @@ export function initUIEventListeners() {
   const hudFreeInput = document.getElementById('hud-free-input');
   if (hudFreeInput) {
     hudFreeInput.addEventListener('input', (e) => {
-      setHUDExpressionLive(e.target.value || '0', true);
+      hudBaseExpression = e.target.value || '0';
+      setHUDExpressionLive(hudBaseExpression, true);
     });
   }
-
-  // Teclas do Teclado Matemático Completo no HUD
-  document.querySelectorAll('.hud-key-btn').forEach(kBtn => {
-    kBtn.addEventListener('click', () => {
-      const ins = kBtn.getAttribute('data-insert');
-      if (!ins) return;
-      const cur = hudFreeInput ? (hudFreeInput.value || '') : '';
-      const next = (cur === '0' || !cur) ? ins : cur + ins;
-      setHUDExpressionLive(next, true);
-    });
-  });
-
-  document.getElementById('hud-key-backspace')?.addEventListener('click', () => {
-    const cur = hudFreeInput ? (hudFreeInput.value || '') : '';
-    const next = cur.length > 1 ? cur.slice(0, -1) : '0';
-    setHUDExpressionLive(next, true);
-  });
-
-  document.getElementById('hud-key-clear')?.addEventListener('click', () => {
-    setHUDExpressionLive('0', true);
-  });
 
   // Rewatch
   document.getElementById('btn-rewatch-write')?.addEventListener('click', () => {
@@ -1744,7 +2177,8 @@ export function initUIEventListeners() {
       updatePlayButtonUI();
     } else if (e.key === 'Tab') {
       e.preventDefault();
-      switchModule(state.activeModule === 'convolution' ? 'fourier' : 'convolution');
+      const nextMod = state.activeModule === 'convolution' ? 'fourier' : (state.activeModule === 'fourier' ? 'ctft' : 'convolution');
+      switchModule(nextMod);
     } else if (['1', '2', '3', '4'].includes(e.key)) {
       setStep(Number(e.key), true);
     } else if (e.key.toLowerCase() === 'z') {
@@ -1755,7 +2189,20 @@ export function initUIEventListeners() {
       e.preventDefault();
       const dir = e.key === 'ArrowRight' ? 1 : -1;
       const slider = document.getElementById('t-slider');
-      if (state.activeModule === 'convolution' && state.step === 1) {
+      if (state.activeModule === 'ctft') {
+        if (state.step === 4) {
+          state.ctftBridgeT0 = Math.max(2.0, Math.min(25.0, state.ctftBridgeT0 + dir * 0.5));
+          state.ctftCalculated = calculateCTFTData(state.ctftPresetKey, state.ctftPulseWidth, state.ctftDecay, state.ctftBridgeT0);
+          if (slider) slider.value = state.ctftBridgeT0;
+        } else if (state.step === 3) {
+          state.t = Math.max(-15.0, Math.min(15.0, state.t + dir * 0.2));
+          if (slider) slider.value = state.t;
+        } else {
+          state.ctftPulseWidth = Math.max(0.5, Math.min(5.0, state.ctftPulseWidth + dir * 0.25));
+          state.ctftCalculated = calculateCTFTData(state.ctftPresetKey, state.ctftPulseWidth, state.ctftDecay, state.ctftBridgeT0);
+          if (slider) slider.value = state.ctftPulseWidth;
+        }
+      } else if (state.activeModule === 'convolution' && state.step === 1) {
         state.tauSweep = Math.max(-3.5, Math.min(5.5, state.tauSweep + dir * 0.05));
         if (slider) slider.value = state.tauSweep;
       } else if (state.activeModule === 'convolution' && state.step === 2) {

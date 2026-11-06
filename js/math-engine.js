@@ -6,7 +6,12 @@ export function renderMath(el, latex, displayMode = false) {
   if (!el) return;
   if (window.katex) {
     try {
-      window.katex.render(latex, el, { throwOnError: false, displayMode, strict: 'ignore' });
+      window.katex.render(latex, el, {
+        output: 'html',
+        throwOnError: false,
+        displayMode,
+        strict: 'ignore'
+      });
       return;
     } catch (err) {}
   }
@@ -16,7 +21,12 @@ export function renderMath(el, latex, displayMode = false) {
 export function latexToHtml(latex, displayMode = false) {
   if (window.katex) {
     try {
-      return window.katex.renderToString(latex, { throwOnError: false, displayMode, strict: 'ignore' });
+      return window.katex.renderToString(latex, {
+        output: 'html',
+        throwOnError: false,
+        displayMode,
+        strict: 'ignore'
+      });
     } catch (err) {
       return latex;
     }
@@ -252,6 +262,111 @@ export function compileSignalExpr(expr) {
     };
   } catch (err) {
     return () => 0;
+  }
+}
+
+/**
+ * Valida uma expressão de sinal de forma não-destrutiva (sem quebrar durante a digitação)
+ * e retorna função compilada, suporte [tMin, tMax], energia Ex e pontos críticos.
+ */
+export function validateSignalExpression(expr) {
+  const raw = (expr || '').trim();
+  if (!raw) {
+    return { valid: false, fn: null, support: [-1, 1], energy: 0, maxAmp: 1 };
+  }
+
+  // Verifica balanceamento de parênteses e chaves e se não termina com operador pendente
+  let parenDepth = 0;
+  let braceDepth = 0;
+  for (let i = 0; i < raw.length; i++) {
+    if (raw[i] === '(') parenDepth++;
+    else if (raw[i] === ')') parenDepth--;
+    else if (raw[i] === '{') braceDepth++;
+    else if (raw[i] === '}') braceDepth--;
+    if (parenDepth < 0 || braceDepth < 0) {
+      return { valid: false, fn: null, support: [-1, 1], energy: 0, maxAmp: 1 };
+    }
+  }
+  if (parenDepth !== 0 || braceDepth !== 0 || /[+\-*/^_(\\]$/.test(raw)) {
+    return { valid: false, fn: null, support: [-1, 1], energy: 0, maxAmp: 1 };
+  }
+
+  const clean = (raw.includes('\\') || raw.includes('{') || /\)\s*[a-zA-Z(]/.test(raw) || /\d\s*[a-zA-Z(]/.test(raw))
+    ? latexToExpr(raw)
+    : raw;
+
+  const u = (v) => (v >= 0 ? 1.0 : 0.0);
+  const r = (v) => (v >= 0 ? v : 0.0);
+  const rect = (v) => (Math.abs(v) <= 0.5 ? 1.0 : 0.0);
+  const tri = (v) => (Math.abs(v) <= 1.0 ? 1.0 - Math.abs(v) : 0.0);
+  const sinc = (v) => (Math.abs(v) < 1e-6 ? 1.0 : Math.sin(Math.PI * v) / (Math.PI * v));
+  const sign = (v) => (v > 0 ? 1.0 : v < 0 ? -1.0 : 0.0);
+  const sgn = sign;
+  const delta = (v) => {
+    const eps = 0.05;
+    return Math.abs(v) <= eps ? (1.0 / (2 * eps)) : 0.0;
+  };
+
+  let jsExpr = clean;
+  jsExpr = replaceBalancedCall(jsExpr, 'e^(', 'exp(', ')');
+  jsExpr = jsExpr.replace(/e\^([a-zA-Z0-9_\\+-]+)/g, 'exp($1)');
+
+  let pGuard = 0;
+  while (jsExpr.includes('^') && pGuard++ < 8) {
+    const prev = jsExpr;
+    jsExpr = jsExpr.replace(/(\([^()]+\)|[a-zA-Z0-9_.]+)\s*\^\s*(\([^()]+\)|[a-zA-Z0-9_.]+)/g, 'Math.pow($1, $2)');
+    if (jsExpr === prev) break;
+  }
+  jsExpr = jsExpr.replace(/\^/g, '**');
+
+  jsExpr = jsExpr
+    .replace(/\bpi\b/gi, 'Math.PI')
+    .replace(/\be\b/g, 'Math.E')
+    .replace(/\bsin\s*\(/g, 'Math.sin(')
+    .replace(/\bcos\s*\(/g, 'Math.cos(')
+    .replace(/\bexp\s*\(/g, 'Math.exp(')
+    .replace(/\bsqrt\s*\(/g, 'Math.sqrt(')
+    .replace(/\babs\s*\(/g, 'Math.abs(')
+    .replace(/\bsign\s*\(/g, 'sign(')
+    .replace(/\bsgn\s*\(/g, 'sgn(')
+    .replace(/\bdelta\s*\(/g, 'delta(');
+
+  try {
+    const rawFn = new Function('t', 'u', 'r', 'rect', 'tri', 'sinc', 'sign', 'sgn', 'delta', `"use strict"; return Number(${jsExpr}) || 0;`);
+    // Testa avaliação em pontos de amostra para capturar ReferenceError
+    rawFn(-1.0, u, r, rect, tri, sinc, sign, sgn, delta);
+    rawFn(0.0, u, r, rect, tri, sinc, sign, sgn, delta);
+    rawFn(0.5, u, r, rect, tri, sinc, sign, sgn, delta);
+
+    const safeFn = (tVal) => {
+      try {
+        const v = rawFn(tVal, u, r, rect, tri, sinc, sign, sgn, delta);
+        return Number.isFinite(v) ? v : 0;
+      } catch (e) {
+        return 0;
+      }
+    };
+
+    let tMin = null;
+    let tMax = null;
+    let energy = 0;
+    let maxAmp = 0.01;
+    const dt = 0.04;
+    for (let t = -6.0; t <= 6.0; t += dt) {
+      const y = safeFn(t);
+      const absY = Math.abs(y);
+      if (absY > maxAmp) maxAmp = absY;
+      if (absY > 1e-3) {
+        if (tMin === null) tMin = Math.round(t * 20) / 20;
+        tMax = Math.round(t * 20) / 20;
+      }
+      energy += y * y * dt;
+    }
+
+    const support = tMin !== null ? [tMin, Math.max(tMin + 0.05, tMax)] : [0, 0];
+    return { valid: true, fn: safeFn, support, energy, maxAmp, cleanExpr: clean };
+  } catch (err) {
+    return { valid: false, fn: null, support: [-1, 1], energy: 0, maxAmp: 1 };
   }
 }
 
@@ -501,5 +616,161 @@ export function calculateFourierData(expr, T0Val = 3.0, NVal = 7) {
     harmonicPower,
     efficiency,
     mse
+  };
+}
+
+// ============================================================================
+// MOTOR DE CÁLCULO DA TRANSFORMADA DE FOURIER CONTÍNUA (CTFT)
+// Inclui Ponte de Khutoryansky (T0 -> Infinito), Magnitude |X(w)| e Fase ∠X(w)
+// ============================================================================
+export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decayVal = 1.0, bridgeT0Val = 4.0, customExpr = null) {
+  const tau = Math.max(0.4, Number(pulseWidthVal) || 2.0);
+  const a = Math.max(0.2, Number(decayVal) || 1.0);
+  const T0 = Math.max(tau + 0.5, Number(bridgeT0Val) || 4.0);
+  const w0 = (2 * Math.PI) / T0;
+
+  // 1. Sinal no Domínio do Tempo x(t)
+  let fnTime = (t) => 0;
+  let timeSupport = [-tau / 2, tau / 2];
+  let latexTime = '\\operatorname{rect}(t/\\tau_0)';
+  let latexCTFT = '\\tau_0 \\operatorname{sinc}\\left(\\frac{\\omega \\tau_0}{2}\\right)';
+  let energyTime = tau;
+
+  // 2. Transformada Contínua X(w) = Mag * e^(j*Phase)
+  let fnMag = (w) => 0;
+  let fnPhase = (w) => 0;
+
+  if (presetKey === 'custom_ctft' && customExpr) {
+    const valRes = validateSignalExpression(customExpr);
+    fnTime = valRes.valid && valRes.fn ? valRes.fn : compileSignalExpr(customExpr);
+    timeSupport = valRes.support || [-2.0, 2.0];
+    latexTime = exprToLatex(customExpr, 't');
+    latexCTFT = `\\int_{${timeSupport[0].toFixed(1)}}^{${timeSupport[1].toFixed(1)}} \\left(${latexTime}\\right) e^{-j\\omega t}\\,dt`;
+    energyTime = valRes.energy || 1.0;
+
+    const tStart = Math.max(-6.0, timeSupport[0] - 0.15);
+    const tEnd = Math.min(6.0, timeSupport[1] + 0.15);
+    const N_INT = 160;
+    const dt = (tEnd - tStart) / Math.max(1, N_INT);
+    const tSamples = new Float64Array(N_INT + 1);
+    const xSamples = new Float64Array(N_INT + 1);
+    for (let i = 0; i <= N_INT; i++) {
+      const tVal = tStart + i * dt;
+      tSamples[i] = tVal;
+      xSamples[i] = fnTime(tVal);
+    }
+
+    const evalCustomX = (w) => {
+      if (tEnd <= tStart + 1e-4) return { re: 0, im: 0 };
+      let re = 0;
+      let im = 0;
+      for (let i = 0; i <= N_INT; i++) {
+        const weight = (i === 0 || i === N_INT) ? 0.5 : 1.0;
+        const angle = -w * tSamples[i];
+        const xv = xSamples[i] * weight;
+        re += xv * Math.cos(angle);
+        im += xv * Math.sin(angle);
+      }
+      return { re: re * dt, im: im * dt };
+    };
+
+    fnMag = (w) => {
+      const c = evalCustomX(w);
+      return Math.hypot(c.re, c.im);
+    };
+    fnPhase = (w) => {
+      const c = evalCustomX(w);
+      return Math.atan2(c.im, c.re);
+    };
+  } else if (presetKey === 'exp') {
+    fnTime = (t) => (t >= 0 ? Math.exp(-a * t) : 0);
+    timeSupport = [0, Math.min(6.0, 5.0 / a)];
+    latexTime = `e^{-${a.toFixed(1)}t} u(t)`;
+    latexCTFT = `\\frac{1}{${a.toFixed(1)} + j\\omega}`;
+    energyTime = 1.0 / (2 * a);
+    fnMag = (w) => 1.0 / Math.sqrt(a * a + w * w);
+    fnPhase = (w) => -Math.atan2(w, a);
+  } else if (presetKey === 'tri') {
+    fnTime = (t) => (Math.abs(t) <= tau / 2 ? 1.0 - Math.abs(t) / (tau / 2) : 0);
+    timeSupport = [-tau / 2, tau / 2];
+    latexTime = `\\operatorname{tri}(t/${tau.toFixed(1)})`;
+    latexCTFT = `${tau.toFixed(1)} \\operatorname{sinc}^2\\left(\\frac{\\omega ${tau.toFixed(1)}}{4}\\right)`;
+    energyTime = (2 / 3) * (tau / 2);
+    fnMag = (w) => {
+      const arg = (w * tau) / 4;
+      const s = Math.abs(arg) < 1e-6 ? 1.0 : Math.sin(arg) / arg;
+      return tau * s * s;
+    };
+    fnPhase = () => 0;
+  } else if (presetKey === 'bilateral_exp') {
+    fnTime = (t) => Math.exp(-a * Math.abs(t));
+    timeSupport = [-Math.min(6.0, 5.0 / a), Math.min(6.0, 5.0 / a)];
+    latexTime = `e^{-${a.toFixed(1)}|t|}`;
+    latexCTFT = `\\frac{2 \\cdot ${a.toFixed(1)}}{${(a * a).toFixed(2)} + \\omega^2}`;
+    energyTime = 1.0 / a;
+    fnMag = (w) => (2 * a) / (a * a + w * w);
+    fnPhase = () => 0;
+  } else {
+    // Padrão: Pulso Retangular rect(t/tau)
+    fnTime = (t) => (Math.abs(t) <= tau / 2 ? 1.0 : 0);
+    timeSupport = [-tau / 2, tau / 2];
+    latexTime = `\\operatorname{rect}\\left(\\frac{t}{${tau.toFixed(1)}}\\right)`;
+    latexCTFT = `${tau.toFixed(1)} \\operatorname{sinc}\\left(\\frac{\\omega \\cdot ${tau.toFixed(1)}}{2}\\right)`;
+    energyTime = tau;
+    fnMag = (w) => {
+      const arg = (w * tau) / 2;
+      const sinc = Math.abs(arg) < 1e-6 ? 1.0 : Math.sin(arg) / arg;
+      return tau * Math.abs(sinc);
+    };
+    fnPhase = (w) => {
+      const arg = (w * tau) / 2;
+      const sinc = Math.abs(arg) < 1e-6 ? 1.0 : Math.sin(arg) / arg;
+      return sinc >= 0 ? 0 : Math.PI;
+    };
+  }
+
+  // 3. Ponte de Khutoryansky: Raias Discretas T0 * Dn aproximando X(w)
+  const bridgeHarmonics = [];
+  const maxBridgeN = Math.min(25, Math.floor((16.0 / w0)));
+  for (let n = -maxBridgeN; n <= maxBridgeN; n++) {
+    const wn = n * w0;
+    const magContinuous = fnMag(wn);
+    const dnMagnitude = magContinuous / T0;
+    bridgeHarmonics.push({
+      n,
+      wn,
+      dnMagnitude,
+      scaledDn: dnMagnitude * T0, // Deve coincidir com X(wn)
+      phase: fnPhase(wn)
+    });
+  }
+
+  // 4. Integração Numérica de Verificação de Parseval
+  const wMax = 20.0;
+  const numWSamples = 300;
+  const dw = (2 * wMax) / numWSamples;
+  let energyFreqSum = 0;
+  for (let i = 0; i < numWSamples; i++) {
+    const wVal = -wMax + (i + 0.5) * dw;
+    const m = fnMag(wVal);
+    energyFreqSum += m * m;
+  }
+  const energyFreq = (energyFreqSum * dw) / (2 * Math.PI);
+
+  return {
+    presetKey,
+    tau,
+    a,
+    T0,
+    w0,
+    fnTime,
+    timeSupport,
+    latexTime,
+    latexCTFT,
+    energyTime,
+    energyFreq,
+    fnMag,
+    fnPhase,
+    bridgeHarmonics
   };
 }

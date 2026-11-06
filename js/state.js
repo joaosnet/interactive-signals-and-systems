@@ -92,7 +92,7 @@ const initialA11yMotion = (function () {
 })();
 
 export const state = {
-  activeModule: 'convolution', // 'convolution' | 'fourier'
+  activeModule: 'convolution', // 'convolution' | 'fourier' | 'ctft'
   step: 4,
   t: 1.5,
   tauSweep: 1.2,
@@ -110,7 +110,9 @@ export const state = {
 
   // Floating Signal Focus HUD
   focusHUDActive: false,
-  focusHUDTarget: 'x', // 'x' | 'h' | 'fourier'
+  focusHUDTarget: 'x', // 'x' | 'h' | 'fourier' | 'ctft'
+  hudBuildMode: 'replace', // 'replace' | 'add' | 'sub'
+  mobileSheetSnap: 'default', // 'compact' | 'default' | 'expanded'
 
   // Acessibilidade (A11y)
   fontScale: initialFontScale,
@@ -131,8 +133,17 @@ export const state = {
   fourierForm: 'compact', // 'compact' | 'trig' | 'exp'
   fourierCustomPresets: initialFourierCustomPresets,
   fourierCalculated: null,
+  fourierAnimMode: 'khutoryansky', // 'khutoryansky' (ondas oscilantes) | 'accumulation' (n=1..N)
   highlightedHarmonic: null,
   audioEnabled: false,
+
+  // Transformada de Fourier Contínua (CTFT)
+  ctftPresetKey: 'rect',
+  ctftExpr: 'rect(t/2)',
+  ctftPulseWidth: 2.0,
+  ctftDecay: 1.0,
+  ctftBridgeT0: 4.0,
+  ctftCalculated: null,
 
   // Customização de Interface (ver apenas o que quer)
   visibleSections: initialVisibleSections,

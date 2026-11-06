@@ -233,3 +233,87 @@ export const BUILTIN_FOURIER_PRESETS = {
     N: 11
   }
 };
+
+export const BUILTIN_CTFT_PRESETS = {
+  rect: {
+    id: 'rect',
+    title: 'Pulso Retangular Canônico',
+    titleEn: 'Canonical Rectangular Pulse',
+    subtitle: 'x(t) = rect(t/τ₀) ↔ X(ω) = τ₀ sinc(ωτ₀/2)',
+    subtitleEn: 'x(t) = rect(t/τ₀) ↔ X(ω) = τ₀ sinc(ωτ₀/2)',
+    expr: 'rect(t/2)',
+    latexX: '\\operatorname{rect}(t/2)',
+    latexCTFT: '2\\operatorname{sinc}(\\omega)',
+    tau0: 2.0,
+    fnX: (t) => (Math.abs(t) <= 1.0 ? 1.0 : 0.0),
+    mag: (w, tau = 2.0) => Math.abs(w === 0 ? tau : tau * Math.sin((w * tau) / 2) / ((w * tau) / 2)),
+    phase: (w, tau = 2.0) => {
+      const val = w === 0 ? tau : tau * Math.sin((w * tau) / 2) / ((w * tau) / 2);
+      return val >= 0 ? 0 : Math.PI;
+    }
+  },
+  exp: {
+    id: 'exp',
+    title: 'Exponencial Unilateral Real',
+    titleEn: 'Real Unilateral Exponential',
+    subtitle: 'x(t) = e^(-at)u(t) ↔ X(ω) = 1/(a + jω)',
+    subtitleEn: 'x(t) = e^(-at)u(t) ↔ X(ω) = 1/(a + jω)',
+    expr: 'e^(-t)*u(t)',
+    latexX: 'e^{-t}u(t)',
+    latexCTFT: '\\frac{1}{1 + j\\omega}',
+    a: 1.0,
+    fnX: (t) => (t >= 0 ? Math.exp(-t) : 0),
+    mag: (w, a = 1.0) => 1.0 / Math.sqrt(a * a + w * w),
+    phase: (w, a = 1.0) => -Math.atan2(w, a)
+  },
+  tri: {
+    id: 'tri',
+    title: 'Pulso Triangular Simétrico',
+    titleEn: 'Symmetric Triangular Pulse',
+    subtitle: 'x(t) = tri(t/τ₀) ↔ X(ω) = τ₀ sinc²(ωτ₀/4)',
+    subtitleEn: 'x(t) = tri(t/τ₀) ↔ X(ω) = τ₀ sinc²(ωτ₀/4)',
+    expr: 'tri(t/2)',
+    latexX: '\\operatorname{tri}(t/2)',
+    latexCTFT: '2\\operatorname{sinc}^2(\\omega/2)',
+    tau0: 2.0,
+    fnX: (t) => (Math.abs(t) <= 1.0 ? 1.0 - Math.abs(t) : 0),
+    mag: (w, tau = 2.0) => {
+      const arg = (w * tau) / 4;
+      const s = arg === 0 ? 1.0 : Math.sin(arg) / arg;
+      return tau * s * s;
+    },
+    phase: () => 0
+  },
+  bilateral_exp: {
+    id: 'bilateral_exp',
+    title: 'Exponencial Bilateral',
+    titleEn: 'Bilateral Exponential',
+    subtitle: 'x(t) = e^(-a|t|) ↔ X(ω) = 2a/(a² + ω²)',
+    subtitleEn: 'x(t) = e^(-a|t|) ↔ X(ω) = 2a/(a² + ω²)',
+    expr: 'e^(-abs(t))',
+    latexX: 'e^{-|t|}',
+    latexCTFT: '\\frac{2}{1 + \\omega^2}',
+    a: 1.0,
+    fnX: (t) => Math.exp(-Math.abs(t)),
+    mag: (w, a = 1.0) => (2 * a) / (a * a + w * w),
+    phase: () => 0
+  },
+  bridge: {
+    id: 'bridge',
+    title: 'Ponte de Khutoryansky (T₀ → ∞)',
+    titleEn: 'Khutoryansky Bridge (T₀ → ∞)',
+    subtitle: 'Trem de pulsos com T₀ expansível mostrando raias adensando em sinc(ω)',
+    subtitleEn: 'Pulse train with expanding T₀ showing discrete stems merging into sinc(ω)',
+    expr: 'rect(t)',
+    latexX: '\\sum_{k} \\operatorname{rect}(t - k T_0)',
+    latexCTFT: '\\operatorname{sinc}(\\omega/2)',
+    tau0: 1.0,
+    defaultT0: 4.0,
+    fnX: (t) => (Math.abs(t) <= 0.5 ? 1.0 : 0.0),
+    mag: (w) => Math.abs(w === 0 ? 1.0 : Math.sin(w / 2) / (w / 2)),
+    phase: (w) => {
+      const val = w === 0 ? 1.0 : Math.sin(w / 2) / (w / 2);
+      return val >= 0 ? 0 : Math.PI;
+    }
+  }
+};
