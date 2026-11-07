@@ -1,118 +1,181 @@
-# Interactive Signals & Systems
+<div align="center">
 
-Browser lab for continuous-time convolution and Fourier series decomposition. Renders signal transformations in interactive 3D coordinates $(t, \tau, z)$ and $(t, n, z)$ at 120 FPS using native Canvas 2D with Three.js camera projection. Zero plotting libraries, zero build steps, 100% client-side for GitHub Pages.
+**English** · [Português](./README.pt-BR.md) · [Español](./README.es.md)
 
-**Live application**: [joaosnet.github.io/interactive-signals-and-systems](https://joaosnet.github.io/interactive-signals-and-systems/)
+# Interactive Signals and Systems
+
+Interactive laboratory for continuous-time convolution, Fourier series decomposition, and continuous-time Fourier transforms in three-dimensional space $(t, \tau, z)$ and $(t, \omega, z)$.
+
+[![Live Demo](https://img.shields.io/badge/Live_Demo-joaosnet.github.io-090b10?style=flat-square&logo=github)](https://joaosnet.github.io/interactive-signals-and-systems/)
+[![Engine](https://img.shields.io/badge/Engine-Canvas_2D_%2B_Three.js-00449e?style=flat-square)](https://threejs.org/)
+[![Target](https://img.shields.io/badge/Render-120_FPS_Fixed_Loop-047857?style=flat-square)](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame)
+[![Curriculum](https://img.shields.io/badge/Curriculum-UFPA_Telecom-be123c?style=flat-square)](https://ufpa.br/)
+[![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square)](./LICENSE)
+
+<br/>
+
+<img src="./assets/demo.gif" alt="Interactive Signals and Systems 3D Demonstration" width="100%" style="border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1);" />
+
+</div>
 
 ---
 
-## Modules
+## Overview
+
+Interactive Signals and Systems is an in-browser laboratory designed for engineering education. It renders signal transformations in 3D coordinates at 120 FPS using native HTML5 Canvas 2D with Three.js camera projection.
+
+The application requires zero build tools, zero external plotting libraries, and runs entirely on the client side.
+
+- **Live Application**: [joaosnet.github.io/interactive-signals-and-systems](https://joaosnet.github.io/interactive-signals-and-systems/)
+- **Academic Context**: Faculty of Telecommunications Engineering, Federal University of Pará (UFPA).
+- **Theoretical Basis**: Aligned with B. P. Lathi (*Linear Systems and Signals*) and A. V. Oppenheim (*Signals and Systems*).
+
+---
+
+## Core Modules
 
 ### 1. Continuous Convolution (`#convolution`)
-- **Four graphical steps**:
-  1. $t \to \tau$: Variable substitution and range mapping with laser sweep.
-  2. Reflection: $180^\circ$ spatial flip producing $h(-\tau)$.
-  3. Shift: Rigid translation by displacement $t$, giving $h(t - \tau)$.
-  4. Integration: Overlap product $\int_{-\infty}^{+\infty} x(\tau) h(t - \tau) d\tau$ evaluating instantaneous $y(t)$.
-- **Automatic Support & Regime Detector**: Finds support $[a, b]$ and deduce transition boundaries for any custom user signal.
-- **3D waterfall history**: Slices traced along the $t$-axis illustrating accumulated convolution output.
-- **Commutative switch**: Instant toggle between $x(t) \ast h(t)$ and $h(t) \ast x(t)$.
-- **Analytical notebook**: Region-by-region integration bounds and exact symbolic fractions.
-- **Reference presets**: Lathi and Oppenheim textbook cases (exponential decay, rectangular pulses, ramps, dipole pulses).
+
+Evaluates the continuous-time convolution integral:
+
+$$y(t) = x(t) \ast h(t) = \int_{-\infty}^{+\infty} x(\tau) h(t - \tau) \, d\tau$$
+
+The solver breaks execution into four distinct analytical and graphical steps:
+
+1. **Coordinate Substitution ($t \to \tau$)**: Maps input signals $x(t)$ and $h(t)$ onto the dummy integration axis $\tau$.
+2. **Time Reflection**: Generates $h(-\tau)$ via horizontal inversion across $\tau = 0$.
+3. **Time Displacement**: Translates the inverted impulse response to position $t$, forming $h(t - \tau)$.
+4. **Integration**: Evaluates the overlap product area $x(\tau)h(t - \tau)$ to determine the instantaneous output $y(t)$.
+
+Key operational capabilities:
+- **Support and Regime Detector**: Automatically calculates non-zero supports $[a, b]$ and critical transition boundaries for arbitrary piecewise functions.
+- **3D Waterfall Surface**: Traces historic evaluation slices along the orthogonal $z$-axis to visualize cumulative energy.
+- **Commutative Switch**: Toggles between $x(t) \ast h(t)$ and $h(t) \ast x(t)$ with instantaneous recomputation.
+- **Analytical Notebook**: Computes regional integration bounds with exact fractional arithmetic.
+- **Textbook Presets**: Standard configurations from Lathi and Oppenheim (single and double exponential, rectangular pulses, ramps, and dipole pulses).
 
 ### 2. Fourier Series Analyzer (`#fourier`)
-- **Three Mathematical Representations**:
-  - Compact Polar: $f(t) \approx a_0 + \sum_{n=1}^{N} C_n \cos(n\omega_0 t + \theta_n)$
-  - Trigonometric: $f(t) \approx a_0 + \sum_{n=1}^{N} \left[ a_n \cos(n\omega_0 t) + b_n \sin(n\omega_0 t) \right]$
-  - Complex Exponential Bilateral: $f(t) \approx \sum_{n=-N}^{N} D_n e^{j n \omega_0 t}$
-- **Eugene Khutoryansky Visual Dynamics**:
-  - Continuous sinusoidal wave propagation in 3D time-frequency coordinates with zero render lags.
-  - Crest alignment with discrete spectrum stems when camera turns to lateral 2D Spectrum view.
-- **3D spatial decomposition**:
-  - Front plane ($z = 0$): Periodic input signal $f(t)$ across $2.5 T_0$.
-  - Origin ($z = 0$): DC component $a_0 = \frac{1}{T_0} \int_0^{T_0} f(t) dt$.
-  - Depth ($z = n$): Individual harmonic carriers along the frequency depth axis.
-  - Spectrum wall: Discrete magnitude line spectrum $|C_n|$ or $|D_n|$ with spherical markers and phase indicators.
-  - Synthesis curve: Partial sum reconstruction $\sum_{n=1}^N$ showing Gibbs phenomenon.
-- **Symmetry detection**: Even, Odd, Half-Wave ($f(t - T_0/2) = -f(t)$), and Quarter-Wave symmetries.
-- **Parseval power ratio**: Total power $P_{\text{total}}$, harmonic power $P_N$, and capture efficiency $\eta = (P_N / P_{\text{total}}) \times 100\%$ with visual energy bar.
-- **Web Audio Synthesizer**: Audibly hear the synthesized waveform timbre in real time or isolate individual overtones.
-- **Harmonic isolation**: Click on any table row $n$ to highlight its wave and spectrum stem in 3D while dimming the others.
 
-### 3. Continuous Fourier Transform — CTFT (`#ctft`)
-- **Direct & Inverse CTFT**: $X(\omega) = \int_{-\infty}^{+\infty} x(t) e^{-j\omega t} dt$ and $x(t) = \frac{1}{2\pi} \int_{-\infty}^{+\infty} X(\omega) e^{j\omega t} d\omega$.
-- **3D Space Representation**: Front plane ($z = 0$) shows real-time pulse $x(t)$, while back plane ($z = Z_{\max}$) renders continuous magnitude spectrum $|X(\omega)|$.
-- **Eugene Khutoryansky Bridge ($T_0 \to \infty$)**: Live harmonic density slider illustrating how discrete Fourier series lines $T_0 D_n$ collapse into continuous envelope $X(\omega)$ as period $T_0$ approaches infinity.
-- **Rayleigh-Parseval Energy Conservation**: Real-time energy balance $\int_{-\infty}^{+\infty} |x(t)|^2 dt = \frac{1}{2\pi} \int_{-\infty}^{+\infty} |X(\omega)|^2 d\omega$.
-- **Canonical Pairs**: Rectangular pulse $\operatorname{rect}(t/\tau_0) \leftrightarrow \tau_0 \operatorname{sinc}(\omega \tau_0 / 2\pi)$, causal exponential $e^{-\alpha t} u(t) \leftrightarrow \frac{1}{\alpha + j\omega}$, triangular pulse $\operatorname{tri}(t/\tau_0) \leftrightarrow \frac{\tau_0}{2} \operatorname{sinc}^2(\omega \tau_0 / 4\pi)$, and bilateral exponential $e^{-\alpha |t|} \leftrightarrow \frac{2\alpha}{\alpha^2 + \omega^2}$.
-- **UFPA 4-Step Analytical Derivation**: Step 1 (Signal & Definition), Step 2 (Transform Pair & Integrals), Step 3 (Continuous Spectrum), and Step 4 (Parseval & Khutoryansky Bridge).
+Decomposes arbitrary periodic signals $f(t)$ with period $T_0$ and fundamental frequency $\omega_0 = 2\pi / T_0$ into three mathematical representations:
 
----
+- **Compact Trigonometric Form**:
+  $$f(t) \approx a_0 + \sum_{n=1}^{N} C_n \cos(n\omega_0 t + \theta_n)$$
+- **Trigonometric Form**:
+  $$f(t) \approx a_0 + \sum_{n=1}^{N} \left[ a_n \cos(n\omega_0 t) + b_n \sin(n\omega_0 t) \right]$$
+- **Complex Exponential Form**:
+  $$f(t) \approx \sum_{n=-N}^{N} D_n e^{j n \omega_0 t}$$
 
-## Design & Usability
+Key operational capabilities:
+- **Khutoryansky Traveling Wave Dynamics**: Continuous sinusoidal wave propagation in 3D time-frequency coordinates.
+- **Spatial Plane Mapping**:
+  - Front plane ($z = 0$): Periodic input signal $f(t)$ rendered over $2.5 T_0$.
+  - Depth axis ($z = n$): Individual harmonic carriers along the frequency axis.
+  - Spectrum wall: Discrete line spectrum stems for $|C_n|$ and $|D_n|$ with phase indicators.
+  - Synthesis curve: Partial sum reconstruction illustrating Gibbs phenomenon at jump discontinuities.
+- **Symmetry Detection**: Automatic detection of Even, Odd, Half-Wave ($f(t - T_0/2) = -f(t)$), and Quarter-Wave symmetries to show eliminated coefficients.
+- **Parseval Energy Distribution**: Computes total average power $P_{\text{total}}$, harmonic sum $P_N$, and capture efficiency:
+  $$\eta = \frac{P_N}{P_{\text{total}}} \times 100\%$$
+- **Web Audio Engine**: Generates audible composite waveforms and allows isolating individual overtones.
+- **Harmonic Selection**: Clicking any harmonic row isolates its spatial wave and spectrum stem while dimming non-selected components.
 
-- **Segmented Control Navigation**: Prominent top pill slider with clear icons and mathematical formulas to switch between Convolution, Fourier Series, and CTFT in 1 click.
-- **Mobile First & Android AAA Experience**: Fixed 3D canvas stage (`~42dvh`) with touch orbit, collapsible bottom-sheet UI with native drag handle, and docked MathLive virtual keyboard with quick-access mathematical chips (`u(t)`, `rect(t)`, `tri(t)`, `δ(t)`, `sinc(t)`).
-- **Orthographic & 3D Camera Views**: Instant toggle between `3D Free Orbit`, `2D Time (Frontal)`, `2D Spectrum (Lateral)`, and `Top Plan`.
-- **Customizable UI ("View what you want")**: Toggle visibility filters for `[Passo a Passo]`, `[Tabela]`, `[Exemplos]`, and `[Editor de Sinais]` with auto-save.
-- **Zen Focus Mode (`Z`)**: Collapse sidebar to dedicate 100% of the screen to the 3D stage with a floating minimal dock.
-- **Projector mode by default**: Pure white background (`#ffffff`), pitch black text (`#000000`), 1.55x line weight, and saturated high-contrast curves (`#00449e`, `#be123c`, `#047857`) for classrooms, lecture halls, and HDMI beamers.
-- **Dark & Light modes**: Dark Technical mode (`#090b10`) and editorial light theme switchable in Settings (`⚙️`).
-- **Bilingual (EN / PT-BR)**: Automatic browser detection with manual toggle `[ EN | PT-BR ]`.
-- **Keyboard shortcuts**: Space (Play/Pause), 1-4 (Steps), Tab (Cycle Convolution → Fourier → CTFT), Z (Zen mode), M (Audio), ←/→ (fine time/frequency/parameter adjust).
-- **SEO & PWA**: JSON-LD Structured Data (`LearningResource` & `WebApplication`), Open Graph, Twitter Cards, `sitemap.xml`, `robots.txt`, and offline PWA `manifest.json`.
+### 3. Continuous-Time Fourier Transform (`#ctft`)
+
+Evaluates the direct and inverse Fourier transform pair:
+
+$$X(\omega) = \int_{-\infty}^{+\infty} x(t) e^{-j\omega t} \, dt \quad \Longleftrightarrow \quad x(t) = \frac{1}{2\pi} \int_{-\infty}^{+\infty} X(\omega) e^{j\omega t} \, d\omega$$
+
+Key operational capabilities:
+- **Dual Plane Representation**: Displays time-domain pulse $x(t)$ on the front plane ($z = 0$) and continuous magnitude spectrum $|X(\omega)|$ on the back plane ($z = Z_{\max}$).
+- **The Khutoryansky Bridge ($T_0 \to \infty$)**: Interactive period expansion demonstrating discrete harmonic lines $T_0 D_n$ condensing into the continuous spectral envelope $X(\omega)$.
+- **Rayleigh-Parseval Conservation**: Real-time numerical verification of energy equivalence:
+  $$\int_{-\infty}^{+\infty} |x(t)|^2 \, dt = \frac{1}{2\pi} \int_{-\infty}^{+\infty} |X(\omega)|^2 \, d\omega$$
+- **Standard Transform Pairs**: Canonical test cases including rectangular pulses, causal exponential decays, triangular pulses, and bilateral exponentials.
+- **Four-Step Analytical Derivation**: Step-by-step breakdown covering signal definitions, transform pairs, spectrum properties, and Parseval balances.
 
 ---
 
-## Architecture
+## Interface and Display Systems
 
-Modular native ES6 architecture (zero build step, GitHub Pages ready):
+- **Camera Projections**: Instant selection among `3D Free Orbit`, `2D Time (Front)`, `2D Spectrum (Lateral)`, and `Top Plan`.
+- **Projector Mode**: High-contrast white background (`#ffffff`), solid black axes (`#000000`), 1.55x stroke weight, and saturated curves (`#00449e`, `#be123c`, `#047857`) calibrated for lecture hall beamers.
+- **Dark Technical Theme**: Low-glare dark environment (`#090b10`) for laboratory and low-light workstation usage.
+- **Mobile Architecture**: Responsive bottom-sheet layout with touch orbit gestures and a docked virtual math keyboard with single-tap function inputs (`u(t)`, `rect(t)`, `tri(t)`, `δ(t)`, `sinc(t)`).
+- **Zen Focus Mode (`Z`)**: Minimizes panels to leave 100% of the screen dedicated to the 3D stage.
+- **Bilingual System**: English and Brazilian Portuguese interface switching with persistent preferences via `localStorage`.
+
+---
+
+## Keyboard Shortcuts
+
+| Key | Action |
+| :--- | :--- |
+| `Space` | Play or pause simulation loop |
+| `1`, `2`, `3`, `4` | Direct jump to Convolution steps 1 through 4 |
+| `Tab` | Cycle modules: Convolution $\to$ Fourier $\to$ CTFT |
+| `Z` | Toggle Zen full-screen mode |
+| `M` | Toggle Web Audio synthesizer |
+| `←` / `→` | Incremental step of time parameter $t$ or frequency $\omega$ |
+| `Esc` | Close active modal dialog or popover |
+
+---
+
+## Repository Architecture
+
 ```
-├── index.html          # Semantic HTML shell, SEO Meta & Schema.org JSON-LD
+interactive-signals-and-systems/
+├── index.html          # Semantic HTML5 shell, SEO metadata, JSON-LD schema
 ├── css/
-│   └── styles.css      # Design system, themes (projector/dark/light), Zen mode, mobile bottom-sheet
+│   └── styles.css      # Design system, themes (projector, dark, light), responsive bottom-sheet
 ├── js/
-│   ├── app.js          # Entry point & 120 FPS animation loop
-│   ├── state.js        # Reactive state & localStorage persistence
-│   ├── i18n.js         # Bilingual dictionary (PT-BR / EN) & tooltips
-│   ├── math-engine.js  # Signal compiler, support detector, Fourier 3-forms, CTFT engine
-│   ├── presets.js      # Textbook and exam problem presets (Convolution, Fourier, CTFT)
-│   ├── stage-3d.js     # Canvas 2D + Three.js projection, camera presets, Khutoryansky 3D dynamics
-│   ├── notebook.js     # Didactic resolution notebook & handwriting animation
-│   ├── audio.js        # Web Audio API real-time harmonic synthesizer
-│   └── ui.js           # Segmented control, popovers, virtual math keyboard & mobile touch chips
+│   ├── app.js          # Main entry point and 120 FPS animation loop
+│   ├── state.js        # Reactive state container and localStorage persistence
+│   ├── i18n.js         # Bilingual translation dictionary and mathematical labels
+│   ├── math-engine.js  # Analytic solver, support detector, Fourier decomposition, CTFT
+│   ├── presets.js      # Textbook and exam signal presets
+│   ├── stage-3d.js     # Canvas 2D engine with Three.js camera transformations
+│   ├── notebook.js     # Step-by-step mathematical notebook renderer
+│   ├── audio.js        # Web Audio API real-time additive synthesizer
+│   └── ui.js           # Navigation controllers, HUD, and virtual math keyboard
 ├── assets/
+│   ├── demo.gif        # High-resolution demonstration capture
 │   ├── favicon.svg     # Vector favicon
-│   └── og-banner.svg   # 1200x630 vector social sharing banner
-├── sitemap.xml
-├── robots.txt
-└── manifest.json
+│   └── og-banner.svg   # Open Graph social sharing image (1200x630)
+├── sitemap.xml         # Search engine index map
+├── robots.txt          # Crawler instructions
+└── manifest.json       # PWA web application manifest
 ```
 
 ---
 
-## Running Locally
+## Local Execution
 
-Serve with Python:
+Run with Python 3:
 
 ```bash
 python -m http.server 3000
 ```
 
-Deep links:
+Run with Node.js:
+
+```bash
+npx serve .
+```
+
+Access the modules directly:
 - `http://localhost:3000/#convolution`
 - `http://localhost:3000/#fourier`
 - `http://localhost:3000/#ctft`
 
 ---
 
-## References
+## Academic References
 
-- B. P. Lathi, *Linear Systems and Signals*, 2nd ed., Oxford University Press.
-- Alan V. Oppenheim, Alan S. Willsky, S. Hamid Nawab, *Signals and Systems*, 2nd ed., Prentice Hall.
+- B. P. Lathi, *Linear Systems and Signals*, 2nd ed., Oxford University Press, 2004.
+- Alan V. Oppenheim, Alan S. Willsky, S. Hamid Nawab, *Signals and Systems*, 2nd ed., Prentice Hall, 1996.
+- Faculdade de Engenharia de Telecomunicações (FEST), Universidade Federal do Pará (UFPA).
 
 ---
 
 ## License
 
-MIT
+This project is licensed under the [MIT License](./LICENSE).

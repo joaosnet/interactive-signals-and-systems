@@ -1,13 +1,15 @@
 {
   "0": "stage-3d.js",
-  "1": "Interactive Signals & Systems",
+  "1": "Interactive Signals and Systems",
   "2": "state.js",
   "3": "ui.js",
   "4": "app.js",
+  "5": "Señales y Sistemas de Forma Interactiva",
   "6": "manifest.json",
   "7": "stage-3d.js",
   "8": "server.js",
   "9": "assemble_master_index.js",
   "10": "package.json",
-  "11": "create_perfect_index.js"
+  "11": "create_perfect_index.js",
+  "12": "updateAudioSynth"
 }
