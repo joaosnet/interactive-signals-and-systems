@@ -74,6 +74,10 @@ export function exprToLatex(expr, varName = 't') {
   let s = expr.trim();
   if (varName !== 't') {
     s = s.replace(/\bt\b/g, varName);
+    // Simplify double negation -(-\tau) in exponents/parentheses -> \tau
+    if (varName === '(-\\tau)') {
+      s = s.replace(/([(^])-\(\s*-\\tau\s*\)/g, '$1\\tau');
+    }
     // Remove redundant double parentheses like u((-\tau)) -> u(-\tau)
     s = s.replace(/\(\(([^()]+)\)\)/g, '($1)');
   }
@@ -83,6 +87,7 @@ export function exprToLatex(expr, varName = 't') {
   s = replaceBalancedCall(s, 'abs(', '\\left|', '\\right|');
   s = replaceBalancedCall(s, 'rect(', '\\mathrm{rect}(', ')');
   s = replaceBalancedCall(s, 'tri(', '\\mathrm{tri}(', ')');
+  s = replaceBalancedCall(s, 'sincpi(', '\\mathrm{sinc}_{\\pi}(', ')');
   s = replaceBalancedCall(s, 'sinc(', '\\mathrm{sinc}(', ')');
   s = replaceBalancedCall(s, 'sin(', '\\sin(', ')');
   s = replaceBalancedCall(s, 'cos(', '\\cos(', ')');
@@ -120,6 +125,11 @@ export function latexToExpr(latex) {
 
   // Converte barras de valor absoluto |x| em abs(x)
   s = s.replace(/\|([^|]+)\|/g, 'abs($1)');
+
+  // Normaliza sinc_\pi / \mathrm{sinc}_{\pi} antes de remover wrappers
+  s = s.replace(/\\(?:mathrm|operatorname)\s*\{\s*sinc\s*\}\s*_\s*\{\s*\\pi\s*\}/g, 'sincpi');
+  s = s.replace(/\bsinc\s*_\s*\{\s*\\pi\s*\}/g, 'sincpi');
+  s = s.replace(/\\sincpi\b/g, 'sincpi');
 
   // Remove wrappers de texto/operador (\mathrm{rect} -> rect, \operatorname{tri} -> tri)
   let guardWrap = 0;
@@ -205,30 +215,32 @@ export function latexToExpr(latex) {
   return s || '0';
 }
 
-export function compileSignalExpr(expr) {
+const SIGNAL_HELPERS = {
+  u: (v) => (Math.abs(v) < 1e-12 ? 0.5 : (v > 0 ? 1.0 : 0.0)),
+  r: (v) => (v >= 0 ? v : 0.0),
+  rect: (v) => (Math.abs(Math.abs(v) - 0.5) < 1e-12 ? 0.5 : (Math.abs(v) < 0.5 ? 1.0 : 0.0)),
+  tri: (v) => (Math.abs(v) <= 1.0 ? 1.0 - Math.abs(v) : 0.0),
+  // Convenção UFPA / B. P. Lathi: sinc(x) = sin(x)/x; sincpi(x) = sin(pi*x)/(pi*x)
+  sinc: (v) => (Math.abs(v) < 1e-7 ? 1.0 : Math.sin(v) / v),
+  sincpi: (v) => (Math.abs(v) < 1e-7 ? 1.0 : Math.sin(Math.PI * v) / (Math.PI * v)),
+  sign: (v) => (v > 0 ? 1.0 : v < 0 ? -1.0 : 0.0),
+  get sgn() { return this.sign; },
+  delta: (v) => {
+    const eps = 0.025;
+    return Math.abs(v) <= eps ? (1.0 / (2 * eps)) : 0.0;
+  }
+};
+
+function buildSignalEvaluator(expr) {
   const raw = (expr || '0').trim();
   const clean = (raw.includes('\\') || raw.includes('{') || /\)\s*[a-zA-Z(]/.test(raw) || /\d\s*[a-zA-Z(]/.test(raw))
     ? latexToExpr(raw)
     : raw;
-  const u = (v) => (v >= 0 ? 1.0 : 0.0);
-  const r = (v) => (v >= 0 ? v : 0.0);
-  const rect = (v) => (Math.abs(v) <= 0.5 ? 1.0 : 0.0);
-  const tri = (v) => (Math.abs(v) <= 1.0 ? 1.0 - Math.abs(v) : 0.0);
-  const sinc = (v) => (Math.abs(v) < 1e-6 ? 1.0 : Math.sin(Math.PI * v) / (Math.PI * v));
-  const sign = (v) => (v > 0 ? 1.0 : v < 0 ? -1.0 : 0.0);
-  const sgn = sign;
-  const delta = (v) => {
-    const eps = 0.05;
-    return Math.abs(v) <= eps ? (1.0 / (2 * eps)) : 0.0;
-  };
 
   let jsExpr = clean;
-
-  // Substitui e^(...) e e^... por exp(...) antes de qualquer processamento de potência
   jsExpr = replaceBalancedCall(jsExpr, 'e^(', 'exp(', ')');
   jsExpr = jsExpr.replace(/e\^([a-zA-Z0-9_\\+-]+)/g, 'exp($1)');
 
-  // Converte potências gerais base^exp em Math.pow(base, exp) para evitar SyntaxError em negações unárias
   let pGuard = 0;
   while (jsExpr.includes('^') && pGuard++ < 8) {
     const prev = jsExpr;
@@ -245,21 +257,36 @@ export function compileSignalExpr(expr) {
     .replace(/\bexp\s*\(/g, 'Math.exp(')
     .replace(/\bsqrt\s*\(/g, 'Math.sqrt(')
     .replace(/\babs\s*\(/g, 'Math.abs(')
+    .replace(/\bsincpi\s*\(/g, 'sincpi(')
     .replace(/\bsign\s*\(/g, 'sign(')
     .replace(/\bsgn\s*\(/g, 'sgn(')
     .replace(/\bdelta\s*\(/g, 'delta(');
 
+  const { u, r, rect, tri, sinc, sincpi, sign, sgn, delta } = SIGNAL_HELPERS;
+  const rawFn = new Function(
+    't', 'u', 'r', 'rect', 'tri', 'sinc', 'sincpi', 'sign', 'sgn', 'delta',
+    `"use strict"; return Number(${jsExpr}) || 0;`
+  );
+  // Testa avaliação inicial para capturar SyntaxError / ReferenceError
+  rawFn(-1.0, u, r, rect, tri, sinc, sincpi, sign, sgn, delta);
+  rawFn(0.0, u, r, rect, tri, sinc, sincpi, sign, sgn, delta);
+  rawFn(0.5, u, r, rect, tri, sinc, sincpi, sign, sgn, delta);
+
+  const safeFn = (tVal) => {
+    try {
+      const v = rawFn(tVal, u, r, rect, tri, sinc, sincpi, sign, sgn, delta);
+      return Number.isFinite(v) ? v : 0;
+    } catch (e) {
+      return 0;
+    }
+  };
+  safeFn._hasDelta = /\bdelta\s*\(/.test(clean);
+  return { fn: safeFn, cleanExpr: clean };
+}
+
+export function compileSignalExpr(expr) {
   try {
-    const fn = new Function('t', 'u', 'r', 'rect', 'tri', 'sinc', 'sign', 'sgn', 'delta', `"use strict"; return Number(${jsExpr}) || 0;`);
-    fn(0.5, u, r, rect, tri, sinc, sign, sgn, delta);
-    return (tVal) => {
-      try {
-        const val = fn(tVal, u, r, rect, tri, sinc, sign, sgn, delta);
-        return Number.isFinite(val) ? val : 0;
-      } catch (e) {
-        return 0;
-      }
-    };
+    return buildSignalEvaluator(expr).fn;
   } catch (err) {
     return () => 0;
   }
@@ -291,94 +318,103 @@ export function validateSignalExpression(expr) {
     return { valid: false, fn: null, support: [-1, 1], energy: 0, maxAmp: 1 };
   }
 
-  const clean = (raw.includes('\\') || raw.includes('{') || /\)\s*[a-zA-Z(]/.test(raw) || /\d\s*[a-zA-Z(]/.test(raw))
-    ? latexToExpr(raw)
-    : raw;
-
-  const u = (v) => (v >= 0 ? 1.0 : 0.0);
-  const r = (v) => (v >= 0 ? v : 0.0);
-  const rect = (v) => (Math.abs(v) <= 0.5 ? 1.0 : 0.0);
-  const tri = (v) => (Math.abs(v) <= 1.0 ? 1.0 - Math.abs(v) : 0.0);
-  const sinc = (v) => (Math.abs(v) < 1e-6 ? 1.0 : Math.sin(Math.PI * v) / (Math.PI * v));
-  const sign = (v) => (v > 0 ? 1.0 : v < 0 ? -1.0 : 0.0);
-  const sgn = sign;
-  const delta = (v) => {
-    const eps = 0.05;
-    return Math.abs(v) <= eps ? (1.0 / (2 * eps)) : 0.0;
-  };
-
-  let jsExpr = clean;
-  jsExpr = replaceBalancedCall(jsExpr, 'e^(', 'exp(', ')');
-  jsExpr = jsExpr.replace(/e\^([a-zA-Z0-9_\\+-]+)/g, 'exp($1)');
-
-  let pGuard = 0;
-  while (jsExpr.includes('^') && pGuard++ < 8) {
-    const prev = jsExpr;
-    jsExpr = jsExpr.replace(/(\([^()]+\)|[a-zA-Z0-9_.]+)\s*\^\s*(\([^()]+\)|[a-zA-Z0-9_.]+)/g, 'Math.pow($1, $2)');
-    if (jsExpr === prev) break;
-  }
-  jsExpr = jsExpr.replace(/\^/g, '**');
-
-  jsExpr = jsExpr
-    .replace(/\bpi\b/gi, 'Math.PI')
-    .replace(/\be\b/g, 'Math.E')
-    .replace(/\bsin\s*\(/g, 'Math.sin(')
-    .replace(/\bcos\s*\(/g, 'Math.cos(')
-    .replace(/\bexp\s*\(/g, 'Math.exp(')
-    .replace(/\bsqrt\s*\(/g, 'Math.sqrt(')
-    .replace(/\babs\s*\(/g, 'Math.abs(')
-    .replace(/\bsign\s*\(/g, 'sign(')
-    .replace(/\bsgn\s*\(/g, 'sgn(')
-    .replace(/\bdelta\s*\(/g, 'delta(');
-
   try {
-    const rawFn = new Function('t', 'u', 'r', 'rect', 'tri', 'sinc', 'sign', 'sgn', 'delta', `"use strict"; return Number(${jsExpr}) || 0;`);
-    // Testa avaliação em pontos de amostra para capturar ReferenceError
-    rawFn(-1.0, u, r, rect, tri, sinc, sign, sgn, delta);
-    rawFn(0.0, u, r, rect, tri, sinc, sign, sgn, delta);
-    rawFn(0.5, u, r, rect, tri, sinc, sign, sgn, delta);
-
-    const safeFn = (tVal) => {
-      try {
-        const v = rawFn(tVal, u, r, rect, tri, sinc, sign, sgn, delta);
-        return Number.isFinite(v) ? v : 0;
-      } catch (e) {
-        return 0;
-      }
-    };
+    const { fn: safeFn, cleanExpr } = buildSignalEvaluator(raw);
 
     let tMin = null;
     let tMax = null;
     let energy = 0;
     let maxAmp = 0.01;
-    const dt = 0.04;
+    const dt = 0.02;
     for (let t = -6.0; t <= 6.0; t += dt) {
       const y = safeFn(t);
       const absY = Math.abs(y);
       if (absY > maxAmp) maxAmp = absY;
       if (absY > 1e-3) {
-        if (tMin === null) tMin = Math.round(t * 20) / 20;
-        tMax = Math.round(t * 20) / 20;
+        if (tMin === null) tMin = Math.round(t * 50) / 50;
+        tMax = Math.round(t * 50) / 50;
       }
       energy += y * y * dt;
     }
 
     const support = tMin !== null ? [tMin, Math.max(tMin + 0.05, tMax)] : [0, 0];
-    return { valid: true, fn: safeFn, support, energy, maxAmp, cleanExpr: clean };
+    return { valid: true, fn: safeFn, support, energy, maxAmp, cleanExpr, isAllZero: tMin === null };
   } catch (err) {
     return { valid: false, fn: null, support: [-1, 1], energy: 0, maxAmp: 1 };
   }
 }
 
-export function integrateSimpson(fnA, fnB, tVal, a = -5.0, b = 7.5, n = 320) {
-  const h = (b - a) / n;
-  let sum = fnA(a) * fnB(tVal - a) + fnA(b) * fnB(tVal - b);
-  for (let i = 1; i < n; i++) {
-    const tau = a + i * h;
-    const val = fnA(tau) * fnB(tVal - tau);
-    sum += (i % 2 === 0 ? 2 : 4) * val;
+export function integrateSimpson(fnA, fnB, tVal, a = null, b = null, n = 360) {
+  const lo = a !== null ? a : Math.min(-8.0, tVal - 8.0);
+  const hi = b !== null ? b : Math.max(10.0, tVal + 8.0);
+  if (hi <= lo) return 0;
+
+  const evalProd = (tau) => fnA(tau) * fnB(tVal - tau);
+  const hasDelta = Boolean(fnA._hasDelta || fnB._hasDelta);
+
+  const adaptivePanel = (x0, x1, f0, fl, fm, fr, f1, tol, depth) => {
+    const h = x1 - x0;
+    const s1 = (h / 6) * (f0 + 4 * fm + f1);
+    const s2 = (h / 12) * (f0 + 4 * fl + 2 * fm + 4 * fr + f1);
+    if (depth <= 0) {
+      // Regra do ponto medio no limite evita vies de extremidade em saltos descontínuos
+      return h * fm;
+    }
+    if (Math.abs(s2 - s1) <= 15 * tol) {
+      return s2 + (s2 - s1) / 15;
+    }
+    const xm = 0.5 * (x0 + x1);
+    const xl = 0.5 * (x0 + xm);
+    const xr = 0.5 * (xm + x1);
+    const fll = evalProd(0.5 * (x0 + xl));
+    const flr = evalProd(0.5 * (xl + xm));
+    const frl = evalProd(0.5 * (xm + xr));
+    const frr = evalProd(0.5 * (xr + x1));
+    return (
+      adaptivePanel(x0, xm, f0, fll, fl, flr, fm, tol * 0.5, depth - 1) +
+      adaptivePanel(xm, x1, fm, frl, fr, frr, f1, tol * 0.5, depth - 1)
+    );
+  };
+
+  // Passo de painel <= 0.04 garante subamostragem < 0.01 menor que a largura do delta (0.05)
+  const panels = Math.max(Math.floor(n / 2), Math.ceil((hi - lo) / 0.04));
+  const step = (hi - lo) / panels;
+  const tol = 1e-5;
+  let total = 0;
+  let x0 = lo;
+  let f0 = evalProd(x0);
+
+  for (let i = 0; i < panels; i++) {
+    const x1 = i === panels - 1 ? hi : lo + (i + 1) * step;
+    const xm = 0.5 * (x0 + x1);
+    const xl = 0.5 * (x0 + xm);
+    const xr = 0.5 * (xm + x1);
+    const fl = evalProd(xl);
+    const fm = evalProd(xm);
+    const fr = evalProd(xr);
+    const f1 = evalProd(x1);
+
+    const forceSplit = hasDelta && [x0, xl, xm, xr, x1].some(
+      (pt) => Math.abs(fnA(pt)) > 0.45 || Math.abs(fnB(tVal - pt)) > 0.45
+    );
+
+    if (forceSplit) {
+      const fll = evalProd(0.5 * (x0 + xl));
+      const flr = evalProd(0.5 * (xl + xm));
+      const frl = evalProd(0.5 * (xm + xr));
+      const frr = evalProd(0.5 * (xr + x1));
+      total +=
+        adaptivePanel(x0, xm, f0, fll, fl, flr, fm, tol * 0.5, 8) +
+        adaptivePanel(xm, x1, fm, frl, fr, frr, f1, tol * 0.5, 8);
+    } else {
+      total += adaptivePanel(x0, x1, f0, fl, fm, fr, f1, tol, 9);
+    }
+
+    x0 = x1;
+    f0 = f1;
   }
-  return (h / 3) * sum;
+
+  return total;
 }
 
 // Formatador Racional Inteligente (exibe 1/6, 2/3, 4/pi, etc)
@@ -420,67 +456,156 @@ export function formatSymbolic(val) {
   return val.toFixed(3);
 }
 
+function fmtBound(val) {
+  const rounded = Math.round(val * 100) / 100;
+  return Number.isInteger(rounded) ? String(rounded) : Number(rounded.toFixed(2)).toString();
+}
+
+function buildConvolutionIntegralLatex(f1, f2, m1, m2, fSym = 'x', mSym = 'h') {
+  const shiftTerm = (bound) => {
+    if (Math.abs(bound) < 1e-6) return 't';
+    return bound > 0 ? `t-${fmtBound(bound)}` : `t+${fmtBound(-bound)}`;
+  };
+
+  let lowExpr = '-\\infty';
+  if (Number.isFinite(f1) && Number.isFinite(m2)) {
+    lowExpr = `\\max(${fmtBound(f1)},\\, ${shiftTerm(m2)})`;
+  } else if (Number.isFinite(f1)) {
+    lowExpr = fmtBound(f1);
+  } else if (Number.isFinite(m2)) {
+    lowExpr = shiftTerm(m2);
+  }
+
+  let highExpr = '+\\infty';
+  if (Number.isFinite(f2) && Number.isFinite(m1)) {
+    highExpr = `\\min(${fmtBound(f2)},\\, ${shiftTerm(m1)})`;
+  } else if (Number.isFinite(f2)) {
+    highExpr = fmtBound(f2);
+  } else if (Number.isFinite(m1)) {
+    highExpr = shiftTerm(m1);
+  }
+
+  return `y(t) = \\int_{${lowExpr}}^{${highExpr}} ${fSym}(\\tau)${mSym}(t-\\tau)\\,d\\tau`;
+}
+
 // Detector Automático de Suporte e Regiões Críticas de Convolução
-export function detectSupportAndRegions(fnX, fnH, exprX = '', exprH = '') {
+export function detectSupportAndRegions(fnX, fnH, exprX = '', exprH = '', isCommuted = false) {
   const scanSupport = (fn) => {
     let a = null;
     let b = null;
-    const step = 0.05;
-    for (let t = -8.0; t <= 10.0; t += step) {
+    const step = 0.025;
+    for (let t = -10.0; t <= 10.0; t += step) {
       if (Math.abs(fn(t)) > 1e-3) {
-        if (a === null) a = Math.round(t * 10) / 10;
-        b = Math.round(t * 10) / 10;
+        const snap = Math.round(t * 20) / 20;
+        if (a === null) a = snap;
+        b = snap;
       }
     }
-    if (a === null) return [0, 3];
-    return [Math.max(-8, a), Math.min(8, b)];
+    if (a === null) {
+      return { support: [0, 0], isEmpty: true };
+    }
+    const leftInf = Math.abs(fn(-15.5)) > 0 && Math.abs(fn(-22.0)) > 0;
+    const rightInf = Math.abs(fn(15.5)) > 0 && Math.abs(fn(22.0)) > 0;
+    return {
+      support: [leftInf ? -Infinity : a, rightInf ? Infinity : b],
+      isEmpty: false
+    };
   };
 
-  const [x1, x2] = scanSupport(fnX);
-  const [h1, h2] = scanSupport(fnH);
+  const xInfo = scanSupport(fnX);
+  const hInfo = scanSupport(fnH);
+  const [x1, x2] = xInfo.support;
+  const [h1, h2] = hInfo.support;
 
-  const tStart = x1 + h1;
-  const tMid1 = x1 + h2;
-  const tMid2 = x2 + h1;
-  const tEnd = x2 + h2;
+  if (xInfo.isEmpty || hInfo.isEmpty) {
+    return {
+      supportX: [x1, x2],
+      supportH: [h1, h2],
+      regions: [{
+        range: 't \\in \\mathbb{R}',
+        test: () => true,
+        sampleT: 0,
+        latex: 'y(t) = 0 \\quad (\\text{Sinal nulo})',
+        latexEn: 'y(t) = 0 \\quad (\\text{Zero signal})'
+      }]
+    };
+  }
 
-  const pts = [tStart, Math.min(tMid1, tMid2), Math.max(tMid1, tMid2), tEnd].sort((a, b) => a - b);
-  const uniquePts = pts.filter((val, idx, arr) => idx === 0 || Math.abs(val - arr[idx - 1]) > 0.15);
+  const tStart = (Number.isFinite(x1) && Number.isFinite(h1)) ? x1 + h1 : -Infinity;
+  const tEnd = (Number.isFinite(x2) && Number.isFinite(h2)) ? x2 + h2 : Infinity;
+  const candidates = [];
+  if (Number.isFinite(tStart)) candidates.push(tStart);
+  if (Number.isFinite(x1) && Number.isFinite(h2)) candidates.push(x1 + h2);
+  if (Number.isFinite(x2) && Number.isFinite(h1)) candidates.push(x2 + h1);
+  if (Number.isFinite(tEnd)) candidates.push(tEnd);
 
+  candidates.sort((a, b) => a - b);
+  const uniquePts = candidates.filter((val, idx, arr) => idx === 0 || Math.abs(val - arr[idx - 1]) > 0.08);
+  const intLatex = isCommuted
+    ? buildConvolutionIntegralLatex(h1, h2, x1, x2, 'h', 'x')
+    : buildConvolutionIntegralLatex(x1, x2, h1, h2, 'x', 'h');
   const regions = [];
-  // 1. Antes da sobreposição
-  regions.push({
-    range: `t < ${uniquePts[0].toFixed(1)}`,
-    test: (t) => t < uniquePts[0],
-    sampleT: uniquePts[0] - 0.8,
-    latex: 'y(t) = 0 \\quad (\\text{Sem sobreposição})',
-    latexEn: 'y(t) = 0 \\quad (\\text{No overlap})'
-  });
 
-  // 2. Regiões intermediárias de sobreposição
-  for (let i = 0; i < uniquePts.length - 1; i++) {
-    const rA = uniquePts[i];
-    const rB = uniquePts[i + 1];
-    const mid = (rA + rB) / 2;
-    const intLatex = `y(t) = \\int_{\\max(${x1}, t-${h2})}^{\\min(${x2}, t-${h1})} x(\\tau)h(t-\\tau)d\\tau`;
+  if (uniquePts.length === 0) {
     regions.push({
-      range: `${rA.toFixed(1)} \\le t < ${rB.toFixed(1)}`,
-      test: (t) => t >= rA && t < rB,
-      sampleT: mid,
+      range: 't \\in \\mathbb{R}',
+      test: () => true,
+      sampleT: 0,
       latex: intLatex,
       latexEn: intLatex
     });
-  }
+  } else {
+    const firstPt = uniquePts[0];
+    if (Number.isFinite(tStart)) {
+      regions.push({
+        range: `t < ${fmtBound(firstPt)}`,
+        test: (t) => t < firstPt,
+        sampleT: firstPt - 0.8,
+        latex: 'y(t) = 0 \\quad (\\text{Sem sobreposição})',
+        latexEn: 'y(t) = 0 \\quad (\\text{No overlap})'
+      });
+    } else {
+      regions.push({
+        range: `t < ${fmtBound(firstPt)}`,
+        test: (t) => t < firstPt,
+        sampleT: firstPt - 1.0,
+        latex: intLatex,
+        latexEn: intLatex
+      });
+    }
 
-  // 3. Após o fim da sobreposição
-  const lastPt = uniquePts[uniquePts.length - 1];
-  regions.push({
-    range: `t \\ge ${lastPt.toFixed(1)}`,
-    test: (t) => t >= lastPt,
-    sampleT: lastPt + 0.8,
-    latex: 'y(t) = 0 \\quad (\\text{Fim da sobreposição})',
-    latexEn: 'y(t) = 0 \\quad (\\text{End of overlap})'
-  });
+    for (let i = 0; i < uniquePts.length - 1; i++) {
+      const rA = uniquePts[i];
+      const rB = uniquePts[i + 1];
+      const mid = (rA + rB) / 2;
+      regions.push({
+        range: `${fmtBound(rA)} \\le t < ${fmtBound(rB)}`,
+        test: (t) => t >= rA && t < rB,
+        sampleT: mid,
+        latex: intLatex,
+        latexEn: intLatex
+      });
+    }
+
+    const lastPt = uniquePts[uniquePts.length - 1];
+    if (Number.isFinite(tEnd)) {
+      regions.push({
+        range: `t \\ge ${fmtBound(lastPt)}`,
+        test: (t) => t >= lastPt,
+        sampleT: lastPt + 0.8,
+        latex: 'y(t) = 0 \\quad (\\text{Fim da sobreposição})',
+        latexEn: 'y(t) = 0 \\quad (\\text{End of overlap})'
+      });
+    } else {
+      regions.push({
+        range: `t \\ge ${fmtBound(lastPt)}`,
+        test: (t) => t >= lastPt,
+        sampleT: lastPt + 1.2,
+        latex: intLatex,
+        latexEn: intLatex
+      });
+    }
+  }
 
   return {
     supportX: [x1, x2],
@@ -496,12 +621,27 @@ export function calculateFourierData(expr, T0Val = 3.0, NVal = 7) {
   const fn = compileSignalExpr(expr);
   const N = Math.min(25, Math.max(1, Math.round(NVal) || 7));
 
-  const numSamples = 300;
+  // Detecta automaticamente se o sinal foi definido em [-T0/2, T0/2) ou em [0, T0)
+  let negEnergy = 0;
+  let upperPosEnergy = 0;
+  const probeCount = 24;
+  for (let i = 0; i < probeCount; i++) {
+    const frac = (i + 0.5) / probeCount;
+    const tNeg = -T0 * 0.5 * frac;
+    const tUpper = T0 * 0.5 + T0 * 0.5 * frac;
+    const vNeg = fn(tNeg);
+    const vUp = fn(tUpper);
+    negEnergy += vNeg * vNeg;
+    upperPosEnergy += vUp * vUp;
+  }
+  const tBase = (negEnergy > 1e-6 && upperPosEnergy < 1e-6) ? -T0 * 0.5 : 0;
+
+  const numSamples = 600;
   const dt = T0 / numSamples;
 
   // Função periódica em todo o eixo t
   const fPeriodic = (t) => {
-    const wrapped = ((t % T0) + T0) % T0;
+    const wrapped = tBase + ((((t - tBase) % T0) + T0) % T0);
     return fn(wrapped);
   };
 
@@ -509,7 +649,7 @@ export function calculateFourierData(expr, T0Val = 3.0, NVal = 7) {
   let a0Sum = 0;
   let totalEnergySum = 0;
   for (let i = 0; i < numSamples; i++) {
-    const tSample = (i + 0.5) * dt;
+    const tSample = tBase + (i + 0.5) * dt;
     const v = fn(tSample);
     a0Sum += v;
     totalEnergySum += v * v;
@@ -525,7 +665,7 @@ export function calculateFourierData(expr, T0Val = 3.0, NVal = 7) {
     let anSum = 0;
     let bnSum = 0;
     for (let i = 0; i < numSamples; i++) {
-      const tSample = (i + 0.5) * dt;
+      const tSample = tBase + (i + 0.5) * dt;
       const val = fn(tSample);
       anSum += val * Math.cos(n * w0 * tSample);
       bnSum += val * Math.sin(n * w0 * tSample);
@@ -557,9 +697,9 @@ export function calculateFourierData(expr, T0Val = 3.0, NVal = 7) {
   let oddDiff = 0;
   let halfWaveDiff = 0;
   let normSum = 0;
-  const testSteps = 60;
+  const testSteps = 120;
   for (let i = 0; i < testSteps; i++) {
-    const tVal = ((i + 0.5) / testSteps) * T0;
+    const tVal = tBase + ((i + 0.5) / testSteps) * T0;
     const fVal = fPeriodic(tVal);
     const fMinus = fPeriodic(-tVal);
     const fHalf = fPeriodic(tVal + T0 / 2);
@@ -593,7 +733,7 @@ export function calculateFourierData(expr, T0Val = 3.0, NVal = 7) {
   // 5. Erro Médio Quadrático (MSE) e Eficiência de Parseval
   let mseSum = 0;
   for (let i = 0; i < numSamples; i++) {
-    const tSample = (i + 0.5) * dt;
+    const tSample = tBase + (i + 0.5) * dt;
     const orig = fn(tSample);
     const rec = reconstruct(tSample);
     const diff = orig - rec;
@@ -606,6 +746,7 @@ export function calculateFourierData(expr, T0Val = 3.0, NVal = 7) {
     T0,
     w0,
     f0: 1.0 / T0,
+    tBase,
     a0,
     harmonics,
     symmetryType,
@@ -624,7 +765,7 @@ export function calculateFourierData(expr, T0Val = 3.0, NVal = 7) {
 // Inclui Ponte de Khutoryansky (T0 -> Infinito), Magnitude |X(w)| e Fase ∠X(w)
 // ============================================================================
 export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decayVal = 1.0, bridgeT0Val = 4.0, customExpr = null) {
-  const tau = Math.max(0.4, Number(pulseWidthVal) || 2.0);
+  const tau = Math.max(0.25, Number(pulseWidthVal) || 2.0);
   const a = Math.max(0.2, Number(decayVal) || 1.0);
   const T0 = Math.max(tau + 0.5, Number(bridgeT0Val) || 4.0);
   const w0 = (2 * Math.PI) / T0;
@@ -635,6 +776,7 @@ export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decay
   let latexTime = '\\operatorname{rect}(t/\\tau_0)';
   let latexCTFT = '\\tau_0 \\operatorname{sinc}\\left(\\frac{\\omega \\tau_0}{2}\\right)';
   let energyTime = tau;
+  let valX0 = tau;
 
   // 2. Transformada Contínua X(w) = Mag * e^(j*Phase)
   let fnMag = (w) => 0;
@@ -646,33 +788,38 @@ export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decay
     timeSupport = valRes.support || [-2.0, 2.0];
     latexTime = exprToLatex(customExpr, 't');
     latexCTFT = `\\int_{${timeSupport[0].toFixed(1)}}^{${timeSupport[1].toFixed(1)}} \\left(${latexTime}\\right) e^{-j\\omega t}\\,dt`;
-    energyTime = valRes.energy || 1.0;
 
-    const tStart = Math.max(-6.0, timeSupport[0] - 0.15);
-    const tEnd = Math.min(6.0, timeSupport[1] + 0.15);
-    const N_INT = 160;
+    const tStart = Math.max(-7.0, timeSupport[0] - 0.15);
+    const tEnd = Math.min(7.0, timeSupport[1] + 0.15);
+    const N_INT = 480;
     const dt = (tEnd - tStart) / Math.max(1, N_INT);
-    const tSamples = new Float64Array(N_INT + 1);
-    const xSamples = new Float64Array(N_INT + 1);
-    for (let i = 0; i <= N_INT; i++) {
-      const tVal = tStart + i * dt;
+    const tSamples = new Float64Array(N_INT);
+    const xSamples = new Float64Array(N_INT);
+    let calcEnergy = 0;
+    for (let i = 0; i < N_INT; i++) {
+      const tVal = tStart + (i + 0.5) * dt;
+      const xv = fnTime(tVal);
       tSamples[i] = tVal;
-      xSamples[i] = fnTime(tVal);
+      xSamples[i] = xv;
+      calcEnergy += xv * xv * dt;
     }
+    energyTime = calcEnergy > 1e-6 ? calcEnergy : (valRes.energy || 0);
 
     const evalCustomX = (w) => {
       if (tEnd <= tStart + 1e-4) return { re: 0, im: 0 };
       let re = 0;
       let im = 0;
-      for (let i = 0; i <= N_INT; i++) {
-        const weight = (i === 0 || i === N_INT) ? 0.5 : 1.0;
+      for (let i = 0; i < N_INT; i++) {
         const angle = -w * tSamples[i];
-        const xv = xSamples[i] * weight;
+        const xv = xSamples[i];
         re += xv * Math.cos(angle);
         im += xv * Math.sin(angle);
       }
       return { re: re * dt, im: im * dt };
     };
+
+    const x0Complex = evalCustomX(0);
+    valX0 = x0Complex.re;
 
     fnMag = (w) => {
       const c = evalCustomX(w);
@@ -680,36 +827,70 @@ export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decay
     };
     fnPhase = (w) => {
       const c = evalCustomX(w);
+      if (Math.hypot(c.re, c.im) < 1e-6) return 0;
       return Math.atan2(c.im, c.re);
     };
   } else if (presetKey === 'exp') {
-    fnTime = (t) => (t >= 0 ? Math.exp(-a * t) : 0);
-    timeSupport = [0, Math.min(6.0, 5.0 / a)];
+    fnTime = (t) => (t > 0 ? Math.exp(-a * t) : (Math.abs(t) < 1e-12 ? 0.5 : 0));
+    timeSupport = [0, Math.min(8.0, 6.0 / a)];
     latexTime = `e^{-${a.toFixed(1)}t} u(t)`;
     latexCTFT = `\\frac{1}{${a.toFixed(1)} + j\\omega}`;
     energyTime = 1.0 / (2 * a);
+    valX0 = 1.0 / a;
     fnMag = (w) => 1.0 / Math.sqrt(a * a + w * w);
     fnPhase = (w) => -Math.atan2(w, a);
   } else if (presetKey === 'tri') {
-    fnTime = (t) => (Math.abs(t) <= tau / 2 ? 1.0 - Math.abs(t) / (tau / 2) : 0);
-    timeSupport = [-tau / 2, tau / 2];
-    latexTime = `\\operatorname{tri}(t/${tau.toFixed(1)})`;
-    latexCTFT = `${tau.toFixed(1)} \\operatorname{sinc}^2\\left(\\frac{\\omega ${tau.toFixed(1)}}{4}\\right)`;
-    energyTime = (2 / 3) * (tau / 2);
+    // Convenção unificada: tri(t/a) = max(0, 1 - |t/a|) com suporte [-a, a] e X(w) = a*sinc^2(w*a/2)
+    const aTri = tau;
+    fnTime = (t) => (Math.abs(t) <= aTri ? 1.0 - Math.abs(t) / aTri : 0);
+    timeSupport = [-aTri, aTri];
+    latexTime = aTri === 1.0
+      ? '\\operatorname{tri}(t)'
+      : `\\operatorname{tri}\\left(\\frac{t}{${aTri.toFixed(1)}}\\right)`;
+    latexCTFT = aTri === 1.0
+      ? '\\operatorname{sinc}^2\\left(\\frac{\\omega}{2}\\right)'
+      : `${aTri.toFixed(1)} \\operatorname{sinc}^2\\left(\\frac{\\omega \\cdot ${aTri.toFixed(1)}}{2}\\right)`;
+    energyTime = (2 / 3) * aTri;
+    valX0 = aTri;
     fnMag = (w) => {
-      const arg = (w * tau) / 4;
-      const s = Math.abs(arg) < 1e-6 ? 1.0 : Math.sin(arg) / arg;
-      return tau * s * s;
+      const arg = (w * aTri) / 2;
+      const s = Math.abs(arg) < 1e-7 ? 1.0 : Math.sin(arg) / arg;
+      return aTri * s * s;
     };
     fnPhase = () => 0;
   } else if (presetKey === 'bilateral_exp') {
     fnTime = (t) => Math.exp(-a * Math.abs(t));
-    timeSupport = [-Math.min(6.0, 5.0 / a), Math.min(6.0, 5.0 / a)];
+    timeSupport = [-Math.min(8.0, 6.0 / a), Math.min(8.0, 6.0 / a)];
     latexTime = `e^{-${a.toFixed(1)}|t|}`;
     latexCTFT = `\\frac{2 \\cdot ${a.toFixed(1)}}{${(a * a).toFixed(2)} + \\omega^2}`;
     energyTime = 1.0 / a;
+    valX0 = 2.0 / a;
     fnMag = (w) => (2 * a) / (a * a + w * w);
     fnPhase = () => 0;
+  } else if (presetKey === 'bridge') {
+    fnTime = (t) => {
+      const wrapped = ((((t + T0 * 0.5) % T0) + T0) % T0) - T0 * 0.5;
+      return Math.abs(wrapped) <= tau / 2 ? 1.0 : 0;
+    };
+    timeSupport = [-tau / 2, tau / 2];
+    latexTime = tau === 1.0
+      ? '\\sum_{k} \\operatorname{rect}(t - k T_0)'
+      : `\\sum_{k} \\operatorname{rect}\\left(\\frac{t - k T_0}{${tau.toFixed(1)}}\\right)`;
+    latexCTFT = tau === 1.0
+      ? '\\operatorname{sinc}\\left(\\frac{\\omega}{2}\\right)'
+      : `${tau.toFixed(1)} \\operatorname{sinc}\\left(\\frac{\\omega \\cdot ${tau.toFixed(1)}}{2}\\right)`;
+    energyTime = tau;
+    valX0 = tau;
+    fnMag = (w) => {
+      const arg = (w * tau) / 2;
+      const s = Math.abs(arg) < 1e-7 ? 1.0 : Math.sin(arg) / arg;
+      return tau * Math.abs(s);
+    };
+    fnPhase = (w) => {
+      const arg = (w * tau) / 2;
+      const s = Math.abs(arg) < 1e-7 ? 1.0 : Math.sin(arg) / arg;
+      return s >= 0 ? 0 : Math.PI;
+    };
   } else {
     // Padrão: Pulso Retangular rect(t/tau)
     fnTime = (t) => (Math.abs(t) <= tau / 2 ? 1.0 : 0);
@@ -717,15 +898,16 @@ export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decay
     latexTime = `\\operatorname{rect}\\left(\\frac{t}{${tau.toFixed(1)}}\\right)`;
     latexCTFT = `${tau.toFixed(1)} \\operatorname{sinc}\\left(\\frac{\\omega \\cdot ${tau.toFixed(1)}}{2}\\right)`;
     energyTime = tau;
+    valX0 = tau;
     fnMag = (w) => {
       const arg = (w * tau) / 2;
-      const sinc = Math.abs(arg) < 1e-6 ? 1.0 : Math.sin(arg) / arg;
-      return tau * Math.abs(sinc);
+      const s = Math.abs(arg) < 1e-7 ? 1.0 : Math.sin(arg) / arg;
+      return tau * Math.abs(s);
     };
     fnPhase = (w) => {
       const arg = (w * tau) / 2;
-      const sinc = Math.abs(arg) < 1e-6 ? 1.0 : Math.sin(arg) / arg;
-      return sinc >= 0 ? 0 : Math.PI;
+      const s = Math.abs(arg) < 1e-7 ? 1.0 : Math.sin(arg) / arg;
+      return s >= 0 ? 0 : Math.PI;
     };
   }
 
@@ -745,9 +927,10 @@ export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decay
     });
   }
 
-  // 4. Integração Numérica de Verificação de Parseval
-  const wMax = 20.0;
-  const numWSamples = 300;
+  // 4. Integração Numérica de Verificação de Parseval (malha ampla adaptativa)
+  const scaleHint = Math.max(0.25, Math.min(tau, 1.0 / a));
+  const wMax = Math.max(90.0, 60.0 / scaleHint);
+  const numWSamples = 2000;
   const dw = (2 * wMax) / numWSamples;
   let energyFreqSum = 0;
   for (let i = 0; i < numWSamples; i++) {
@@ -763,6 +946,7 @@ export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decay
     a,
     T0,
     w0,
+    valX0,
     fnTime,
     timeSupport,
     latexTime,

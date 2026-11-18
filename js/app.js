@@ -84,6 +84,10 @@ function animationLoop(now = performance.now()) {
       }
       if (tSlider) tSlider.value = state.t;
       updateSliderBadge();
+      frameCounter++;
+      if (frameCounter % 6 === 0) {
+        updateNotebookUI(false);
+      }
     } else {
       if (state.step === 1) {
         state.tauSweep += 0.035 * spd;

@@ -36,6 +36,12 @@ try {
   if (saved) initialFourierCustomPresets = JSON.parse(saved);
 } catch (e) {}
 
+let initialCTFTCustomPresets = [];
+try {
+  const saved = localStorage.getItem('ctft3d_custom_presets_v1');
+  if (saved) initialCTFTCustomPresets = JSON.parse(saved);
+} catch (e) {}
+
 let initialVisibleSections = {
   notebook: true,
   regions: true,
@@ -51,6 +57,7 @@ let initialLayers = {
   waterfall: true,
   labels: true,
   spectrumWall: true,
+  phaseSpectrum: true,
   grid: true,
   thickStroke: false
 };
@@ -112,6 +119,7 @@ export const state = {
   focusHUDActive: false,
   focusHUDTarget: 'x', // 'x' | 'h' | 'fourier' | 'ctft'
   hudBuildMode: 'replace', // 'replace' | 'add' | 'sub'
+  hudInputMode: 'mathlive', // 'mathlive' | 'text'
   mobileSheetSnap: 'default', // 'compact' | 'default' | 'expanded'
 
   // Acessibilidade (A11y)
@@ -143,6 +151,7 @@ export const state = {
   ctftPulseWidth: 2.0,
   ctftDecay: 1.0,
   ctftBridgeT0: 4.0,
+  ctftCustomPresets: initialCTFTCustomPresets,
   ctftCalculated: null,
 
   // Customização de Interface (ver apenas o que quer)
@@ -167,6 +176,9 @@ export function saveCustomPreset(preset, moduleType = 'convolution') {
     if (moduleType === 'fourier') {
       state.fourierCustomPresets.push(preset);
       localStorage.setItem('fourier3d_custom_presets_v1', JSON.stringify(state.fourierCustomPresets));
+    } else if (moduleType === 'ctft') {
+      state.ctftCustomPresets.push(preset);
+      localStorage.setItem('ctft3d_custom_presets_v1', JSON.stringify(state.ctftCustomPresets));
     } else {
       state.customPresets.push(preset);
       localStorage.setItem('conv3d_custom_presets_v2', JSON.stringify(state.customPresets));
@@ -179,6 +191,9 @@ export function removeCustomPreset(presetId, moduleType = 'convolution') {
     if (moduleType === 'fourier') {
       state.fourierCustomPresets = state.fourierCustomPresets.filter(p => p.id !== presetId);
       localStorage.setItem('fourier3d_custom_presets_v1', JSON.stringify(state.fourierCustomPresets));
+    } else if (moduleType === 'ctft') {
+      state.ctftCustomPresets = state.ctftCustomPresets.filter(p => p.id !== presetId);
+      localStorage.setItem('ctft3d_custom_presets_v1', JSON.stringify(state.ctftCustomPresets));
     } else {
       state.customPresets = state.customPresets.filter(p => p.id !== presetId);
       localStorage.setItem('conv3d_custom_presets_v2', JSON.stringify(state.customPresets));

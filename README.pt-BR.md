@@ -85,7 +85,8 @@ Avalia o par direto e inverso da Transformada de Fourier de Tempo Contínuo:
 $$X(\omega) = \int_{-\infty}^{+\infty} x(t) e^{-j\omega t} \, dt \quad \Longleftrightarrow \quad x(t) = \frac{1}{2\pi} \int_{-\infty}^{+\infty} X(\omega) e^{j\omega t} \, d\omega$$
 
 Recursos do módulo:
-- **Representação em Planos Duplos**: O sinal aperiódico $x(t)$ ocupa o plano frontal ($z = 0$), enquanto a curva contínua de magnitude espectral $|X(\omega)|$ é desenhada no plano traseiro ($z = Z_{\max}$).
+- **Representação em Planos Duplos**: O sinal aperiódico $x(t)$ ocupa o plano frontal ($z = 0$), enquanto o espectro contínuo de magnitude $|X(\omega)|$ e a curva de fase $\angle X(\omega)$ são desenhados nos planos espectrais.
+- **Convenção UFPA / Lathi**: Padronização unificada $\operatorname{sinc}(x) = \sin(x)/x$ (com atalho opcional `sincpi(x)`) e $\operatorname{tri}(t/a) \leftrightarrow a\,\operatorname{sinc}^2(\omega a / 2)$.
 - **Ponte de Khutoryansky ($T_0 \to \infty$)**: Controle interativo de expansão do período mostrando as raias discretas $T_0 D_n$ convergindo para o envelope contínuo $X(\omega)$.
 - **Conservação de Energia de Rayleigh-Parseval**: Verificação numérica em tempo real da equivalência:
   $$\int_{-\infty}^{+\infty} |x(t)|^2 \, dt = \frac{1}{2\pi} \int_{-\infty}^{+\infty} |X(\omega)|^2 \, d\omega$$
@@ -99,7 +100,7 @@ Recursos do módulo:
 - **Projeções de Câmera**: Alternância imediata entre `3D Livre`, `2D Tempo (Frontal)`, `2D Espectro (Lateral)` e `Vista Superior`.
 - **Modo Projetor**: Fundo branco absoluto (`#ffffff`), eixos em preto sólido (`#000000`), traço com espessura 1.55x e curvas de alta saturação (`#00449e`, `#be123c`, `#047857`), calibrados para projetores de salas de aula e auditórios.
 - **Tema Dark Technical**: Ambiente escuro de baixo brilho (`#090b10`) para trabalho prolongado em laboratório.
-- **Experiência Móvel**: Layout com painel retrátil inferior (*bottom-sheet*), gestos de toque na órbita 3D e teclado matemático virtual com atalhos diretos (`u(t)`, `rect(t)`, `tri(t)`, `δ(t)`, `sinc(t)`).
+- **Experiência Móvel**: Layout com painel retrátil inferior (*bottom-sheet*), gestos de toque na órbita 3D, teclado matemático virtual (`⌨`), barra rápida de funções (`u(t)`, `rect(t)`, `tri(t)`, `δ(t)`, `sinc(t)`) e alternância para teclado nativo (`Abc`).
 - **Modo Zen (`Z`)**: Oculta barras laterais e dedica 100% da viewport ao palco 3D.
 - **Interface Bilíngue**: Suporte a Inglês e Português do Brasil com armazenamento local de preferências (`localStorage`).
 
@@ -125,6 +126,7 @@ Recursos do módulo:
 interactive-signals-and-systems/
 ├── index.html          # Estrutura HTML5 semântica, metadados SEO e schema JSON-LD
 ├── css/
+│   ├── utilities.css   # CSS utilitário estático pré-compilado (zero-build)
 │   └── styles.css      # Sistema de design, temas (projetor, dark, light) e layout mobile
 ├── js/
 │   ├── app.js          # Ponto de entrada e loop de animação a 120 FPS
@@ -136,10 +138,13 @@ interactive-signals-and-systems/
 │   ├── notebook.js     # Caderno de resolução didática passo a passo
 │   ├── audio.js        # Síntese aditiva em tempo real via Web Audio API
 │   └── ui.js           # Controles de navegação, HUD e teclado virtual
+├── tests/
+│   └── math-engine.test.js # Suíte de testes automatizados (Convolução, Fourier, CTFT e Parseval)
 ├── assets/
 │   ├── demo.gif        # Registro em alta definição da simulação interativa
 │   ├── favicon.svg     # Ícone vetorial
 │   └── og-banner.svg   # Banner Open Graph para compartilhamento social (1200x630)
+├── server.js           # Servidor estático Node.js sem dependências
 ├── sitemap.xml         # Mapa de indexação para motores de busca
 ├── robots.txt          # Diretrizes para indexadores
 └── manifest.json       # Manifesto de aplicação web progressiva (PWA)
@@ -147,18 +152,19 @@ interactive-signals-and-systems/
 
 ---
 
-## Execução Local
+## Execução Local e Testes
 
-Servidor local via Python 3:
+Servidor local e suíte de testes via Node.js:
+
+```bash
+npm start
+npm test
+```
+
+Ou servidor local via Python 3:
 
 ```bash
 python -m http.server 3000
-```
-
-Servidor local via Node.js:
-
-```bash
-npx serve .
 ```
 
 Acesso direto por âncoras de rota:

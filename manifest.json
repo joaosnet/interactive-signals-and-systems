@@ -1,7 +1,7 @@
 {
   "name": "3D Signals & Systems Lab — Convolution & Fourier Analysis",
   "short_name": "Signals 3D",
-  "description": "Laboratório interativo 3D para Convolução Contínua e Análise de Séries de Fourier em tempo real.",
+  "description": "Laboratório interativo 3D para Convolução Contínua, Série de Fourier e Transformada de Fourier (CTFT) em tempo real.",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -11,7 +11,13 @@
       "src": "assets/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ]
 }

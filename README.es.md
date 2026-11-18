@@ -85,7 +85,8 @@ Calcula el par directo e inverso de la Transformada de Fourier en Tiempo Continu
 $$X(\omega) = \int_{-\infty}^{+\infty} x(t) e^{-j\omega t} \, dt \quad \Longleftrightarrow \quad x(t) = \frac{1}{2\pi} \int_{-\infty}^{+\infty} X(\omega) e^{j\omega t} \, d\omega$$
 
 Capacidades operativas:
-- **Representación en Planos Duales**: El pulso aperiódico $x(t)$ se ubica en el plano frontal ($z = 0$), mientras que la curva continua de magnitud espectral $|X(\omega)|$ se representa en el plano posterior ($z = Z_{\max}$).
+- **Representación en Planos Duales**: El pulso aperiódico $x(t)$ se ubica en el plano frontal ($z = 0$), mientras que tanto el espectro continuo de magnitud $|X(\omega)|$ como el espectro de fase $\angle X(\omega)$ se dibujan en los planos espectrales.
+- **Convención UFPA / Lathi**: Estandarización unificada $\operatorname{sinc}(x) = \sin(x)/x$ (con atajo opcional `sincpi(x)`) y $\operatorname{tri}(t/a) \leftrightarrow a\,\operatorname{sinc}^2(\omega a / 2)$.
 - **Puente de Khutoryansky ($T_0 \to \infty$)**: Control deslizante interactivo de período que demuestra cómo las líneas discretas $T_0 D_n$ colapsan en la envolvente continua $X(\omega)$.
 - **Conservación de Energía de Rayleigh-Parseval**: Validación numérica en tiempo real del balance energético:
   $$\int_{-\infty}^{+\infty} |x(t)|^2 \, dt = \frac{1}{2\pi} \int_{-\infty}^{+\infty} |X(\omega)|^2 \, d\omega$$
@@ -99,7 +100,7 @@ Capacidades operativas:
 - **Proyecciones de Cámara**: Cambio inmediato entre `3D Libre`, `2D Tiempo (Frontal)`, `2D Espectro (Lateral)` y `Vista Superior`.
 - **Modo Proyector**: Fondo blanco puro (`#ffffff`), ejes en negro sólido (`#000000`), trazo reforzado a 1.55x y curvas de alta saturación (`#00449e`, `#be123c`, `#047857`), calibrados para proyectores y pantallas de auditorio.
 - **Tema Dark Technical**: Entorno oscuro antirreflejo (`#090b10`) para sesiones prolongadas de laboratorio.
-- **Arquitectura Móvil**: Diseño responsivo con panel deslizable inferior (*bottom-sheet*), navegación táctil orbital 3D y teclado matemático virtual con operadores de acceso rápido (`u(t)`, `rect(t)`, `tri(t)`, `δ(t)`, `sinc(t)`).
+- **Arquitectura Móvil**: Diseño responsivo con panel deslizable inferior (*bottom-sheet*), navegación táctil orbital 3D, teclado matemático virtual (`⌨`), barra rápida de funciones (`u(t)`, `rect(t)`, `tri(t)`, `δ(t)`, `sinc(t)`) y selector de teclado nativo (`Abc`).
 - **Modo Zen (`Z`)**: Oculta paneles laterales para dedicar el 100% de la pantalla al escenario 3D.
 - **Soporte Multilingüe**: Interfaz con conmutación en tiempo real y almacenamiento de preferencias locales (`localStorage`).
 
@@ -125,6 +126,7 @@ Capacidades operativas:
 interactive-signals-and-systems/
 ├── index.html          # Estructura semántica HTML5, metadatos SEO y esquema JSON-LD
 ├── css/
+│   ├── utilities.css   # CSS utilitario estático precompilado (zero-build)
 │   └── styles.css      # Sistema de diseño, temas (proyector, oscuro, claro) y vista móvil
 ├── js/
 │   ├── app.js          # Punto de entrada principal y bucle de animación a 120 FPS
@@ -136,10 +138,13 @@ interactive-signals-and-systems/
 │   ├── notebook.js     # Generador de cuaderno didáctico paso a paso
 │   ├── audio.js        # Sintetizador aditivo en tiempo real mediante Web Audio API
 │   └── ui.js           # Controladores de interfaz, HUD y teclado matemático
+├── tests/
+│   └── math-engine.test.js # Suite de pruebas automatizadas (Convolución, Fourier, CTFT, Parseval)
 ├── assets/
 │   ├── demo.gif        # Registro en alta resolución de la simulación interactiva
 │   ├── favicon.svg     # Favicon vectorial
 │   └── og-banner.svg   # Imagen Open Graph para enlaces sociales (1200x630)
+├── server.js           # Servidor estático Node.js sin dependencias
 ├── sitemap.xml         # Mapa de sitio para indexación
 ├── robots.txt          # Reglas para rastreadores web
 └── manifest.json       # Manifiesto de aplicación web progresiva (PWA)
@@ -147,18 +152,19 @@ interactive-signals-and-systems/
 
 ---
 
-## Ejecución Local
+## Ejecución Local y Pruebas
+
+Con Node.js:
+
+```bash
+npm start
+npm test
+```
 
 Con Python 3:
 
 ```bash
 python -m http.server 3000
-```
-
-Con Node.js:
-
-```bash
-npx serve .
 ```
 
 Enlaces directos a módulos:

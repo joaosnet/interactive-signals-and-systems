@@ -79,7 +79,7 @@ export function getEffectiveSignals() {
     if (foundCustom) {
       const fnX = compileSignalExpr(foundCustom.exprX);
       const fnH = compileSignalExpr(foundCustom.exprH);
-      const auto = detectSupportAndRegions(fnX, fnH, foundCustom.exprX, foundCustom.exprH);
+      const auto = detectSupportAndRegions(fnX, fnH, foundCustom.exprX, foundCustom.exprH, state.isCommuted);
       p = {
         ...foundCustom,
         fnX,
@@ -92,7 +92,7 @@ export function getEffectiveSignals() {
     } else {
       const fnX = compileSignalExpr(state.exprX);
       const fnH = compileSignalExpr(state.exprH);
-      const auto = detectSupportAndRegions(fnX, fnH, state.exprX, state.exprH);
+      const auto = detectSupportAndRegions(fnX, fnH, state.exprX, state.exprH, state.isCommuted);
       p = {
         id: 'custom_live',
         exprX: state.exprX,
@@ -111,6 +111,8 @@ export function getEffectiveSignals() {
     return {
       fixedSym: 'x',
       movingSym: 'h',
+      exprFixed: p.exprX,
+      exprMoving: p.exprH,
       fnFixed: p.fnX,
       fnMoving: p.fnH,
       supportFixed: p.supportX || [0, 3],
@@ -123,6 +125,8 @@ export function getEffectiveSignals() {
     return {
       fixedSym: 'h',
       movingSym: 'x',
+      exprFixed: p.exprH,
+      exprMoving: p.exprX,
       fnFixed: p.fnH,
       fnMoving: p.fnX,
       supportFixed: p.supportH || [0, 3],
@@ -839,7 +843,8 @@ export function renderFourierScene3D(dt = 0.016) {
   // 3. Linha e Plano do Nível Médio DC a0 em z = 0
   draw3DLine({ x: T_MIN, y: calc.a0, z: 0 }, { x: T_MAX, y: calc.a0, z: 0 }, pal.prod, 1.8 * strokeScale, [4, 3]);
 
-  // 4. Harmônicas Individuais ao Longo do Eixo de Profundidade z = n (Dinâmica Eugene Khutoryansky + Morphing Suave)
+  // 4. Harmônicas Individuais ao Longo do Eixo de Profundidade z = n (Alinhadas em fase com f(t) e S_N(t))
+  const harmCrossPoints = [];
   calc.harmonics.forEach((hItem, idx) => {
     const prevW = harmonicMorphWeights[hItem.n] ?? 0.15;
     const morphW = prevW + (1.0 - prevW) * 0.22;
@@ -853,18 +858,15 @@ export function renderFourierScene3D(dt = 0.016) {
 
     const harmPts = [];
     const nw0 = hItem.nw0;
-    const thetaN = hItem.theta || 0;
     for (let i = 0; i <= steps; i++) {
       const tv = T_MIN + (i / steps) * (T_MAX - T_MIN);
-      let yVal;
-      if (state.isPlaying && state.fourierAnimMode === 'khutoryansky') {
-        yVal = hItem.cn * Math.cos(nw0 * tv - nw0 * tNow + thetaN) * morphW;
-      } else {
-        yVal = (hItem.an * Math.cos(nw0 * tv) + hItem.bn * Math.sin(nw0 * tv)) * morphW;
-      }
+      const yVal = (hItem.an * Math.cos(nw0 * tv) + hItem.bn * Math.sin(nw0 * tv)) * morphW;
       harmPts.push({ x: tv, y: yVal, z: zPos });
     }
     draw3DPolyline(harmPts, harmColor, harmWidth);
+
+    const yInst = (hItem.an * Math.cos(nw0 * tNow) + hItem.bn * Math.sin(nw0 * tNow)) * morphW;
+    harmCrossPoints.push({ x: tNow, y: yInst, z: zPos, color: harmColor, isHighlighted });
 
     // 5. Hastes do Espectro Discreto na Parede Lateral x = T_MAX (Colapso Espectral 3D -> 2D)
     if (state.layers.spectrumWall) {
@@ -899,29 +901,44 @@ export function renderFourierScene3D(dt = 0.016) {
     }
   }
 
-  // 6. Curva Reconstruída SN(t) no plano z = 0.1
+  // 6. Curva Reconstruída SN(t) no plano z = 0.1 (sempre alinhada sobre f(t))
   const recPts = [];
   for (let i = 0; i <= steps; i++) {
     const tv = T_MIN + (i / steps) * (T_MAX - T_MIN);
-    let yRec;
-    if (state.isPlaying && state.fourierAnimMode === 'khutoryansky') {
-      yRec = calc.a0;
-      for (let j = 0; j < calc.harmonics.length; j++) {
-        const hj = calc.harmonics[j];
-        yRec += hj.cn * Math.cos(hj.nw0 * tv - hj.nw0 * tNow + (hj.theta || 0));
-      }
-    } else {
-      yRec = calc.reconstruct(tv);
-    }
-    recPts.push({ x: tv, y: yRec, z: 0.1 });
+    recPts.push({ x: tv, y: calc.reconstruct(tv), z: 0.1 });
   }
   const reconColor = state.theme === 'projector' ? '#be123c' : '#10b981';
   draw3DPolyline(recPts, reconColor, 2.6 * strokeScale);
 
-  // 7. Cursor Laser de Varredura Temporal t em toda a profundidade z
+  // 7. Plano e Cursor Transversal de Varredura Temporal t ao longo de todas as harmônicas
+  if (tNow >= T_MIN && tNow <= T_MAX) {
+    draw3DPolygon(
+      [
+        { x: tNow, y: AMP_MIN * 0.72, z: 0 },
+        { x: tNow, y: AMP_MIN * 0.72, z: Z_MAX },
+        { x: tNow, y: AMP_MAX * 0.85, z: Z_MAX },
+        { x: tNow, y: AMP_MAX * 0.85, z: 0 }
+      ],
+      pal.activePlaneFill,
+      pal.activePlaneBorder,
+      0.8
+    );
+
+    harmCrossPoints.forEach((hp) => {
+      draw3DLine({ x: hp.x, y: 0, z: hp.z }, { x: hp.x, y: hp.y, z: hp.z }, hp.color, (hp.isHighlighted ? 2.0 : 1.1) * strokeScale);
+      const pDot = projectPoint3D(hp.x, hp.y, hp.z);
+      if (pDot) {
+        ctx3d.beginPath();
+        ctx3d.arc(pDot.x, pDot.y, (hp.isHighlighted ? 3.5 : 2.3) * strokeScale, 0, Math.PI * 2);
+        ctx3d.fillStyle = hp.color;
+        ctx3d.fill();
+      }
+    });
+  }
+
   const recNow = calc.reconstruct(tNow);
   draw3DLine({ x: tNow, y: 0, z: 0.1 }, { x: tNow, y: recNow, z: 0.1 }, pal.conv, 2.0 * strokeScale);
-  draw3DLine({ x: tNow, y: -0.05, z: 0 }, { x: tNow, y: -0.05, z: Z_MAX }, 'rgba(16, 185, 129, 0.4)', 1.2 * strokeScale, [3, 3]);
+  draw3DLine({ x: tNow, y: -0.05, z: 0 }, { x: tNow, y: -0.05, z: Z_MAX }, 'rgba(16, 185, 129, 0.45)', 1.2 * strokeScale, [3, 3]);
   const ptRec = projectPoint3D(tNow, recNow, 0.1);
   if (ptRec) {
     ctx3d.fillStyle = pal.conv;
@@ -968,6 +985,63 @@ function hideAllFloatingLabels() {
   });
 }
 
+function layoutFloatingLabels(placements) {
+  const w = canvasContainer ? (canvasContainer.clientWidth || 384) : 384;
+  const h = canvasContainer ? (canvasContainer.clientHeight || 260) : 260;
+  const minX = 28;
+  const maxX = Math.max(minX + 10, w - 28);
+  const minY = 44;
+  const maxY = Math.max(minY + 10, h - 42);
+
+  const visibleNodes = [];
+  placements.forEach((item) => {
+    const el = document.getElementById(item.id);
+    if (!el) return;
+    if (!item.visible) {
+      el.style.opacity = '0';
+      return;
+    }
+    const pt = projectPoint3D(item.x, item.y, item.z);
+    if (!pt || pt.x < -30 || pt.x > w + 30 || pt.y < -30 || pt.y > h + 30) {
+      el.style.opacity = '0';
+      return;
+    }
+    visibleNodes.push({
+      id: item.id,
+      el,
+      px: Math.max(minX, Math.min(maxX, pt.x)),
+      py: Math.max(minY, Math.min(maxY, pt.y)),
+      priority: item.priority || 1
+    });
+  });
+
+  // Separação 2D anti-colisão (especialmente importante no viewport compacto mobile)
+  const minDx = w < 500 ? 64 : 56;
+  const minDy = w < 500 ? 22 : 20;
+  for (let pass = 0; pass < 4; pass++) {
+    for (let i = 0; i < visibleNodes.length; i++) {
+      for (let j = i + 1; j < visibleNodes.length; j++) {
+        const a = visibleNodes[i];
+        const b = visibleNodes[j];
+        const dx = Math.abs(a.px - b.px);
+        const dy = b.py - a.py;
+        if (dx < minDx && Math.abs(dy) < minDy) {
+          const push = (minDy - Math.abs(dy)) * 0.55;
+          const dir = dy >= 0 ? 1 : -1;
+          a.py = Math.max(minY, Math.min(maxY, a.py - dir * push));
+          b.py = Math.max(minY, Math.min(maxY, b.py + dir * push));
+        }
+      }
+    }
+  }
+
+  visibleNodes.forEach((node) => {
+    node.el.style.opacity = '1';
+    node.el.style.left = `${node.px}px`;
+    node.el.style.top = `${node.py}px`;
+  });
+}
+
 function updateFloatingLabels(sig, effectiveT, yNow, WALL_X) {
   const livePill = document.getElementById('stage-live-pill');
   if (livePill) {
@@ -1004,49 +1078,38 @@ function updateFloatingLabels(sig, effectiveT, yNow, WALL_X) {
   );
   setLabelMath('lbl-conv', 'y(t)');
 
-  const placeLabel = (id, x, y, z, visible = true) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (!visible) { el.style.opacity = '0'; return; }
-    const pt = projectPoint3D(x, y, z);
-    const w = canvasContainer.clientWidth || 384;
-    const h = canvasContainer.clientHeight || 260;
-    if (!pt || pt.x < 15 || pt.x > w - 15 || pt.y < 15 || pt.y > h - 15) {
-      el.style.opacity = '0';
-      return;
-    }
-    el.style.opacity = '1';
-    el.style.left = `${pt.x}px`;
-    el.style.top = `${pt.y}px`;
-  };
-
   const activeZ = state.step >= 3 ? effectiveT : 0.0;
-  placeLabel('lbl-tau', 1.2, -0.22, -2.6, true);
-  placeLabel('lbl-t', WALL_X + 0.85, -0.18, 2.2, true);
-  placeLabel('lbl-z', -3.5, 1.48, 6.0, true);
-  placeLabel('lbl-x1', 0.4, Math.max(0.7, sig.fnFixed(0.3)) + 0.25, activeZ, true);
-  placeLabel('lbl-x2', effectiveT - 1.1, 1.18, state.step === 1 ? 1.4 : activeZ, true);
-  placeLabel('lbl-conv', WALL_X, yNow + 0.28, effectiveT, state.step === 4);
-
   const [mA, mB] = sig.supportMoving;
   const showB1 = state.step >= 3 && Number.isFinite(mB);
   const showB2 = state.step >= 3 && Number.isFinite(mA);
+  const b1Val = showB1 ? effectiveT - mB : 0;
+  const b2Val = showB2 ? effectiveT - mA : 0;
+
   if (showB1) {
-    const b1Val = effectiveT - mB;
     const elB1 = document.getElementById('lbl-b1');
-    if (elB1) elB1.textContent = mB === 0 ? `t=${b1Val.toFixed(1)}` : `${-mB}+t=${b1Val.toFixed(1)}`;
-    placeLabel('lbl-b1', b1Val, -0.2, activeZ, true);
-  } else {
-    placeLabel('lbl-b1', 0, 0, 0, false);
+    if (elB1) {
+      delete elB1.dataset.lastLatex;
+      elB1.textContent = mB === 0 ? `t=${b1Val.toFixed(1)}` : `${-mB}+t=${b1Val.toFixed(1)}`;
+    }
   }
   if (showB2) {
-    const b2Val = effectiveT - mA;
     const elB2 = document.getElementById('lbl-b2');
-    if (elB2) elB2.textContent = mA === 0 ? `t=${b2Val.toFixed(1)}` : `${-mA}+t=${b2Val.toFixed(1)}`;
-    placeLabel('lbl-b2', b2Val, -0.2, activeZ, true);
-  } else {
-    placeLabel('lbl-b2', 0, 0, 0, false);
+    if (elB2) {
+      delete elB2.dataset.lastLatex;
+      elB2.textContent = mA === 0 ? `t=${b2Val.toFixed(1)}` : `${-mA}+t=${b2Val.toFixed(1)}`;
+    }
   }
+
+  layoutFloatingLabels([
+    { id: 'lbl-tau', x: 1.2, y: -0.22, z: -2.6, visible: true },
+    { id: 'lbl-t', x: WALL_X + 0.85, y: -0.18, z: 2.2, visible: true },
+    { id: 'lbl-z', x: -3.5, y: 1.48, z: 6.0, visible: true },
+    { id: 'lbl-x1', x: 0.4, y: Math.max(0.7, sig.fnFixed(0.3)) + 0.25, z: activeZ, visible: true },
+    { id: 'lbl-x2', x: effectiveT - 1.1, y: 1.18, z: state.step === 1 ? 1.4 : activeZ, visible: true },
+    { id: 'lbl-conv', x: WALL_X, y: yNow + 0.28, z: effectiveT, visible: state.step === 4 },
+    { id: 'lbl-b1', x: b1Val, y: -0.2, z: activeZ, visible: showB1 },
+    { id: 'lbl-b2', x: b2Val, y: -0.2, z: activeZ, visible: showB2 }
+  ]);
 }
 
 function updateFloatingLabelsFourier(calc, tNow, Z_MAX) {
@@ -1071,32 +1134,19 @@ function updateFloatingLabelsFourier(calc, tNow, Z_MAX) {
   setLabelMath('lbl-x2', 'S_N(t)');
   setLabelMath('lbl-conv', state.fourierForm === 'exp' ? '|D_n|' : '|C_n|');
 
-  const placeLabel = (id, x, y, z, visible = true) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (!visible) { el.style.opacity = '0'; return; }
-    const pt = projectPoint3D(x, y, z);
-    const w = canvasContainer.clientWidth || 384;
-    const h = canvasContainer.clientHeight || 260;
-    if (!pt || pt.x < 15 || pt.x > w - 15 || pt.y < 15 || pt.y > h - 15) {
-      el.style.opacity = '0';
-      return;
-    }
-    el.style.opacity = '1';
-    el.style.left = `${pt.x}px`;
-    el.style.top = `${pt.y}px`;
-  };
-
   const cycles = state.waterfallCycles || 2;
   const T_MAX = calc.T0 * (cycles * 0.5);
-  placeLabel('lbl-tau', 1.8, -0.22, 0, true);
-  placeLabel('lbl-t', 0.0, -0.2, Z_MAX * 0.7, true);
-  placeLabel('lbl-z', -2.5, 1.45, 0, true);
-  placeLabel('lbl-x1', 0.5, calc.fn(0.5) + 0.25, 0, true);
-  placeLabel('lbl-x2', tNow, calc.reconstruct(tNow) + 0.25, 0.1, true);
-  placeLabel('lbl-conv', T_MAX, 1.15, Z_MAX * 0.4, Boolean(state.layers.spectrumWall));
-  placeLabel('lbl-b1', 0, 0, 0, false);
-  placeLabel('lbl-b2', 0, 0, 0, false);
+
+  layoutFloatingLabels([
+    { id: 'lbl-tau', x: 1.8, y: -0.22, z: 0, visible: true },
+    { id: 'lbl-t', x: 0.0, y: -0.2, z: Z_MAX * 0.7, visible: true },
+    { id: 'lbl-z', x: -2.5, y: 1.45, z: 0, visible: true },
+    { id: 'lbl-x1', x: 0.5, y: calc.fPeriodic(0.5) + 0.25, z: 0, visible: true },
+    { id: 'lbl-x2', x: tNow, y: calc.reconstruct(tNow) + 0.28, z: 0.1, visible: true },
+    { id: 'lbl-conv', x: T_MAX, y: 1.15, z: Z_MAX * 0.4, visible: Boolean(state.layers.spectrumWall) },
+    { id: 'lbl-b1', x: 0, y: 0, z: 0, visible: false },
+    { id: 'lbl-b2', x: 0, y: 0, z: 0, visible: false }
+  ]);
 }
 
 // ============================================================================
@@ -1133,6 +1183,7 @@ export function renderCTFTScene3D(dt = 0.016) {
   const AMP_MIN = -1.2;
   const AMP_MAX = 2.4;
   const Z_MAX = 5.0;
+  const showPhaseCurve = state.layers.phaseSpectrum !== false && (state.step === 2 || state.step === 3);
 
   // 1. Parede Traseira e Piso da Caixa 3D
   if (state.layers.grid) {
@@ -1174,7 +1225,7 @@ export function renderCTFTScene3D(dt = 0.016) {
   draw3DPolyline(timePts, pal.x1, timeWidth, [], isFocusActive, 'ctft');
 
   // Preenchimento de área sob x(t)
-  const timeArea = buildCurveAreaPolygon(timePts, 0, 0);
+  const timeArea = buildCurveAreaPolygon(timePts);
   if (timeArea.length > 2) {
     draw3DPolygon(timeArea, 'rgba(56, 189, 248, 0.16)', null, 0);
   }
@@ -1203,9 +1254,32 @@ export function renderCTFTScene3D(dt = 0.016) {
   draw3DPolyline(magPts, pal.conv, 2.6 * strokeScale);
 
   // Preenchimento sob o espectro de magnitude
-  const magArea = buildCurveAreaPolygon(magPts, 0, Z_MAX);
+  const magArea = buildCurveAreaPolygon(magPts);
   if (magArea.length > 2) {
     draw3DPolygon(magArea, 'rgba(16, 185, 129, 0.18)', null, 0);
+  }
+
+  // 3.1 Espectro Contínuo de Fase ∠X(w) (escala [-pi, pi] -> [-0.88, 0.88] em z = Z_MAX - 0.75)
+  if (showPhaseCurve && typeof calc.fnPhase === 'function') {
+    const zPhase = Z_MAX - 0.75;
+    const phaseScale = 0.28;
+    draw3DLine({ x: T_MIN, y: 0, z: zPhase }, { x: T_MAX, y: 0, z: zPhase }, pal.gridSub, 0.9 * strokeScale, [2, 3]);
+    let segPts = [];
+    let prevPh = null;
+    for (let i = 0; i <= steps; i++) {
+      const wVal = -W_SPAN + (i / steps) * (2 * W_SPAN);
+      const xCoord = (wVal / W_SPAN) * T_MAX;
+      const ph = calc.fnPhase(wVal);
+      if (prevPh !== null && Math.abs(ph - prevPh) > 2.4) {
+        if (segPts.length >= 2) draw3DPolyline(segPts, pal.x2, 1.9 * strokeScale, [5, 3]);
+        segPts = [];
+      }
+      segPts.push({ x: xCoord, y: ph * phaseScale, z: zPhase });
+      prevPh = ph;
+    }
+    if (segPts.length >= 2) {
+      draw3DPolyline(segPts, pal.x2, 1.9 * strokeScale, [5, 3]);
+    }
   }
 
   // 4. Ponte de Khutoryansky (Raias Discretas de Fourier T0 * Dn)
@@ -1245,13 +1319,14 @@ export function renderCTFTScene3D(dt = 0.016) {
   if (isFocusActive) ctx3d.globalAlpha = 1.0;
 
   ctx3d.restore();
-  updateFloatingLabelsCTFT(calc, Z_MAX);
+  updateFloatingLabelsCTFT(calc, Z_MAX, showPhaseCurve);
 }
 
-function updateFloatingLabelsCTFT(calc, Z_MAX) {
+function updateFloatingLabelsCTFT(calc, Z_MAX, showPhaseCurve = false) {
   const livePill = document.getElementById('stage-live-pill');
   if (livePill) {
-    const latex = `X(0) = ${calc.fnMag(0).toFixed(2)} \\quad (E_x = ${calc.energyTime.toFixed(2)}\\text{ J}, \\; T_0 = ${calc.T0.toFixed(1)}\\text{s})`;
+    const x0Display = (calc.valX0 !== undefined ? calc.valX0 : calc.fnMag(0)).toFixed(2);
+    const latex = `X(0) = ${x0Display} \\quad (E_x = ${calc.energyTime.toFixed(2)}\\text{ J}, \\; T_0 = ${calc.T0.toFixed(1)}\\text{s})`;
     if (livePill.dataset.lastLatex !== latex) {
       livePill.dataset.lastLatex = latex;
       renderMath(livePill, latex, false);
@@ -1269,31 +1344,20 @@ function updateFloatingLabelsCTFT(calc, Z_MAX) {
   setLabelMath('lbl-x1', 'x(t)');
   setLabelMath('lbl-x2', '|X(\\omega)|');
   setLabelMath('lbl-conv', 'T_0 D_n');
+  if (showPhaseCurve) {
+    setLabelMath('lbl-b1', '\\angle X(\\omega)');
+  }
 
-  const placeLabel = (id, x, y, z, visible = true) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (!visible) { el.style.opacity = '0'; return; }
-    const pt = projectPoint3D(x, y, z);
-    const w = canvasContainer.clientWidth || 384;
-    const h = canvasContainer.clientHeight || 260;
-    if (!pt || pt.x < 15 || pt.x > w - 15 || pt.y < 15 || pt.y > h - 15) {
-      el.style.opacity = '0';
-      return;
-    }
-    el.style.opacity = '1';
-    el.style.left = `${pt.x}px`;
-    el.style.top = `${pt.y}px`;
-  };
-
-  placeLabel('lbl-tau', 2.0, -0.22, 0, true);
-  placeLabel('lbl-t', 0.0, -0.2, Z_MAX, true);
-  placeLabel('lbl-z', -2.5, 1.45, 0, true);
-  placeLabel('lbl-x1', 0.0, 1.15, 0, true);
-  placeLabel('lbl-x2', 0.0, calc.fnMag(0) + 0.25, Z_MAX, true);
-  placeLabel('lbl-conv', 2.5, 0.8, Z_MAX, Boolean(state.layers.spectrumWall));
-  placeLabel('lbl-b1', 0, 0, 0, false);
-  placeLabel('lbl-b2', 0, 0, 0, false);
+  layoutFloatingLabels([
+    { id: 'lbl-tau', x: 2.0, y: -0.22, z: 0, visible: true },
+    { id: 'lbl-t', x: 0.0, y: -0.2, z: Z_MAX, visible: true },
+    { id: 'lbl-z', x: -2.5, y: 1.45, z: 0, visible: true },
+    { id: 'lbl-x1', x: 0.0, y: 1.15, z: 0, visible: true },
+    { id: 'lbl-x2', x: 0.0, y: calc.fnMag(0) + 0.25, z: Z_MAX, visible: true },
+    { id: 'lbl-conv', x: 2.5, y: 0.8, z: Z_MAX, visible: Boolean(state.layers.spectrumWall) },
+    { id: 'lbl-b1', x: -3.2, y: 0.72, z: Z_MAX - 0.75, visible: showPhaseCurve },
+    { id: 'lbl-b2', x: 0, y: 0, z: 0, visible: false }
+  ]);
 }
 
 export function init3DStage() {
@@ -1331,20 +1395,24 @@ function initPointerOrbitControls() {
   let prevY = 0;
   let pinchDist = 0;
 
-  // Clique direto nos rótulos 3D flutuantes de sinal (x(τ), h(t-τ), f(t))
+  // Clique direto nos rótulos 3D flutuantes de sinal (x(τ), h(t-τ), f(t), x(t) CTFT)
   const lblX1 = document.getElementById('lbl-x1');
   const lblX2 = document.getElementById('lbl-x2');
   if (lblX1) {
     lblX1.addEventListener('click', (e) => {
       e.stopPropagation();
-      const target = state.activeModule === 'fourier' ? 'fourier' : (state.isCommuted ? 'h' : 'x');
+      const target = state.activeModule === 'ctft'
+        ? 'ctft'
+        : (state.activeModule === 'fourier' ? 'fourier' : (state.isCommuted ? 'h' : 'x'));
       window.dispatchEvent(new CustomEvent('open-signal-hud', { detail: { target } }));
     });
   }
   if (lblX2) {
     lblX2.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (state.activeModule === 'fourier') {
+      if (state.activeModule === 'ctft') {
+        window.dispatchEvent(new CustomEvent('open-signal-hud', { detail: { target: 'ctft' } }));
+      } else if (state.activeModule === 'fourier') {
         window.dispatchEvent(new CustomEvent('open-signal-hud', { detail: { target: 'fourier' } }));
       } else {
         const target = state.isCommuted ? 'x' : 'h';

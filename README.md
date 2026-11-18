@@ -85,7 +85,8 @@ Evaluates the direct and inverse Fourier transform pair:
 $$X(\omega) = \int_{-\infty}^{+\infty} x(t) e^{-j\omega t} \, dt \quad \Longleftrightarrow \quad x(t) = \frac{1}{2\pi} \int_{-\infty}^{+\infty} X(\omega) e^{j\omega t} \, d\omega$$
 
 Key operational capabilities:
-- **Dual Plane Representation**: Displays time-domain pulse $x(t)$ on the front plane ($z = 0$) and continuous magnitude spectrum $|X(\omega)|$ on the back plane ($z = Z_{\max}$).
+- **Dual Plane Representation**: Displays time-domain pulse $x(t)$ on the front plane ($z = 0$) and both continuous magnitude spectrum $|X(\omega)|$ and phase spectrum $\angle X(\omega)$ on the spectral planes.
+- **UFPA / Lathi Convention**: Unified non-normalized $\operatorname{sinc}(x) = \sin(x)/x$ (plus optional `sincpi(x)` shortcut) and $\operatorname{tri}(t/a) \leftrightarrow a\,\operatorname{sinc}^2(\omega a / 2)$.
 - **The Khutoryansky Bridge ($T_0 \to \infty$)**: Interactive period expansion demonstrating discrete harmonic lines $T_0 D_n$ condensing into the continuous spectral envelope $X(\omega)$.
 - **Rayleigh-Parseval Conservation**: Real-time numerical verification of energy equivalence:
   $$\int_{-\infty}^{+\infty} |x(t)|^2 \, dt = \frac{1}{2\pi} \int_{-\infty}^{+\infty} |X(\omega)|^2 \, d\omega$$
@@ -99,7 +100,7 @@ Key operational capabilities:
 - **Camera Projections**: Instant selection among `3D Free Orbit`, `2D Time (Front)`, `2D Spectrum (Lateral)`, and `Top Plan`.
 - **Projector Mode**: High-contrast white background (`#ffffff`), solid black axes (`#000000`), 1.55x stroke weight, and saturated curves (`#00449e`, `#be123c`, `#047857`) calibrated for lecture hall beamers.
 - **Dark Technical Theme**: Low-glare dark environment (`#090b10`) for laboratory and low-light workstation usage.
-- **Mobile Architecture**: Responsive bottom-sheet layout with touch orbit gestures and a docked virtual math keyboard with single-tap function inputs (`u(t)`, `rect(t)`, `tri(t)`, `δ(t)`, `sinc(t)`).
+- **Mobile Architecture**: Responsive bottom-sheet layout with touch orbit gestures, a docked MathLive virtual keyboard (`⌨`), quick function chips (`u(t)`, `rect(t)`, `tri(t)`, `δ(t)`, `sinc(t)`), and native system keyboard toggle (`Abc`).
 - **Zen Focus Mode (`Z`)**: Minimizes panels to leave 100% of the screen dedicated to the 3D stage.
 - **Bilingual System**: English and Brazilian Portuguese interface switching with persistent preferences via `localStorage`.
 
@@ -125,6 +126,7 @@ Key operational capabilities:
 interactive-signals-and-systems/
 ├── index.html          # Semantic HTML5 shell, SEO metadata, JSON-LD schema
 ├── css/
+│   ├── utilities.css   # Precompiled static utility CSS (zero-build)
 │   └── styles.css      # Design system, themes (projector, dark, light), responsive bottom-sheet
 ├── js/
 │   ├── app.js          # Main entry point and 120 FPS animation loop
@@ -136,10 +138,13 @@ interactive-signals-and-systems/
 │   ├── notebook.js     # Step-by-step mathematical notebook renderer
 │   ├── audio.js        # Web Audio API real-time additive synthesizer
 │   └── ui.js           # Navigation controllers, HUD, and virtual math keyboard
+├── tests/
+│   └── math-engine.test.js # Automated Node test suite (Convolution, Fourier, CTFT, Parseval)
 ├── assets/
 │   ├── demo.gif        # High-resolution demonstration capture
 │   ├── favicon.svg     # Vector favicon
 │   └── og-banner.svg   # Open Graph social sharing image (1200x630)
+├── server.js           # Zero-dependency Node static development server
 ├── sitemap.xml         # Search engine index map
 ├── robots.txt          # Crawler instructions
 └── manifest.json       # PWA web application manifest
@@ -147,18 +152,19 @@ interactive-signals-and-systems/
 
 ---
 
-## Local Execution
+## Local Execution & Tests
 
-Run with Python 3:
+Run the local Node static server or automated tests:
+
+```bash
+npm start
+npm test
+```
+
+Or run with Python 3:
 
 ```bash
 python -m http.server 3000
-```
-
-Run with Node.js:
-
-```bash
-npx serve .
 ```
 
 Access the modules directly:

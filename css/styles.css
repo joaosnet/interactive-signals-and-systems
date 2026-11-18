@@ -1,5 +1,7 @@
 :root {
   --font-scale: 1;
+  --kb-offset: 0px;
+  --keyboard-zindex: 105;
   --bg-canvas: #090b10;
   --bg-panel: rgba(13, 17, 26, 0.94);
   --bg-card: rgba(20, 26, 38, 0.85);
@@ -118,6 +120,17 @@ body.theme-projector .ui-card {
   transition: all 0.15s ease;
 }
 .ui-control:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+.ctrl-pill {
+  background-color: var(--bg-control);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.ctrl-pill:hover {
   background-color: var(--bg-hover);
   border-color: var(--border-strong);
 }
@@ -506,6 +519,7 @@ body.theme-projector.a11y-high-contrast {
 body.a11y-high-contrast .ui-surface,
 body.a11y-high-contrast .ui-card,
 body.a11y-high-contrast .ui-control,
+body.a11y-high-contrast .ctrl-pill,
 body.a11y-high-contrast .step-card,
 body.a11y-high-contrast .preset-pill,
 body.a11y-high-contrast .mathfield-box,
@@ -667,38 +681,89 @@ body.a11y-high-contrast :focus-visible {
   color: var(--c-conv);
 }
 
-/* Modern Popover API & @starting-style Top-Layer Transitions (/modern-web-guidance) */
-#settings-popover {
-  margin: 0;
+/* Modern Popover API, Viewport-Aware Anchoring & @starting-style (/modern-web-guidance) */
+#settings-popover,
+#layers-popover {
   border: 1px solid var(--border-strong);
   box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 #settings-popover[popover] {
-  position: fixed;
-  inset: auto;
-  top: 44px;
-  left: 8px;
   max-height: calc(100dvh - 56px);
   overflow-y: auto;
   width: min(300px, calc(100vw - 16px));
-  border: 1px solid var(--border-strong);
-  box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
   opacity: 0;
   transform: translateY(-6px) scale(0.98);
   transition: opacity 0.18s ease-out, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), display 0.18s allow-discrete, overlay 0.18s allow-discrete;
 }
-/* Tailwind .flex sobrescreve o display:none do UA; fecha o popover de fato (senão bloqueia cliques) */
-#settings-popover[popover]:not(:popover-open) {
+#layers-popover[popover] {
+  max-height: calc(100dvh - 56px);
+  overflow-y: auto;
+  width: min(240px, calc(100vw - 16px));
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+  transition: opacity 0.18s ease-out, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), display 0.18s allow-discrete, overlay 0.18s allow-discrete;
+}
+@media (max-width: 768px) {
+  #settings-popover[popover],
+  #layers-popover[popover] {
+    max-height: min(360px, 44dvh);
+  }
+}
+/* Tailwind .flex sobrescreve o display:none do UA; fecha o popover de fato */
+#settings-popover[popover]:not(:popover-open),
+#layers-popover[popover]:not(:popover-open) {
   display: none !important;
 }
-#settings-popover[popover]:popover-open {
+#settings-popover[popover]:is(:popover-open, .\:popover-open),
+#layers-popover[popover]:is(:popover-open, .\:popover-open) {
   opacity: 1;
   transform: translateY(0) scale(1);
 }
+@supports (position-area: block-end) {
+  #settings-popover[popover],
+  #layers-popover[popover] {
+    inset: auto;
+    margin: 4px 0 0 0;
+    position-area: block-end span-inline-start;
+    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+  }
+}
+@supports not (position-area: block-end) {
+  #settings-popover[popover],
+  #layers-popover[popover] {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+  }
+}
 @starting-style {
-  #settings-popover[popover]:popover-open {
+  #settings-popover[popover]:popover-open,
+  #layers-popover[popover]:popover-open {
     opacity: 0;
     transform: translateY(-6px) scale(0.98);
+  }
+}
+
+/* Minimum Touch/Click Target Sizing (WCAG 2.5.8 & Toolbar Guidance) */
+#a11y-bar button {
+  min-inline-size: 24px;
+  min-block-size: 24px;
+}
+@media (pointer: coarse) {
+  #a11y-bar button,
+  .hud-fn-chip,
+  #hud-btn-keyboard,
+  #hud-btn-input-mode,
+  #hud-key-backspace,
+  #hud-key-clear {
+    min-block-size: 30px;
+    min-inline-size: 28px;
+  }
+}
+@media (max-width: 440px) {
+  #lbl-a11y-contrast,
+  #lbl-a11y-motion {
+    display: none;
   }
 }
 
@@ -741,7 +806,14 @@ body.a11y-high-contrast :focus-visible {
   opacity: 1;
 }
 
-/* MathLive <math-field> Integration in HUD */
+/* MathLive <math-field> & Native Text Input Integration in HUD */
+math-field#hud-mathfield,
+math-field#hud-mathfield *,
+#hud-free-input {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  touch-action: manipulation;
+}
 math-field#hud-mathfield {
   display: block;
   width: 100%;
@@ -757,7 +829,11 @@ math-field#hud-mathfield {
   --selection-color: var(--text-primary);
   --contains-highlight-background-color: transparent;
 }
-math-field#hud-mathfield:focus-within {
+math-field#hud-mathfield.hidden {
+  display: none !important;
+}
+math-field#hud-mathfield:focus-within,
+#hud-free-input:focus {
   border-color: var(--c-conv);
   box-shadow: 0 0 0 2px var(--accent-bg);
 }
@@ -766,6 +842,19 @@ math-field#hud-mathfield::part(virtual-keyboard-toggle) {
 }
 math-field#hud-mathfield::part(menu-toggle) {
   display: none;
+}
+.hud-fn-chip {
+  min-height: 26px;
+  touch-action: manipulation;
+}
+#hud-btn-keyboard[aria-pressed="true"],
+#hud-btn-input-mode[aria-pressed="true"] {
+  background-color: var(--accent-bg);
+  border-color: var(--c-conv);
+  color: var(--c-conv);
+}
+.ML__keyboard {
+  z-index: var(--keyboard-zindex, 105) !important;
 }
 
 /* Create/Edit Signal Card in Preset Gallery */
@@ -938,17 +1027,18 @@ body.theme-projector #signal-focus-hud {
   }
   #signal-focus-hud {
     position: fixed;
-    bottom: 0;
+    bottom: var(--kb-offset, 0px);
     left: 0;
     right: 0;
     width: 100vw;
-    max-height: 82dvh;
+    max-height: calc(100dvh - var(--kb-offset, 0px) - 6px);
     border-radius: 20px 20px 0 0;
     border-bottom: none;
     transform: none;
     z-index: 60;
+    transition: bottom 0.16s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
   }
-  /* Quando o teclado virtual MathLive está visível no mobile, colapsa suavemente os sliders para manter a fórmula e o osciloscópio 2D visíveis */
+  /* Quando o teclado virtual está visível no mobile, colapsa os sliders para manter equação, quickbar e osciloscópio 2D visíveis acima do teclado */
   body.mathlive-kb-visible #hud-parametric-section {
     max-height: 0;
     opacity: 0;

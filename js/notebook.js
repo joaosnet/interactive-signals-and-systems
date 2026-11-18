@@ -4,7 +4,7 @@
 
 import { state } from './state.js';
 import { I18N } from './i18n.js';
-import { renderMath, latexToHtml, exprToLatex, formatSymbolic, calculateCTFTData } from './math-engine.js';
+import { renderMath, latexToHtml, exprToLatex, formatSymbolic } from './math-engine.js';
 import { BUILTIN_CTFT_PRESETS } from './presets.js';
 import { getEffectiveSignals, updateScene3D } from './stage-3d.js';
 
@@ -170,6 +170,10 @@ function buildNotebookLinesConvolution(sig) {
   const fBStr = Number.isFinite(fB) ? String(fB) : '+\\infty';
   const mAStr = Number.isFinite(mA) ? String(mA) : '-\\infty';
   const mBStr = Number.isFinite(mB) ? String(mB) : '+\\infty';
+  const fLBr = Number.isFinite(fA) ? '[' : '(';
+  const fRBr = Number.isFinite(fB) ? ']' : ')';
+  const mLBr = Number.isFinite(mA) ? '[' : '(';
+  const mRBr = Number.isFinite(mB) ? ']' : ')';
 
   if (state.step === 1) {
     const valF = sig.fnFixed(tauNow);
@@ -181,11 +185,11 @@ function buildNotebookLinesConvolution(sig) {
       },
       {
         label: isEn ? '1.2 Domain Transformation (t → τ):' : '1.2 Mudança de Domínio (t → τ):',
-        latex: `${fSym}(\\tau) = ${exprToLatex(sig.preset.exprX, '\\tau')}, \\quad \\tau \\in [${fAStr},\\, ${fBStr}]`
+        latex: `${fSym}(\\tau) = ${exprToLatex(sig.exprFixed || sig.preset.exprX, '\\tau')}, \\quad \\tau \\in ${fLBr}${fAStr},\\, ${fBStr}${fRBr}`
       },
       {
         label: isEn ? '1.3 Moving Kernel in τ:' : '1.3 Segundo Sinal no Domínio τ:',
-        latex: `${mSym}(\\tau) = ${exprToLatex(sig.preset.exprH, '\\tau')}, \\quad \\tau \\in [${mAStr},\\, ${mBStr}]`
+        latex: `${mSym}(\\tau) = ${exprToLatex(sig.exprMoving || sig.preset.exprH, '\\tau')}, \\quad \\tau \\in ${mLBr}${mAStr},\\, ${mBStr}${mRBr}`
       },
       {
         label: isEn ? `1.4 Value at τ = ${tauNow.toFixed(2)}:` : `1.4 Valor no Instante τ = ${tauNow.toFixed(2)}:`,
@@ -197,6 +201,8 @@ function buildNotebookLinesConvolution(sig) {
   if (state.step === 2) {
     const negA = Number.isFinite(mB) ? String(-mB) : '-\\infty';
     const negB = Number.isFinite(mA) ? String(-mA) : '+\\infty';
+    const opMA = Number.isFinite(mA) ? '\\le' : '<';
+    const opMB = Number.isFinite(mB) ? '\\le' : '<';
     return [
       {
         label: isEn ? '2.1 Time Reflection:' : '2.1 Reflexão Temporal:',
@@ -206,11 +212,11 @@ function buildNotebookLinesConvolution(sig) {
       },
       {
         label: isEn ? '2.2 Argument Inversion (τ → -τ):' : '2.2 Inversão de Sinal (τ → -τ):',
-        latex: `${mSym}(-\\tau) = ${exprToLatex(sig.preset.exprH, '(-\\tau)')}`
+        latex: `${mSym}(-\\tau) = ${exprToLatex(sig.exprMoving || sig.preset.exprH, '(-\\tau)')}`
       },
       {
         label: isEn ? '2.3 Domain Inversion:' : '2.3 Inversão do Suporte Temporal:',
-        latex: `${mAStr} \\le -\\tau \\le ${mBStr} \\iff ${negA} \\le \\tau \\le ${negB}`
+        latex: `${mAStr} ${opMA} -\\tau ${opMB} ${mBStr} \\iff ${negA} ${opMB} \\tau ${opMA} ${negB}`
       },
       {
         label: isEn ? '2.4 Rotation Phase:' : '2.4 Rotação de Reflexão:',
@@ -224,14 +230,16 @@ function buildNotebookLinesConvolution(sig) {
     const bRight = Number.isFinite(mA) ? (tNow - mA).toFixed(2) : '+\\infty';
     const symLeft = Number.isFinite(mB) ? (mB === 0 ? 't' : `${-mB}+t`) : '-\\infty';
     const symRight = Number.isFinite(mA) ? (mA === 0 ? 't' : `${-mA}+t`) : '+\\infty';
+    const opMA = Number.isFinite(mA) ? '\\le' : '<';
+    const opMB = Number.isFinite(mB) ? '\\le' : '<';
     return [
       {
         label: isEn ? '3.1 Time Shift by t:' : '3.1 Translação Temporal por t:',
-        latex: `${mSym}(-\\tau) \\to ${mSym}(t-\\tau) = ${exprToLatex(sig.preset.exprH, '(t-\\tau)')}`
+        latex: `${mSym}(-\\tau) \\to ${mSym}(t-\\tau) = ${exprToLatex(sig.exprMoving || sig.preset.exprH, '(t-\\tau)')}`
       },
       {
         label: isEn ? '3.2 Mobile Boundaries in τ:' : '3.2 Limites Móveis em Função de t:',
-        latex: `${mAStr} \\le t - \\tau \\le ${mBStr} \\iff ${symLeft} \\le \\tau \\le ${symRight}`
+        latex: `${mAStr} ${opMA} t - \\tau ${opMB} ${mBStr} \\iff ${symLeft} ${opMB} \\tau ${opMA} ${symRight}`
       },
       {
         label: isEn ? `3.3 Numerical Edge Positions (t = ${tNow.toFixed(2)}):` : `3.3 Posição dos Limites (t = ${tNow.toFixed(2)}):`,
@@ -266,10 +274,40 @@ function buildNotebookLinesConvolution(sig) {
   }
   piecewiseLatex += ' \\end{cases}';
 
-  // Teste de Fronteira Formal (Conferência de Erro Zero)
-  let boundaryProof = isEn
-    ? '\\text{Boundary Continuity: } y(t) \\text{ is continuous across all interval junctions } (\\Delta y = 0).'
-    : '\\text{Continuidade de Fronteiras: } y_i(t_k) = y_{i+1}(t_k) \\implies \\text{Sem impulsos nas transições.}';
+  // Teste de Fronteira Formal (Conferência Numérica de Continuidade)
+  const critRaw = [fA + mA, fA + mB, fB + mA, fB + mB].filter(Number.isFinite).sort((a, b) => a - b);
+  const critPts = critRaw.filter((v, i, arr) => i === 0 || Math.abs(v - arr[i - 1]) > 0.05);
+  let maxJump = 0;
+  let sampleTk = critPts.length > 0 ? critPts[0] : 0;
+  let yLeftSample = 0;
+  let yRightSample = 0;
+  for (let i = 0; i < critPts.length; i++) {
+    const tk = critPts[i];
+    const yl = sig.conv(tk - 1e-3);
+    const yr = sig.conv(tk + 1e-3);
+    const diff = Math.abs(yr - yl);
+    if (i === 0 || diff > maxJump) {
+      sampleTk = tk;
+      yLeftSample = yl;
+      yRightSample = yr;
+      if (diff > maxJump) maxJump = diff;
+    }
+  }
+  const tkStr = Number.isInteger(sampleTk) ? String(sampleTk) : sampleTk.toFixed(1);
+  let boundaryProof;
+  if (critPts.length === 0) {
+    boundaryProof = isEn
+      ? '\\text{Smooth support: } y(t) \\text{ has no finite transition boundaries.}'
+      : '\\text{Suporte ilimitado: } y(t) \\text{ é suave em todo } \\mathbb{R}.';
+  } else if (maxJump < 0.06) {
+    boundaryProof = isEn
+      ? `y(${tkStr}^-) = ${yLeftSample.toFixed(3)} = y(${tkStr}^+) \\implies \\text{Continuous junctions } (\\Delta y \\approx 0).`
+      : `y(${tkStr}^-) = ${yLeftSample.toFixed(3)} = y(${tkStr}^+) \\implies \\text{Contínuo nas fronteiras } (\\Delta y \\approx 0).`;
+  } else {
+    boundaryProof = isEn
+      ? `y(${tkStr}^-) = ${yLeftSample.toFixed(2)}, \\; y(${tkStr}^+) = ${yRightSample.toFixed(2)} \\implies \\text{Jump } \\Delta y = ${maxJump.toFixed(2)}`
+      : `y(${tkStr}^-) = ${yLeftSample.toFixed(2)}, \\; y(${tkStr}^+) = ${yRightSample.toFixed(2)} \\implies \\text{Salto } \\Delta y = ${maxJump.toFixed(2)}`;
+  }
 
   return [
     {
@@ -296,6 +334,7 @@ function buildNotebookLinesConvolution(sig) {
 function buildNotebookLinesCTFT(calc) {
   if (!calc) return [];
   const isEn = state.lang === 'en';
+  const x0Val = calc.valX0 !== undefined ? calc.valX0 : calc.fnMag(0);
 
   if (state.step === 1) {
     return [
@@ -326,26 +365,32 @@ function buildNotebookLinesCTFT(calc) {
       },
       {
         label: isEn ? '2.3 DC Level / Net Area X(0):' : '2.3 Nível Médio Contínuo / Área Líquida X(0):',
-        latex: `X(0) = \\int_{-\\infty}^{+\\infty} x(t)\\,dt = ${calc.fnMag(0).toFixed(4)}`
+        latex: `X(0) = \\int_{-\\infty}^{+\\infty} x(t)\\,dt = ${x0Val.toFixed(4)}`
       }
     ];
   }
 
   if (state.step === 3) {
+    let propLatex;
+    if (calc.presetKey === 'rect' || calc.presetKey === 'bridge') {
+      propLatex = `\\omega_{\\text{${isEn ? 'null' : 'nulo'}}} = \\pm \\frac{2\\pi}{\\tau_0} = \\pm ${((2 * Math.PI) / calc.tau).toFixed(2)}\\text{ rad/s}`;
+    } else if (calc.presetKey === 'tri') {
+      propLatex = `\\omega_{\\text{${isEn ? 'null' : 'nulo'}}} = \\pm \\frac{2\\pi}{a} = \\pm ${((2 * Math.PI) / calc.tau).toFixed(2)}\\text{ rad/s}`;
+    } else {
+      propLatex = `|X(0)| = ${calc.fnMag(0).toFixed(2)}, \\quad |X(10)| = ${calc.fnMag(10).toFixed(4)}`;
+    }
     return [
       {
         label: isEn ? '3.1 Continuous Magnitude Spectrum |X(ω)|:' : '3.1 Espectro Contínuo de Magnitude |X(ω)|:',
         latex: `|X(\\omega)| = \\sqrt{\\operatorname{Re}\\{X\\}^2 + \\operatorname{Im}\\{X\\}^2}`
       },
       {
-        label: isEn ? '3.2 Continuous Phase Spectrum ∠X(ω):' : '3.2 Espectro Contínuo de Fase \\angle X(\\omega):',
+        label: isEn ? '3.2 Continuous Phase Spectrum ∠X(ω):' : '3.2 Espectro Contínuo de Fase ∠X(ω):',
         latex: `\\angle X(\\omega) = \\operatorname{atan2}\\left(\\operatorname{Im}\\{X\\},\\, \\operatorname{Re}\\{X\\}\\right)`
       },
       {
         label: isEn ? '3.3 Spectral Properties & Nulls:' : '3.3 Largura de Faixa e Nulos Espectrais:',
-        latex: calc.presetKey === 'rect'
-          ? `\\omega_{\\text{nulo}} = \\pm \\frac{2\\pi}{\\tau_0} = \\pm ${( (2 * Math.PI) / calc.tau ).toFixed(2)}\\text{ rad/s}`
-          : `|X(0)| = ${calc.fnMag(0).toFixed(2)}, \\quad |X(10)| = ${calc.fnMag(10).toFixed(4)}`
+        latex: propLatex
       }
     ];
   }
@@ -358,7 +403,7 @@ function buildNotebookLinesCTFT(calc) {
     },
     {
       label: isEn ? `4.2 Discrete Harmonics Density at T₀ = ${calc.T0.toFixed(1)}s:` : `4.2 Densidade Espectral Discreta em T₀ = ${calc.T0.toFixed(1)}s:`,
-      latex: `\\omega_0 = \\frac{2\\pi}{T_0} = ${calc.w0.toFixed(2)}\\text{ rad/s}, \\quad N_{\\text{raias}} = ${calc.bridgeHarmonics.length}`
+      latex: `\\omega_0 = \\frac{2\\pi}{T_0} = ${calc.w0.toFixed(2)}\\text{ rad/s}, \\quad N_{\\text{${isEn ? 'lines' : 'raias'}}} = ${calc.bridgeHarmonics.length}`
     },
     {
       label: isEn ? '4.3 Parseval-Rayleigh Energy Conservation:' : '4.3 Teorema de Conservação de Energia (Parseval / Rayleigh):',
@@ -383,14 +428,16 @@ export function updateNotebookUI(animateHandwriting = false) {
     if (isCTFT) {
       const calc = state.ctftCalculated;
       if (calc) {
+        const x0Val = calc.valX0 !== undefined ? calc.valX0 : calc.fnMag(0);
         if (state.step === 1) {
-          metricsEl.innerHTML = `<span class="font-semibold text-sec">${isEn ? 'Energy' : 'Energia'}</span><span>${latexToHtml(`E_x = ${calc.energyTime.toFixed(3)}\\text{ J}`)}</span>`;
+          metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.metricEnergy}</span><span>${latexToHtml(`E_x = ${calc.energyTime.toFixed(3)}\\text{ J}`)}</span>`;
         } else if (state.step === 2) {
-          metricsEl.innerHTML = `<span class="font-semibold text-sec">DC X(0)</span><span>${latexToHtml(`X(0) = ${calc.fnMag(0).toFixed(3)}`)}</span>`;
+          metricsEl.innerHTML = `<span class="font-semibold text-sec">DC X(0)</span><span>${latexToHtml(`X(0) = ${x0Val.toFixed(3)}`)}</span>`;
         } else if (state.step === 3) {
-          metricsEl.innerHTML = `<span class="font-semibold text-sec">|X(0)|</span><span>${latexToHtml(`|X(0)| = ${calc.fnMag(0).toFixed(2)}, \\; \\angle X(0) = 0`)}</span>`;
+          const ph0 = x0Val >= 0 ? '0' : '\\pi';
+          metricsEl.innerHTML = `<span class="font-semibold text-sec">|X(0)|</span><span>${latexToHtml(`|X(0)| = ${calc.fnMag(0).toFixed(2)}, \\; \\angle X(0) = ${ph0}`)}</span>`;
         } else {
-          metricsEl.innerHTML = `<span class="font-semibold text-sec">Ponte T₀</span><span>${latexToHtml(`T_0 = ${calc.T0.toFixed(1)}\\text{s} \\implies \\Delta\\omega = ${calc.w0.toFixed(2)}`)}</span>`;
+          metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.metricBridge}</span><span>${latexToHtml(`T_0 = ${calc.T0.toFixed(1)}\\text{s} \\implies \\Delta\\omega = ${calc.w0.toFixed(2)}`)}</span>`;
         }
       }
     } else if (isFourier) {
@@ -453,10 +500,16 @@ export function updateNotebookUI(animateHandwriting = false) {
         handwritingTimer = null;
       }
       container.innerHTML = '';
+      const useProgressiveWrite = Boolean(animateHandwriting && !state.a11yReduceMotion);
+
       lines.forEach((item, idx) => {
         const div = document.createElement('div');
-        div.className = 'handwriting-line written py-1 notebook-cascade-in';
-        div.style.setProperty('--line-idx', String(idx));
+        div.className = useProgressiveWrite
+          ? 'handwriting-line py-1'
+          : 'handwriting-line written py-1 notebook-cascade-in';
+        if (!useProgressiveWrite) {
+          div.style.setProperty('--line-idx', String(idx));
+        }
         div.innerHTML = `
           <div class="hw-lbl text-[10px] font-medium text-mut mb-0.5">${item.label}</div>
           <div class="flex items-center flex-wrap">
@@ -467,6 +520,31 @@ export function updateNotebookUI(animateHandwriting = false) {
         renderMath(div.querySelector('.hw-clip'), item.latex, false);
         container.appendChild(div);
       });
+
+      if (useProgressiveWrite && lines.length > 0) {
+        const rows = Array.from(container.children);
+        const revealStep = (stepIdx) => {
+          rows.forEach((row, i) => {
+            const slot = row.querySelector('.hw-pen-slot');
+            if (i < stepIdx) {
+              row.className = 'handwriting-line written py-1';
+              if (slot) slot.innerHTML = '';
+            } else if (i === stepIdx) {
+              row.className = 'handwriting-line writing-now py-1';
+              if (slot) slot.innerHTML = PEN_SVG;
+            } else {
+              row.className = 'handwriting-line py-1';
+              if (slot) slot.innerHTML = '';
+            }
+          });
+          if (stepIdx < rows.length) {
+            handwritingTimer = setTimeout(() => revealStep(stepIdx + 1), 240);
+          } else {
+            handwritingTimer = null;
+          }
+        };
+        revealStep(0);
+      }
     }
   }
 
@@ -479,9 +557,9 @@ export function updateNotebookUI(animateHandwriting = false) {
       const tableHeader = document.createElement('div');
       tableHeader.className = 'grid grid-cols-3 gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[10px] font-bold text-sec uppercase tracking-wider mb-1';
       tableHeader.innerHTML = `
-        <span>${isEn ? 'Signal x(t)' : 'Sinal x(t)'}</span>
-        <span>${isEn ? 'Transform X(ω)' : 'Transformada X(ω)'}</span>
-        <span class="text-right">${isEn ? 'Pair / Bridge' : 'Par Notável'}</span>
+        <span>${dict.ctftColSignal}</span>
+        <span>${dict.ctftColTransform}</span>
+        <span class="text-right">${dict.ctftColPair}</span>
       `;
       regContainer.appendChild(tableHeader);
 
@@ -493,14 +571,11 @@ export function updateNotebookUI(animateHandwriting = false) {
         btn.innerHTML = `
           <span class="text-[10px] font-mono-code">${isEn ? p.titleEn : p.title}</span>
           <span class="ctft-formula text-[10px] truncate"></span>
-          <span class="text-[9px] text-mut text-right truncate">${key === 'bridge' ? 'Eugene Khutoryansky' : 'Par Notável'}</span>
+          <span class="text-[9px] text-mut text-right truncate">${key === 'bridge' ? 'Eugene Khutoryansky' : dict.ctftNotablePair}</span>
         `;
         renderMath(btn.querySelector('.ctft-formula'), p.latexX, false);
         btn.addEventListener('click', () => {
-          state.ctftPresetKey = key;
-          state.ctftCalculated = calculateCTFTData(state.ctftPresetKey, state.ctftPulseWidth, state.ctftDecay, state.ctftBridgeT0);
-          updateNotebookUI(false);
-          updateScene3D();
+          window.dispatchEvent(new CustomEvent('select-ctft-preset', { detail: { key } }));
         });
         regContainer.appendChild(btn);
       });
@@ -561,21 +636,43 @@ export function updateNotebookUI(animateHandwriting = false) {
 
       const sig = getEffectiveSignals();
       const regionsList = sig.regions || [];
-      regionsList.forEach((reg, idx, arr) => {
+      const [fA, fB] = sig.supportFixed;
+      const [mA, mB] = sig.supportMoving;
+      const bothFinite = Number.isFinite(fA) && Number.isFinite(fB) && Number.isFinite(mA) && Number.isFinite(mB);
+      const activeIndices = regionsList
+        .map((r, i) => (!r.latex.includes('y(t) = 0') ? i : -1))
+        .filter((i) => i !== -1);
+
+      regionsList.forEach((reg, idx) => {
         const isCurrent = state.step >= 3 && reg.test(state.t);
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = `region-row w-full text-left px-2 py-1.5 rounded-lg grid grid-cols-3 items-center gap-2 ui-control ${isCurrent ? 'active font-semibold' : ''}`;
 
-        let regimeLabel = isEn ? 'Total Overlap' : 'Sobreposição Total';
+        let regimeLabel = isEn ? 'Full Overlap' : 'Sobreposição Total';
         if (reg.latex.includes('y(t) = 0')) {
-          regimeLabel = idx === 0 
+          regimeLabel = idx === 0
             ? (isEn ? 'No Overlap (t < tin)' : 'Sem Sobreposição (t < tin)')
             : (isEn ? 'No Overlap (t > tout)' : 'Sem Sobreposição (t > tout)');
-        } else if (idx === 1) {
-          regimeLabel = isEn ? 'Partial Entrance' : 'Entrada Parcial';
-        } else if (idx === arr.length - 2) {
-          regimeLabel = isEn ? 'Partial Exit' : 'Saída Parcial';
+        } else {
+          const activePos = activeIndices.indexOf(idx);
+          if (bothFinite) {
+            if (activeIndices.length <= 1) {
+              regimeLabel = isEn ? 'Active Overlap' : 'Sobreposição Ativa';
+            } else if (activePos === 0) {
+              regimeLabel = isEn ? 'Partial Entry' : 'Entrada Parcial';
+            } else if (activePos === activeIndices.length - 1) {
+              regimeLabel = isEn ? 'Partial Exit' : 'Saída Parcial';
+            } else {
+              regimeLabel = isEn ? 'Full Overlap' : 'Sobreposição Total';
+            }
+          } else if (activeIndices.length <= 1) {
+            regimeLabel = isEn ? 'Continuous Overlap' : 'Sobreposição Contínua';
+          } else if (activePos === 0 && Number.isFinite(fA) && Number.isFinite(mA)) {
+            regimeLabel = isEn ? 'Partial Entry' : 'Entrada Parcial';
+          } else {
+            regimeLabel = isEn ? 'Full Overlap' : 'Sobreposição Total';
+          }
         }
 
         btn.innerHTML = `

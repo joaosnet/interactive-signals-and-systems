@@ -1,3 +1,5 @@
 # .agents/
 # graphify-out/
 .playwright-cli/
+node_modules/
+graphify-out/cache/

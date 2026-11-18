@@ -10,6 +10,51 @@ import { updateScene3D, setCameraPreset } from './stage-3d.js';
 import { updateNotebookUI } from './notebook.js';
 import { toggleAudio, updateAudioSynth } from './audio.js';
 
+let lastHUDTrigger = null;
+
+function isCTFTDecayPreset(key = state.ctftPresetKey) {
+  return key === 'exp' || key === 'bilateral_exp';
+}
+
+function getCTFTCalcKey(key = state.ctftPresetKey) {
+  return BUILTIN_CTFT_PRESETS[key] ? key : 'custom_ctft';
+}
+
+function recomputeCTFT() {
+  state.ctftCalculated = calculateCTFTData(
+    getCTFTCalcKey(state.ctftPresetKey),
+    state.ctftPulseWidth,
+    state.ctftDecay,
+    state.ctftBridgeT0,
+    state.ctftExpr
+  );
+}
+
+export function selectCTFTPreset(key) {
+  const builtin = BUILTIN_CTFT_PRESETS[key];
+  const custom = !builtin ? (state.ctftCustomPresets || []).find(cp => cp.id === key) : null;
+  const p = builtin || custom;
+  if (!p) return;
+
+  state.ctftPresetKey = key;
+  state.ctftExpr = p.expr || 'rect(t/2)';
+  if (builtin) {
+    state.ctftPulseWidth = p.tau0 !== undefined ? p.tau0 : (key === 'tri' || key === 'bridge' ? 1.0 : 2.0);
+    state.ctftDecay = p.a !== undefined ? p.a : 1.0;
+    if (p.defaultT0 !== undefined) state.ctftBridgeT0 = p.defaultT0;
+  }
+
+  recomputeCTFT();
+  if (key === 'bridge' && state.step !== 4) {
+    setStep(4, false);
+  } else {
+    setStep(state.step, false);
+  }
+  renderPresetGallery();
+  updateNotebookUI(true);
+  updateScene3D();
+}
+
 export function switchModule(moduleName) {
   state.activeModule = moduleName;
   const isFourier = moduleName === 'fourier';
@@ -25,8 +70,13 @@ export function switchModule(moduleName) {
   const btnCTFT = document.getElementById('mod-btn-ctft');
   if (btnConv && btnFourier) {
     btnConv.classList.toggle('active', isConv);
+    btnConv.setAttribute('aria-selected', String(isConv));
     btnFourier.classList.toggle('active', isFourier);
-    if (btnCTFT) btnCTFT.classList.toggle('active', isCTFT);
+    btnFourier.setAttribute('aria-selected', String(isFourier));
+    if (btnCTFT) {
+      btnCTFT.classList.toggle('active', isCTFT);
+      btnCTFT.setAttribute('aria-selected', String(isCTFT));
+    }
   }
 
   // Sincroniza Dock do Modo Zen
@@ -59,14 +109,14 @@ export function switchModule(moduleName) {
   const dict = I18N[state.lang] || I18N.pt;
   const regTitle = document.getElementById('regions-title');
   if (regTitle) {
-    regTitle.textContent = isCTFT ? 'Pares Notáveis & Ponte de Khutoryansky' : (isFourier ? dict.regionsFourierTitle : dict.regionsTitle);
+    regTitle.textContent = isCTFT ? dict.regionsCTFTTitle : (isFourier ? dict.regionsFourierTitle : dict.regionsTitle);
   }
 
   // Atualiza passos (1 a 4) com os rótulos de cada módulo
   updateStepLabels();
 
   if (isCTFT) {
-    state.ctftCalculated = calculateCTFTData(state.ctftPresetKey, state.ctftPulseWidth, state.ctftDecay, state.ctftBridgeT0);
+    recomputeCTFT();
     if (state.activeMathField) setActiveMathField('ctft');
   } else if (isFourier) {
     state.fourierCalculated = calculateFourierData(state.fourierExpr, state.fourierT0, state.fourierN);
@@ -90,9 +140,15 @@ export function switchModule(moduleName) {
       if (pillCTFT) pillCTFT.classList.toggle('hidden', !isCTFT);
 
       pillX.classList.toggle('active', isConv);
+      pillX.setAttribute('aria-selected', String(isConv));
       pillH.classList.remove('active');
+      pillH.setAttribute('aria-selected', 'false');
       pillFourier.classList.toggle('active', isFourier);
-      if (pillCTFT) pillCTFT.classList.toggle('active', isCTFT);
+      pillFourier.setAttribute('aria-selected', String(isFourier));
+      if (pillCTFT) {
+        pillCTFT.classList.toggle('active', isCTFT);
+        pillCTFT.setAttribute('aria-selected', String(isCTFT));
+      }
     }
     updateHUDTitle();
     updateParametricHUDPreview();
@@ -119,24 +175,41 @@ export function setStep(stepNum, restartAnim = true) {
   const titleEl = document.getElementById('slider-param-title');
 
   if (state.activeModule === 'ctft') {
+    const isCustomCTFT = !BUILTIN_CTFT_PRESETS[state.ctftPresetKey];
     if (stepNum === 4) {
-      if (titleEl) titleEl.textContent = 'Período da Ponte T₀ (T₀ → ∞)';
+      if (titleEl) titleEl.textContent = dict.sliderCTFTBridge;
       if (slider) {
         slider.min = '2.0';
         slider.max = '25.0';
         slider.step = '0.5';
         slider.value = state.ctftBridgeT0;
       }
-    } else if (stepNum === 3) {
-      if (titleEl) titleEl.textContent = 'Frequência de Teste ω';
+    } else if (stepNum === 3 || isCustomCTFT) {
+      if (titleEl) titleEl.textContent = dict.sliderCTFTFreq;
       if (slider) {
         slider.min = '-15.0';
         slider.max = '15.0';
         slider.step = '0.2';
         slider.value = state.t;
       }
+    } else if (isCTFTDecayPreset()) {
+      if (titleEl) titleEl.textContent = dict.sliderCTFTDecay;
+      if (slider) {
+        slider.min = '0.2';
+        slider.max = '4.0';
+        slider.step = '0.1';
+        slider.value = state.ctftDecay;
+      }
+    } else if (state.ctftPresetKey === 'tri') {
+      if (titleEl) titleEl.textContent = dict.sliderCTFTBase;
+      if (slider) {
+        slider.min = '0.5';
+        slider.max = '4.0';
+        slider.step = '0.25';
+        slider.value = state.ctftPulseWidth;
+      }
     } else {
-      if (titleEl) titleEl.textContent = 'Largura do Sinal τ₀';
+      if (titleEl) titleEl.textContent = dict.sliderCTFTWidth;
       if (slider) {
         slider.min = '0.5';
         slider.max = '5.0';
@@ -192,8 +265,11 @@ export function updateSliderBadge() {
   const zenBadge = document.getElementById('zen-t-readout');
   let txt = '';
   if (state.activeModule === 'ctft') {
+    const isCustomCTFT = !BUILTIN_CTFT_PRESETS[state.ctftPresetKey];
     if (state.step === 4) txt = `T₀ = ${state.ctftBridgeT0.toFixed(1)} s`;
-    else if (state.step === 3) txt = `ω = ${state.t.toFixed(2)} rad/s`;
+    else if (state.step === 3 || isCustomCTFT) txt = `ω = ${state.t.toFixed(2)} rad/s`;
+    else if (isCTFTDecayPreset()) txt = `a = ${state.ctftDecay.toFixed(2)}`;
+    else if (state.ctftPresetKey === 'tri') txt = `a = ${state.ctftPulseWidth.toFixed(2)} s`;
     else txt = `τ₀ = ${state.ctftPulseWidth.toFixed(2)} s`;
   } else if (state.activeModule === 'fourier') {
     txt = `t = ${state.t.toFixed(2)}`;
@@ -351,16 +427,25 @@ export function applyLanguage(lang) {
 
   updateThemeCycleButtonUI(false);
 
-  const sliderTitle =
-    state.activeModule === 'fourier'
-      ? dict.sliderEvalPoint
-      : state.step === 1
+  let sliderTitle;
+  if (state.activeModule === 'ctft') {
+    const isCustomCTFT = !BUILTIN_CTFT_PRESETS[state.ctftPresetKey];
+    if (state.step === 4) sliderTitle = dict.sliderCTFTBridge;
+    else if (state.step === 3 || isCustomCTFT) sliderTitle = dict.sliderCTFTFreq;
+    else if (isCTFTDecayPreset()) sliderTitle = dict.sliderCTFTDecay;
+    else if (state.ctftPresetKey === 'tri') sliderTitle = dict.sliderCTFTBase;
+    else sliderTitle = dict.sliderCTFTWidth;
+  } else if (state.activeModule === 'fourier') {
+    sliderTitle = dict.sliderEvalPoint;
+  } else {
+    sliderTitle = state.step === 1
       ? dict.sliderSweep
       : state.step === 2
       ? dict.sliderFlip
       : state.step === 3
       ? dict.sliderShift3
       : dict.sliderShift4;
+  }
 
   // Atualiza textos estáticos
   const elMap = {
@@ -369,6 +454,8 @@ export function applyLanguage(lang) {
     'mod-conv-sub': dict.modConvSub,
     'mod-fourier-title': dict.modFourierTitle,
     'mod-fourier-sub': dict.modFourierSub,
+    'mod-ctft-title': dict.modCTFTTitle,
+    'mod-ctft-sub': dict.modCTFTSub,
     'lbl-view-3d': dict.view3D,
     'lbl-view-2d-time': dict.view2DTime,
     'lbl-view-2d-spec': dict.view2DSpec,
@@ -378,6 +465,7 @@ export function applyLanguage(lang) {
     'lbl-layers-title': dict.layersTitle,
     'lbl-layer-waterfall': dict.layerWaterfall,
     'lbl-layer-spectrum': dict.layerSpectrum,
+    'lbl-layer-phase': dict.layerPhase,
     'lbl-layer-labels': dict.layerLabels,
     'lbl-layer-grid': dict.layerGrid,
     'lbl-layer-thick': dict.layerThick,
@@ -410,7 +498,9 @@ export function applyLanguage(lang) {
     'lbl-fourier-form': isEn ? 'Form:' : 'Forma:',
     'notebook-title': dict.notebookTitle,
     'lbl-rewatch': dict.btnRewatch,
-    'regions-title': state.activeModule === 'fourier' ? dict.regionsFourierTitle : dict.regionsTitle,
+    'regions-title': state.activeModule === 'ctft'
+      ? dict.regionsCTFTTitle
+      : (state.activeModule === 'fourier' ? dict.regionsFourierTitle : dict.regionsTitle),
     'gallery-title': dict.galleryTitle,
     'gallery-subtitle': isEn ? 'Tap to load or create' : 'Toque para carregar ou criar',
     'lbl-seq-mode': dict.btnSeqMode,
@@ -423,7 +513,7 @@ export function applyLanguage(lang) {
     // Floating Signal Focus HUD
     'hud-lbl-shape-rect': dict.hudShapeRect,
     'hud-lbl-shape-tri': dict.hudShapeTri,
-    'hud-lbl-shape-pulse': isEn ? 'Switch' : 'Chave',
+    'hud-lbl-shape-pulse': dict.hudShapePulse,
     'hud-lbl-shape-step': dict.hudShapeStep,
     'hud-lbl-shape-exp': isEn ? 'Exp.' : 'Exp.',
     'hud-lbl-shape-ramp': dict.hudShapeRamp,
@@ -445,9 +535,28 @@ export function applyLanguage(lang) {
     if (el) el.textContent = txt;
   });
 
+  const btnKbd = document.getElementById('hud-btn-keyboard');
+  if (btnKbd) {
+    btnKbd.title = dict.hudBtnKbdTitle;
+    btnKbd.setAttribute('aria-label', dict.hudBtnKbdTitle);
+  }
+  const btnMode = document.getElementById('hud-btn-input-mode');
+  if (btnMode) {
+    btnMode.title = dict.hudBtnModeTitle;
+    btnMode.setAttribute('aria-label', dict.hudBtnModeTitle);
+  }
+  const hudFreeIn = document.getElementById('hud-free-input');
+  if (hudFreeIn) {
+    hudFreeIn.placeholder = isEn ? 'Ex: 2*rect(t/2)' : 'Ex: 2*rect(t/2)';
+  }
+
   updateHUDTitle();
   if (state.focusHUDActive) {
     updateParametricHUDPreview(false);
+    const valRes = validateSignalExpression(hudBaseExpression || 'rect(t)');
+    renderHUDOscilloscope(valRes, state.focusHUDTarget || 'x');
+  } else {
+    renderHUDOscilloscope(validateSignalExpression(state.exprX || 'rect(t)'), 'x');
   }
 
   // Atualiza tooltips e atributos ARIA da barra de acessibilidade
@@ -509,6 +618,7 @@ export function renderPresetGallery() {
   const gallery = document.getElementById('preset-gallery');
   if (!gallery) return;
   gallery.innerHTML = '';
+  const dict = I18N[state.lang] || I18N.pt;
   const isEn = state.lang === 'en';
   const isCTFT = state.activeModule === 'ctft';
   const isFourier = state.activeModule === 'fourier';
@@ -537,7 +647,10 @@ export function renderPresetGallery() {
     createCard.addEventListener('click', () => openSignalHUD('ctft'));
     gallery.appendChild(createCard);
 
-    const allCTFT = Object.values(BUILTIN_CTFT_PRESETS);
+    const allCTFT = [
+      ...Object.values(BUILTIN_CTFT_PRESETS),
+      ...(state.ctftCustomPresets || []).map(cp => ({ ...cp, isCustom: true }))
+    ];
     allCTFT.forEach(p => {
       const isActive = state.ctftPresetKey === p.id;
       const card = document.createElement('div');
@@ -548,22 +661,37 @@ export function renderPresetGallery() {
       card.innerHTML = `
         <div class="flex items-center justify-between gap-1">
           <span class="text-[11px] font-bold truncate text-primary">${pTitle}</span>
-          <span class="text-[9px] font-mono-code font-semibold" style="color: var(--c-conv)">CTFT</span>
+          <div class="flex items-center gap-1">
+            <span class="text-[9px] font-mono-code font-semibold" style="color: var(--c-conv)">CTFT</span>
+            ${p.isCustom ? `<button type="button" class="del-preset text-[10px] px-1 rounded hover:bg-red-500/20 text-rose-400" aria-label="${dict.delPreset}">✕</button>` : ''}
+          </div>
         </div>
         <div class="text-[10px] text-mut truncate">${pSub}</div>
         <div class="preset-math text-[10px] pt-0.5 truncate"></div>
       `;
       const mathPreview = card.querySelector('.preset-math');
-      if (mathPreview && p.latexX) {
-        renderMath(mathPreview, `${p.latexX} \\longleftrightarrow ${p.latexCTFT}`, false);
+      if (mathPreview && (p.latexX || p.expr)) {
+        const previewLatex = p.latexCTFT
+          ? `${p.latexX} \\longleftrightarrow ${p.latexCTFT}`
+          : `x(t) = ${exprToLatex(p.expr, 't')}`;
+        renderMath(mathPreview, previewLatex, false);
       }
-      card.addEventListener('click', () => {
-        state.ctftPresetKey = p.id;
-        state.ctftCalculated = calculateCTFTData(p.id, p.tau0 || 2.0, p.a || 1.0, p.defaultT0 || 4.0);
-        renderPresetGallery();
-        updateNotebookUI(true);
-        updateScene3D();
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.del-preset')) return;
+        selectCTFTPreset(p.id);
       });
+      const delBtn = card.querySelector('.del-preset');
+      if (delBtn) {
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeCustomPreset(p.id, 'ctft');
+          if (state.ctftPresetKey === p.id) {
+            selectCTFTPreset('rect');
+          } else {
+            renderPresetGallery();
+          }
+        });
+      }
       gallery.appendChild(card);
     });
     return;
@@ -581,7 +709,7 @@ export function renderPresetGallery() {
         </div>
         <div class="create-card-math text-[10px] text-secondary truncate mt-0.5"></div>
       </div>
-      <button type="button" class="ctrl-pill px-2.5 py-1.5 rounded-lg text-[10px] font-bold shrink-0 flex items-center gap-1" style="border-color: var(--c-x1); color: var(--c-x1)">
+      <button type="button" id="gallery-btn-edit-fourier" class="ctrl-pill px-2.5 py-1.5 rounded-lg text-[10px] font-bold shrink-0 flex items-center gap-1" style="border-color: var(--c-x1); color: var(--c-x1)">
         <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
         <span>${isEn ? 'Edit f(t)' : 'Editar f(t)'}</span>
       </button>
@@ -811,6 +939,7 @@ export function renderHUDOscilloscope(valRes, target = 'x') {
   const supportEl = document.getElementById('hud-osc-support');
   const energyEl = document.getElementById('hud-osc-energy');
 
+  const dict = I18N[state.lang] || I18N.pt;
   const isValid = Boolean(valRes && (valRes.valid || valRes.isValid));
   const isAllZero = Boolean(valRes && (valRes.isAllZero || (valRes.energy !== undefined && valRes.energy < 1e-4)));
 
@@ -818,11 +947,11 @@ export function renderHUDOscilloscope(valRes, target = 'x') {
     if (isValid) {
       statusPill.className = 'inline-flex items-center gap-1 font-bold text-emerald-400';
       statusDot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400';
-      statusText.textContent = isAllZero ? 'Sinal nulo (0)' : 'Sinal válido';
+      statusText.textContent = isAllZero ? dict.hudStatusZero : dict.hudStatusValid;
     } else {
       statusPill.className = 'inline-flex items-center gap-1 font-bold text-amber-400';
       statusDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse';
-      statusText.textContent = 'Digitando fórmula...';
+      statusText.textContent = dict.hudStatusTyping;
     }
   }
 
@@ -836,8 +965,8 @@ export function renderHUDOscilloscope(valRes, target = 'x') {
     const drawAllZero = Boolean(drawRes.isAllZero || (drawRes.energy !== undefined && drawRes.energy < 1e-4));
     if (supportEl) {
       supportEl.textContent = drawAllZero
-        ? 'Suporte: ∅'
-        : `Suporte: [${sMin.toFixed(2)}, ${sMax.toFixed(2)}]`;
+        ? `${dict.hudSupportPrefix}: ∅`
+        : `${dict.hudSupportPrefix}: [${sMin.toFixed(2)}, ${sMax.toFixed(2)}]`;
     }
     if (energyEl) {
       energyEl.textContent = `E = ${(drawRes.energy || 0).toFixed(2)} J`;
@@ -952,9 +1081,10 @@ export function renderHUDOscilloscope(valRes, target = 'x') {
 }
 
 export function setHUDExpressionLive(exprString, syncMathField = true) {
-  const cleanExpr = (exprString || '').trim() || '0';
+  const rawTrimmed = (exprString || '').trim();
+  const cleanExpr = rawTrimmed || '0';
   const freeInput = document.getElementById('hud-free-input');
-  if (freeInput && freeInput.value !== cleanExpr) {
+  if (freeInput && document.activeElement !== freeInput && freeInput.value !== cleanExpr) {
     freeInput.value = cleanExpr;
   }
 
@@ -962,7 +1092,7 @@ export function setHUDExpressionLive(exprString, syncMathField = true) {
     const mf = document.getElementById('hud-mathfield');
     if (mf) {
       isSyncingHudMathField = true;
-      const latexVal = exprToLatex(cleanExpr, 't');
+      const latexVal = rawTrimmed ? exprToLatex(cleanExpr, 't') : '';
       if (typeof mf.setValue === 'function') {
         mf.setValue(latexVal, { silenceNotifications: true });
       } else {
@@ -973,7 +1103,7 @@ export function setHUDExpressionLive(exprString, syncMathField = true) {
   }
 
   const target = state.focusHUDTarget || (state.activeModule === 'ctft' ? 'ctft' : (state.activeModule === 'fourier' ? 'fourier' : 'x'));
-  const valRes = validateSignalExpression(cleanExpr);
+  const valRes = validateSignalExpression(rawTrimmed);
   renderHUDOscilloscope(valRes, target);
 
   // Proteção não-destrutiva: mantém o último sinal 3D válido se a expressão estiver incompleta
@@ -1244,6 +1374,125 @@ export function updateParametricHUDPreview(commitLive = false) {
   }
 }
 
+function syncVirtualKeyboardOffset(forceNativeCheck = false) {
+  const mvk = window.mathVirtualKeyboard;
+  let kbHeight = 0;
+
+  if (state.hudInputMode !== 'text' && mvk && mvk.visible) {
+    const br = mvk.boundingRect;
+    if (br && br.height > 0 && br.height < window.innerHeight * 0.85) {
+      kbHeight = br.height;
+    } else if (mvk.element) {
+      const rect = mvk.element.getBoundingClientRect();
+      if (rect.height > 0 && rect.height < window.innerHeight * 0.85) {
+        kbHeight = rect.height;
+      }
+    }
+  } else if ((state.hudInputMode === 'text' || forceNativeCheck) && window.visualViewport) {
+    const diff = window.innerHeight - window.visualViewport.height;
+    if (diff > 100) {
+      kbHeight = diff;
+    }
+  }
+
+  document.documentElement.style.setProperty('--kb-offset', `${Math.round(kbHeight)}px`);
+  document.body.classList.toggle('mathlive-kb-visible', kbHeight > 20);
+
+  const kbdBtn = document.getElementById('hud-btn-keyboard');
+  if (kbdBtn) {
+    const isKbdOpen = Boolean(mvk && mvk.visible && state.hudInputMode !== 'text');
+    kbdBtn.setAttribute('aria-pressed', String(isKbdOpen));
+  }
+}
+
+function setHUDInputMode(mode, shouldFocus = false) {
+  const mf = document.getElementById('hud-mathfield');
+  const freeInput = document.getElementById('hud-free-input');
+  const modeBtn = document.getElementById('hud-btn-input-mode');
+  const kbdBtn = document.getElementById('hud-btn-keyboard');
+
+  const hasMathField = Boolean(mf && window.customElements?.get('math-field'));
+  const targetMode = (mode === 'text' || !hasMathField) ? 'text' : 'mathlive';
+  state.hudInputMode = targetMode;
+
+  if (targetMode === 'text') {
+    if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.hide === 'function') {
+      try { window.mathVirtualKeyboard.hide(); } catch (_) {}
+    }
+    if (mf) mf.classList.add('hidden');
+    if (freeInput) {
+      freeInput.classList.remove('hidden');
+      freeInput.removeAttribute('aria-hidden');
+      freeInput.value = hudBaseExpression || '0';
+      if (shouldFocus) freeInput.focus();
+    }
+    if (modeBtn) {
+      modeBtn.setAttribute('aria-pressed', 'true');
+      modeBtn.textContent = 'f(x)';
+    }
+    if (kbdBtn) kbdBtn.classList.add('hidden');
+  } else {
+    if (freeInput) {
+      freeInput.classList.add('hidden');
+      freeInput.setAttribute('aria-hidden', 'true');
+    }
+    if (mf) {
+      mf.classList.remove('hidden');
+      isSyncingHudMathField = true;
+      const latexStr = exprToLatex(hudBaseExpression || '0', 't');
+      if (typeof mf.setValue === 'function') {
+        mf.setValue(latexStr, { silenceNotifications: true });
+      } else {
+        mf.value = latexStr;
+      }
+      isSyncingHudMathField = false;
+      if (shouldFocus) mf.focus();
+    }
+    if (modeBtn) {
+      modeBtn.setAttribute('aria-pressed', 'false');
+      modeBtn.textContent = 'Abc';
+    }
+    if (kbdBtn) kbdBtn.classList.remove('hidden');
+  }
+
+  syncVirtualKeyboardOffset(false);
+}
+
+function openMathKeyboard() {
+  const mf = document.getElementById('hud-mathfield');
+  const freeInput = document.getElementById('hud-free-input');
+  if (state.hudInputMode === 'text' || !window.customElements?.get('math-field')) {
+    setHUDInputMode('text', true);
+    return;
+  }
+  if (!mf) return;
+  try {
+    mf.focus();
+  } catch (_) {}
+  requestAnimationFrame(() => {
+    if (window.mathVirtualKeyboard) {
+      try {
+        if (typeof window.mathVirtualKeyboard.show === 'function') {
+          window.mathVirtualKeyboard.show();
+        } else {
+          window.mathVirtualKeyboard.visible = true;
+        }
+      } catch (_) {}
+    }
+    syncVirtualKeyboardOffset(false);
+    setTimeout(() => syncVirtualKeyboardOffset(false), 70);
+  });
+}
+
+function hideMathKeyboard() {
+  if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.hide === 'function') {
+    try {
+      window.mathVirtualKeyboard.hide();
+    } catch (_) {}
+  }
+  syncVirtualKeyboardOffset(false);
+}
+
 export function openSignalHUD(targetSignal) {
   const isFourier = state.activeModule === 'fourier';
   const isCTFT = state.activeModule === 'ctft';
@@ -1260,6 +1509,10 @@ export function openSignalHUD(targetSignal) {
     switchModule('convolution');
   }
 
+  if (!state.focusHUDActive && document.activeElement && document.activeElement !== document.body) {
+    lastHUDTrigger = document.activeElement;
+  }
+
   state.focusHUDActive = true;
   state.focusHUDTarget = target;
 
@@ -1271,16 +1524,14 @@ export function openSignalHUD(targetSignal) {
     hud.style.transform = '';
   }
 
+  document.getElementById('ui-panel')?.setAttribute('inert', '');
   document.body.classList.add('stage-focus-active');
   document.body.classList.add('focus-hud-open');
   document.body.classList.remove('mathlive-kb-visible');
+  document.documentElement.style.setProperty('--kb-offset', '0px');
 
   // Garante que o teclado virtual NÃO abra sozinho ao abrir o HUD
-  if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.hide === 'function') {
-    try {
-      window.mathVirtualKeyboard.hide();
-    } catch (_) {}
-  }
+  hideMathKeyboard();
 
   const pillX = document.getElementById('hud-pill-x');
   const pillH = document.getElementById('hud-pill-h');
@@ -1295,9 +1546,15 @@ export function openSignalHUD(targetSignal) {
     if (pillCTFT) pillCTFT.classList.toggle('hidden', currMod !== 'ctft');
 
     pillX.classList.toggle('active', target === 'x');
+    pillX.setAttribute('aria-selected', String(target === 'x'));
     pillH.classList.toggle('active', target === 'h');
+    pillH.setAttribute('aria-selected', String(target === 'h'));
     pillFourier.classList.toggle('active', target === 'fourier');
-    if (pillCTFT) pillCTFT.classList.toggle('active', target === 'ctft');
+    pillFourier.setAttribute('aria-selected', String(target === 'fourier'));
+    if (pillCTFT) {
+      pillCTFT.classList.toggle('active', target === 'ctft');
+      pillCTFT.setAttribute('aria-selected', String(target === 'ctft'));
+    }
   }
 
   const hudT0Input = document.getElementById('hud-fourier-t0-input');
@@ -1334,6 +1591,8 @@ export function openSignalHUD(targetSignal) {
     } catch (_) {}
   }
 
+  setHUDInputMode(state.hudInputMode || 'mathlive', false);
+
   const valRes = validateSignalExpression(hudBaseExpression);
   renderHUDOscilloscope(valRes, target);
   updateParametricHUDPreview(false);
@@ -1350,17 +1609,21 @@ export function closeSignalHUD() {
     hud.style.transform = '';
   }
 
+  document.getElementById('ui-panel')?.removeAttribute('inert');
   document.body.classList.remove('stage-focus-active');
   document.body.classList.remove('focus-hud-open');
   document.body.classList.remove('mathlive-kb-visible');
+  document.documentElement.style.setProperty('--kb-offset', '0px');
 
-  if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.hide === 'function') {
+  hideMathKeyboard();
+  updateScene3D();
+
+  if (lastHUDTrigger && lastHUDTrigger.isConnected && typeof lastHUDTrigger.focus === 'function') {
     try {
-      window.mathVirtualKeyboard.hide();
+      lastHUDTrigger.focus();
     } catch (_) {}
   }
-
-  updateScene3D();
+  lastHUDTrigger = null;
 }
 
 export function applySignalHUD() {
@@ -1372,12 +1635,27 @@ export function applySignalHUD() {
 }
 
 export function pinSignalHUD() {
-  const target = state.focusHUDTarget || (state.activeModule === 'fourier' ? 'fourier' : 'x');
+  const target = state.focusHUDTarget || (state.activeModule === 'ctft' ? 'ctft' : (state.activeModule === 'fourier' ? 'fourier' : 'x'));
   const freeInput = document.getElementById('hud-free-input');
   const chosenExpr = (freeInput && freeInput.value.trim()) ? freeInput.value.trim() : 'rect(t)';
   setHUDExpressionLive(chosenExpr, true);
 
-  if (target === 'fourier') {
+  if (target === 'ctft') {
+    const id = 'custom_ctft_' + Date.now();
+    const count = (state.ctftCustomPresets?.length || 0) + 1;
+    saveCustomPreset({
+      id,
+      title: `${I18N.pt.savedPreset}${count}`,
+      titleEn: `${I18N.en.savedPreset}${count}`,
+      subtitle: I18N.pt.customSignal,
+      subtitleEn: I18N.en.customSignal,
+      expr: state.ctftExpr,
+      latexX: exprToLatex(state.ctftExpr, 't'),
+      isCustom: true
+    }, 'ctft');
+    state.ctftPresetKey = id;
+    recomputeCTFT();
+  } else if (target === 'fourier') {
     const id = 'custom_' + Date.now();
     const count = state.fourierCustomPresets.length + 1;
     saveCustomPreset({
@@ -1476,35 +1754,45 @@ export function setupA11yBarScroll(a11yBar) {
  */
 export function setupMathLiveVirtualKeyboard() {
   if (typeof window === 'undefined') return;
+  let configured = false;
 
   const configureMVK = () => {
-    if (!window.mathVirtualKeyboard) return;
+    if (!window.mathVirtualKeyboard || configured) return;
+    configured = true;
     try {
+      if (window.MathfieldElement) {
+        window.MathfieldElement.soundsDirectory = null;
+      }
       window.mathVirtualKeyboard.layouts = [
         {
           label: 'Sinais',
           tooltip: 'Sinais & Engenharia (UFPA)',
           rows: [
             [
-              { latex: 'u(t)', insert: 'u(t)' },
-              { latex: '\\operatorname{rect}(t)', insert: '\\operatorname{rect}(t)' },
-              { latex: '\\operatorname{tri}(t)', insert: '\\operatorname{tri}(t)' },
-              { latex: '\\delta(t)', insert: '\\delta(t)' },
-              { latex: '\\operatorname{sinc}(t)', insert: '\\operatorname{sinc}(t)' },
-              { latex: 'r(t)', insert: 'r(t)' }
+              { latex: 'u(t)', insert: 'u(#0)' },
+              { latex: '\\text{rect}', insert: '\\operatorname{rect}(#0)' },
+              { latex: '\\text{tri}', insert: '\\operatorname{tri}(#0)' },
+              { latex: '\\text{sinc}', insert: '\\operatorname{sinc}(#0)' }
             ],
             [
-              { latex: 'e^{-t}', insert: 'e^{-t}' },
-              { latex: 'e^{-2t}u(t)', insert: 'e^{-2t}u(t)' },
+              { latex: '\\delta(t)', insert: '\\delta(#0)' },
+              { latex: 'r(t)', insert: 'r(#0)' },
+              { latex: 'e^{-t}', insert: 'e^{-#0}' },
+              { latex: '\\sin', insert: '\\sin(#0)' }
+            ],
+            [
               { latex: 't', insert: 't' },
-              { latex: '\\tau', insert: '\\tau' },
-              { latex: '\\omega_0', insert: '\\omega_0' },
-              { latex: '\\pi', insert: '\\pi' }
+              { latex: '\\pi', insert: '\\pi' },
+              { latex: '( )', insert: '(#0)' },
+              { latex: '\\cos', insert: '\\cos(#0)' }
             ]
           ]
         },
         'default'
       ];
+      window.mathVirtualKeyboard.addEventListener?.('geometrychange', () => {
+        syncVirtualKeyboardOffset(false);
+      });
     } catch (err) {
       console.warn('[MathLive] Falha ao configurar layouts personalizados:', err);
     }
@@ -1516,6 +1804,101 @@ export function setupMathLiveVirtualKeyboard() {
     window.addEventListener('DOMContentLoaded', configureMVK, { once: true });
     window.addEventListener('load', configureMVK, { once: true });
   }
+}
+
+function wireAnchoredPopover(triggerBtn, popoverEl, { align = 'end' } = {}) {
+  if (!triggerBtn || !popoverEl) return;
+  const supportsPopover = 'popover' in HTMLElement.prototype;
+  const supportsAnchor = typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && CSS.supports('position-area', 'block-end');
+
+  const positionFallback = () => {
+    const t = triggerBtn.getBoundingClientRect();
+    const m = popoverEl.getBoundingClientRect();
+    const belowFits = t.bottom + 6 + m.height <= window.innerHeight - 8;
+    const topPos = belowFits ? t.bottom + 6 : Math.max(8, t.top - m.height - 6);
+    const rawLeft = align === 'end' ? (t.right - m.width) : t.left;
+    const leftPos = Math.max(8, Math.min(rawLeft, window.innerWidth - m.width - 8));
+    popoverEl.style.top = `${Math.round(topPos)}px`;
+    popoverEl.style.left = `${Math.round(leftPos)}px`;
+  };
+
+  if (supportsPopover) {
+    popoverEl.classList.remove('hidden');
+    popoverEl.addEventListener('toggle', (e) => {
+      const isOpen = e.newState === 'open';
+      triggerBtn.classList.toggle('active', isOpen);
+      triggerBtn.setAttribute('aria-expanded', String(isOpen));
+      if (isOpen && !supportsAnchor) {
+        requestAnimationFrame(positionFallback);
+      }
+    });
+  } else {
+    triggerBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const willOpen = popoverEl.classList.contains('hidden');
+      popoverEl.classList.toggle('hidden', !willOpen);
+      triggerBtn.classList.toggle('active', willOpen);
+      triggerBtn.setAttribute('aria-expanded', String(willOpen));
+      if (willOpen) {
+        requestAnimationFrame(positionFallback);
+      }
+    });
+    window.addEventListener('click', (e) => {
+      if (!popoverEl.contains(e.target) && !triggerBtn.contains(e.target)) {
+        popoverEl.classList.add('hidden');
+        triggerBtn.classList.remove('active');
+        triggerBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !popoverEl.classList.contains('hidden')) {
+        popoverEl.classList.add('hidden');
+        triggerBtn.classList.remove('active');
+        triggerBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+}
+
+function setupToolbarRovingTabindex(toolbarEl) {
+  if (!toolbarEl || ('focusGroup' in HTMLElement.prototype)) return;
+  const getItems = () => Array.from(toolbarEl.querySelectorAll('button')).filter((b) => b.offsetParent !== null);
+  const initItems = getItems();
+  initItems.forEach((b, i) => {
+    b.tabIndex = i === 0 ? 0 : -1;
+  });
+
+  toolbarEl.addEventListener('focusin', (e) => {
+    const items = getItems();
+    const targetBtn = e.target.closest('button');
+    if (targetBtn && items.includes(targetBtn)) {
+      items.forEach((b) => {
+        b.tabIndex = b === targetBtn ? 0 : -1;
+      });
+    }
+  });
+
+  toolbarEl.addEventListener('keydown', (e) => {
+    const items = getItems();
+    if (items.length === 0) return;
+    const cur = document.activeElement;
+    const idx = items.indexOf(cur);
+    if (idx === -1) return;
+    const rtl = getComputedStyle(toolbarEl).direction === 'rtl';
+    let nextIdx = -1;
+    if (e.key === 'ArrowRight') nextIdx = (idx + (rtl ? -1 : 1) + items.length) % items.length;
+    else if (e.key === 'ArrowLeft') nextIdx = (idx + (rtl ? 1 : -1) + items.length) % items.length;
+    else if (e.key === 'Home') nextIdx = 0;
+    else if (e.key === 'End') nextIdx = items.length - 1;
+
+    if (nextIdx !== -1) {
+      e.preventDefault();
+      items.forEach((b, i) => {
+        b.tabIndex = i === nextIdx ? 0 : -1;
+      });
+      items[nextIdx].focus();
+    }
+  });
 }
 
 /**
@@ -1677,6 +2060,7 @@ export function initUIEventListeners() {
     btn.addEventListener('click', () => {
       state.isPlaying = !state.isPlaying;
       updatePlayButtonUI();
+      updateNotebookUI(false);
     });
   });
 
@@ -1686,14 +2070,18 @@ export function initUIEventListeners() {
     tSlider.addEventListener('input', (e) => {
       const val = parseFloat(e.target.value);
       if (state.activeModule === 'ctft') {
+        const isCustomCTFT = !BUILTIN_CTFT_PRESETS[state.ctftPresetKey];
         if (state.step === 4) {
           state.ctftBridgeT0 = val;
-          state.ctftCalculated = calculateCTFTData(state.ctftPresetKey, state.ctftPulseWidth, state.ctftDecay, state.ctftBridgeT0);
-        } else if (state.step === 3) {
+          recomputeCTFT();
+        } else if (state.step === 3 || isCustomCTFT) {
           state.t = val;
+        } else if (isCTFTDecayPreset()) {
+          state.ctftDecay = val;
+          recomputeCTFT();
         } else {
           state.ctftPulseWidth = val;
-          state.ctftCalculated = calculateCTFTData(state.ctftPresetKey, state.ctftPulseWidth, state.ctftDecay, state.ctftBridgeT0);
+          recomputeCTFT();
         }
       } else if (state.activeModule === 'fourier') {
         state.t = val;
@@ -1784,25 +2172,15 @@ export function initUIEventListeners() {
   if (btnZen) btnZen.addEventListener('click', toggleZen);
   if (zenExitBtn) zenExitBtn.addEventListener('click', toggleZen);
 
-  // 9. Popover de Camadas
+  // 9. Popover de Camadas (Popover API Nativo + Âncora Responsiva)
   const layersBtn = document.getElementById('btn-layers-toggle');
   const layersPopover = document.getElementById('layers-popover');
-  if (layersBtn && layersPopover) {
-    layersBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      layersPopover.classList.toggle('hidden');
-    });
-    window.addEventListener('click', (e) => {
-      if (!layersPopover.contains(e.target) && !layersBtn.contains(e.target)) {
-        layersPopover.classList.add('hidden');
-      }
-    });
-  }
+  wireAnchoredPopover(layersBtn, layersPopover, { align: 'end' });
 
-  ['waterfall', 'labels', 'spectrumWall', 'grid', 'thickStroke'].forEach(layerKey => {
+  ['waterfall', 'labels', 'spectrumWall', 'phaseSpectrum', 'grid', 'thickStroke'].forEach(layerKey => {
     const cb = document.getElementById(`layer-cb-${layerKey}`);
     if (cb) {
-      cb.checked = state.layers[layerKey];
+      cb.checked = state.layers[layerKey] !== false;
       cb.addEventListener('change', () => {
         state.layers[layerKey] = cb.checked;
         saveStatePreferences();
@@ -1811,37 +2189,10 @@ export function initUIEventListeners() {
     }
   });
 
-  // 10. Popover de Configurações (Popover API Nativo + Fallback Gracioso - Modern Web Guidance)
+  // 10. Popover de Configurações (Popover API Nativo + Fallback Ancorado - Modern Web Guidance)
   const settingsBtn = document.getElementById('btn-settings-toggle');
   const settingsPopover = document.getElementById('settings-popover');
-  if (settingsBtn && settingsPopover) {
-    const supportsPopover = 'popover' in HTMLElement.prototype;
-    if (supportsPopover) {
-      settingsPopover.classList.remove('hidden');
-      settingsPopover.addEventListener('beforetoggle', (e) => {
-        settingsBtn.classList.toggle('active', e.newState === 'open');
-      });
-    } else {
-      settingsBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isHidden = settingsPopover.classList.contains('hidden');
-        settingsPopover.classList.toggle('hidden', !isHidden);
-        settingsBtn.classList.toggle('active', isHidden);
-      });
-      window.addEventListener('click', (e) => {
-        if (!settingsPopover.contains(e.target) && !settingsBtn.contains(e.target)) {
-          settingsPopover.classList.add('hidden');
-          settingsBtn.classList.remove('active');
-        }
-      });
-      window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !settingsPopover.classList.contains('hidden')) {
-          settingsPopover.classList.add('hidden');
-          settingsBtn.classList.remove('active');
-        }
-      });
-    }
-  }
+  wireAnchoredPopover(settingsBtn, settingsPopover, { align: 'end' });
 
   // Temas (Popover + Botão Ciclista Animado na Barra de Acessibilidade)
   document.querySelectorAll('.theme-btn').forEach(btn => {
@@ -1887,13 +2238,17 @@ export function initUIEventListeners() {
   });
 
   // Acessibilidade (A11y): Controles da Barra Dedicada
-  document.getElementById('btn-font-dec')?.addEventListener('click', () => {
+  const btnFontDec = document.getElementById('btn-font-dec');
+  btnFontDec?.addEventListener('click', () => {
+    if (btnFontDec.getAttribute('aria-disabled') === 'true') return;
     setFontScale(state.fontScale - 0.1);
   });
   document.getElementById('btn-font-reset')?.addEventListener('click', () => {
     setFontScale(1.0);
   });
-  document.getElementById('btn-font-inc')?.addEventListener('click', () => {
+  const btnFontInc = document.getElementById('btn-font-inc');
+  btnFontInc?.addEventListener('click', () => {
+    if (btnFontInc.getAttribute('aria-disabled') === 'true') return;
     setFontScale(state.fontScale + 0.1);
   });
   document.getElementById('btn-a11y-contrast')?.addEventListener('click', () => {
@@ -1903,11 +2258,13 @@ export function initUIEventListeners() {
     toggleReduceMotion();
   });
 
-  // Inicializa estado visual de Acessibilidade, Gestos e Teclado MathLive
+  // Inicializa estado visual de Acessibilidade, Toolbar, Gestos e Teclado MathLive
   setFontScale(state.fontScale);
   toggleHighContrast(state.a11yHighContrast);
   toggleReduceMotion(state.a11yReduceMotion);
-  setupA11yBarScroll(document.getElementById('a11y-bar'));
+  setupA11yBarScroll(document.getElementById('a11y-scroll-strip'));
+  setupA11yBarScroll(document.getElementById('hud-fn-quickbar'));
+  setupToolbarRovingTabindex(document.getElementById('a11y-bar'));
   setupMathLiveVirtualKeyboard();
   setupMobileSheetGestures();
 
@@ -1922,10 +2279,14 @@ export function initUIEventListeners() {
     }
   });
 
-  // 12. Evento Disparado ao Clicar nas Curvas 3D ou Rótulos Flutuantes na Simulação
+  // 12. Evento Disparado ao Clicar nas Curvas 3D, Rótulos Flutuantes ou Tabela CTFT
   window.addEventListener('open-signal-hud', (e) => {
     const target = e.detail?.target;
     openSignalHUD(target);
+  });
+  window.addEventListener('select-ctft-preset', (e) => {
+    const key = e.detail?.key;
+    if (key) selectCTFTPreset(key);
   });
 
   // Alternadores de Sinal no Cabeçalho do HUD
@@ -1939,97 +2300,162 @@ export function initUIEventListeners() {
   document.getElementById('stage-focus-backdrop')?.addEventListener('click', () => closeSignalHUD());
   document.getElementById('hud-btn-pin')?.addEventListener('click', () => pinSignalHUD());
 
-  // Ciclo Natural de Foco do <math-field id="hud-mathfield">:
-  // O teclado virtual MathLive abre SOMENTE quando o usuário foca/toca na fórmula
+  // Ciclo Mobile-Safe do Teclado Virtual (<math-field>, Botão ⌨, Modo Abc e Barra Rápida)
   const hudMathField = document.getElementById('hud-mathfield');
+  const hudFreeInput = document.getElementById('hud-free-input');
+  const syncFromMathField = () => {
+    if (!hudMathField || isSyncingHudMathField) return;
+    const rawLatex = typeof hudMathField.getValue === 'function' ? hudMathField.getValue() : (hudMathField.value || '');
+    const parsedExpr = latexToExpr(rawLatex) || '0';
+    hudBaseExpression = parsedExpr;
+    setHUDExpressionLive(parsedExpr, false);
+  };
+
   if (hudMathField) {
-    const handleMathFieldFocus = () => {
-      document.body.classList.add('mathlive-kb-visible');
-      if (window.mathVirtualKeyboard) {
-        try {
-          if (typeof window.mathVirtualKeyboard.show === 'function') {
-            window.mathVirtualKeyboard.show();
-          } else {
-            window.mathVirtualKeyboard.visible = true;
-          }
-        } catch (err) {
-          console.warn('[MathLive] Erro ao abrir teclado:', err);
-        }
-      }
-    };
+    // IMPORTANTE: NUNCA colapsar layout no pointerdown para não mover o alvo sob o dedo no mobile!
+    hudMathField.addEventListener('click', () => {
+      openMathKeyboard();
+    });
+    hudMathField.addEventListener('input', syncFromMathField);
+  }
 
-    const handleMathFieldBlur = () => {
-      document.body.classList.remove('mathlive-kb-visible');
-      if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.hide === 'function') {
-        try {
-          window.mathVirtualKeyboard.hide();
-        } catch (_) {}
-      }
-    };
-
-    hudMathField.addEventListener('focusin', handleMathFieldFocus);
-    hudMathField.addEventListener('focus', handleMathFieldFocus);
-    hudMathField.addEventListener('pointerdown', handleMathFieldFocus);
-    hudMathField.addEventListener('click', handleMathFieldFocus);
-    hudMathField.addEventListener('focusout', handleMathFieldBlur);
-    hudMathField.addEventListener('blur', handleMathFieldBlur);
-
-    hudMathField.addEventListener('input', () => {
-      if (isSyncingHudMathField) return;
-      const rawLatex = typeof hudMathField.getValue === 'function' ? hudMathField.getValue() : (hudMathField.value || '');
-      const parsedExpr = latexToExpr(rawLatex);
-      if (parsedExpr) {
-        hudBaseExpression = parsedExpr;
-        setHUDExpressionLive(parsedExpr, false);
+  // Monitora visualViewport para teclado nativo Android/iOS quando em modo Abc
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+      if (state.focusHUDActive && state.hudInputMode === 'text') {
+        syncVirtualKeyboardOffset(true);
       }
     });
   }
 
-  // Interagir com o construtor paramétrico fecha o teclado virtual automaticamente
+  // Botão explícito ⌨ para abrir/fechar o teclado matemático sem perder o foco
+  const kbdToggleBtn = document.getElementById('hud-btn-keyboard');
+  if (kbdToggleBtn) {
+    kbdToggleBtn.addEventListener('pointerdown', (e) => e.preventDefault());
+    kbdToggleBtn.addEventListener('click', () => {
+      if (state.hudInputMode === 'text') {
+        setHUDInputMode('mathlive', true);
+        openMathKeyboard();
+        return;
+      }
+      if (window.mathVirtualKeyboard?.visible) {
+        hideMathKeyboard();
+      } else {
+        openMathKeyboard();
+      }
+    });
+  }
+
+  // Botão alternador Abc (Teclado Matemático MathLive <-> Input Nativo Gboard/iOS)
+  const modeToggleBtn = document.getElementById('hud-btn-input-mode');
+  if (modeToggleBtn) {
+    modeToggleBtn.addEventListener('pointerdown', (e) => e.preventDefault());
+    modeToggleBtn.addEventListener('click', () => {
+      const nextMode = state.hudInputMode === 'text' ? 'mathlive' : 'text';
+      setHUDInputMode(nextMode, true);
+    });
+  }
+
+  // Barra Rápida de Funções (#hud-fn-quickbar): inserção direta sem fechar o teclado
+  document.querySelectorAll('.hud-fn-chip').forEach((chip) => {
+    chip.addEventListener('pointerdown', (e) => e.preventDefault());
+    chip.addEventListener('click', () => {
+      const latexSnippet = chip.getAttribute('data-latex') || '';
+      const textSnippet = chip.getAttribute('data-text') || '';
+      if (state.hudInputMode === 'text' || !window.customElements?.get('math-field')) {
+        if (hudFreeInput) {
+          const cur = hudFreeInput.value === '0' ? '' : hudFreeInput.value;
+          const start = typeof hudFreeInput.selectionStart === 'number' ? hudFreeInput.selectionStart : cur.length;
+          const end = typeof hudFreeInput.selectionEnd === 'number' ? hudFreeInput.selectionEnd : cur.length;
+          const next = cur.slice(0, start) + textSnippet + cur.slice(end);
+          hudFreeInput.value = next || '0';
+          const caret = start + textSnippet.length;
+          hudFreeInput.focus();
+          hudFreeInput.setSelectionRange?.(caret, caret);
+          hudBaseExpression = hudFreeInput.value;
+          setHUDExpressionLive(hudBaseExpression, false);
+        }
+      } else if (hudMathField) {
+        if (typeof hudMathField.insert === 'function') {
+          hudMathField.insert(latexSnippet, { focus: true, feedback: true });
+        } else {
+          hudMathField.value = (hudMathField.value || '') + latexSnippet;
+        }
+        syncFromMathField();
+      }
+    });
+  });
+
+  // Interagir com o construtor paramétrico fecha o teclado virtual suavemente
   const hudParamSection = document.getElementById('hud-parametric-section');
   if (hudParamSection) {
     hudParamSection.addEventListener('pointerdown', () => {
-      document.body.classList.remove('mathlive-kb-visible');
       if (hudMathField && document.activeElement === hudMathField) {
-        try {
-          hudMathField.blur();
-        } catch (_) {}
+        try { hudMathField.blur(); } catch (_) {}
       }
-      if (window.mathVirtualKeyboard && typeof window.mathVirtualKeyboard.hide === 'function') {
-        try {
-          window.mathVirtualKeyboard.hide();
-        } catch (_) {}
+      hideMathKeyboard();
+    });
+  }
+
+  // Botões de Apagar e Limpar na Linha de Equação do HUD (mantém foco e teclado abertos)
+  const backspaceBtn = document.getElementById('hud-key-backspace');
+  if (backspaceBtn) {
+    backspaceBtn.addEventListener('pointerdown', (e) => e.preventDefault());
+    backspaceBtn.addEventListener('click', () => {
+      if (state.hudInputMode === 'text' || !window.customElements?.get('math-field')) {
+        if (hudFreeInput) {
+          const cur = hudFreeInput.value || '';
+          const start = typeof hudFreeInput.selectionStart === 'number' ? hudFreeInput.selectionStart : cur.length;
+          const end = typeof hudFreeInput.selectionEnd === 'number' ? hudFreeInput.selectionEnd : cur.length;
+          let next;
+          let caret = start;
+          if (end > start) {
+            next = cur.slice(0, start) + cur.slice(end);
+          } else if (start > 0) {
+            next = cur.slice(0, start - 1) + cur.slice(end);
+            caret = start - 1;
+          } else {
+            next = cur;
+          }
+          hudFreeInput.value = next || '0';
+          hudFreeInput.focus();
+          hudFreeInput.setSelectionRange?.(caret, caret);
+          hudBaseExpression = hudFreeInput.value;
+          setHUDExpressionLive(hudBaseExpression, false);
+        }
+      } else if (hudMathField) {
+        if (typeof hudMathField.executeCommand === 'function') {
+          hudMathField.executeCommand(['deleteBackward']);
+        } else {
+          const val = hudMathField.value || '';
+          hudMathField.value = val.slice(0, -1);
+        }
+        syncFromMathField();
       }
     });
   }
 
-  // Botões de Apagar e Limpar na Linha de Equação do HUD
-  document.getElementById('hud-key-backspace')?.addEventListener('click', () => {
-    if (hudMathField) {
-      if (typeof hudMathField.executeCommand === 'function') {
-        hudMathField.executeCommand(['deleteBackward']);
-      } else {
-        const val = hudMathField.value || '';
-        hudMathField.value = val.slice(0, -1);
+  const clearBtn = document.getElementById('hud-key-clear');
+  if (clearBtn) {
+    clearBtn.addEventListener('pointerdown', (e) => e.preventDefault());
+    clearBtn.addEventListener('click', () => {
+      hudBaseExpression = '0';
+      if (state.hudInputMode === 'text' || !window.customElements?.get('math-field')) {
+        if (hudFreeInput) {
+          hudFreeInput.value = '';
+          hudFreeInput.focus();
+        }
+        setHUDExpressionLive('0', false);
+      } else if (hudMathField) {
+        if (typeof hudMathField.setValue === 'function') {
+          hudMathField.setValue('');
+        } else {
+          hudMathField.value = '';
+        }
+        setHUDExpressionLive('0', false);
       }
-      const rawLatex = typeof hudMathField.getValue === 'function' ? hudMathField.getValue() : (hudMathField.value || '');
-      const parsedExpr = latexToExpr(rawLatex) || '0';
-      hudBaseExpression = parsedExpr;
-      setHUDExpressionLive(parsedExpr, false);
-    }
-  });
-
-  document.getElementById('hud-key-clear')?.addEventListener('click', () => {
-    hudBaseExpression = '0';
-    if (hudMathField) {
-      if (typeof hudMathField.setValue === 'function') {
-        hudMathField.setValue('');
-      } else {
-        hudMathField.value = '';
-      }
-      setHUDExpressionLive('0', false);
-    }
-  });
+    });
+  }
 
   // Seletor de Modo de Construção (= Substituir | + Somar | − Subtrair)
   const commitBlockBtn = document.getElementById('hud-btn-commit-block');
@@ -2084,12 +2510,12 @@ export function initUIEventListeners() {
     });
   });
 
-  // Input de Equação Livre do HUD (Sincroniza com MathLive e aplica em tempo real)
-  const hudFreeInput = document.getElementById('hud-free-input');
+  // Input de Equação Livre do HUD (aplica em tempo real sem sobrescrever enquanto digita)
   if (hudFreeInput) {
     hudFreeInput.addEventListener('input', (e) => {
-      hudBaseExpression = e.target.value || '0';
-      setHUDExpressionLive(hudBaseExpression, true);
+      const rawVal = e.target.value;
+      hudBaseExpression = rawVal || '0';
+      setHUDExpressionLive(rawVal, false);
     });
   }
 
@@ -2190,16 +2616,22 @@ export function initUIEventListeners() {
       const dir = e.key === 'ArrowRight' ? 1 : -1;
       const slider = document.getElementById('t-slider');
       if (state.activeModule === 'ctft') {
+        const isCustomCTFT = !BUILTIN_CTFT_PRESETS[state.ctftPresetKey];
         if (state.step === 4) {
           state.ctftBridgeT0 = Math.max(2.0, Math.min(25.0, state.ctftBridgeT0 + dir * 0.5));
-          state.ctftCalculated = calculateCTFTData(state.ctftPresetKey, state.ctftPulseWidth, state.ctftDecay, state.ctftBridgeT0);
+          recomputeCTFT();
           if (slider) slider.value = state.ctftBridgeT0;
-        } else if (state.step === 3) {
+        } else if (state.step === 3 || isCustomCTFT) {
           state.t = Math.max(-15.0, Math.min(15.0, state.t + dir * 0.2));
           if (slider) slider.value = state.t;
+        } else if (isCTFTDecayPreset()) {
+          state.ctftDecay = Math.max(0.2, Math.min(4.0, state.ctftDecay + dir * 0.1));
+          recomputeCTFT();
+          if (slider) slider.value = state.ctftDecay;
         } else {
-          state.ctftPulseWidth = Math.max(0.5, Math.min(5.0, state.ctftPulseWidth + dir * 0.25));
-          state.ctftCalculated = calculateCTFTData(state.ctftPresetKey, state.ctftPulseWidth, state.ctftDecay, state.ctftBridgeT0);
+          const maxW = state.ctftPresetKey === 'tri' ? 4.0 : 5.0;
+          state.ctftPulseWidth = Math.max(0.5, Math.min(maxW, state.ctftPulseWidth + dir * 0.25));
+          recomputeCTFT();
           if (slider) slider.value = state.ctftPulseWidth;
         }
       } else if (state.activeModule === 'convolution' && state.step === 1) {

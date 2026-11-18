@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Primary Meta Tags -->
   <title>Sinais &amp; Sistemas 3D — Laboratório Interativo de Convolução e Série de Fourier</title>
@@ -72,26 +72,17 @@
   }
   </script>
 
-  <!-- External Styles & Fonts -->
-  <script>
-    if (typeof console !== 'undefined' && console.warn) {
-      const _origWarn = console.warn;
-      console.warn = function(...args) {
-        if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
-        _origWarn.apply(console, args);
-      };
-    }
-  </script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- External Styles & Fonts (Zero-Build Static CSS + Pinned CDNs) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-  <script defer src="https://unpkg.com/mathlive"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathlive@0.101.2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-  <!-- Custom Modular Stylesheet -->
+  <!-- Static Utility & Custom Modular Stylesheets -->
+  <link rel="stylesheet" href="css/utilities.css">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 
@@ -150,7 +141,7 @@
         <div class="flex items-center gap-1 pointer-events-auto">
           <!-- Botão Áudio Web (só Fourier) -->
           <button id="btn-audio-toggle" type="button" class="hidden ui-control px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg border text-[9px] sm:text-[10px] font-semibold flex items-center gap-1 shadow-sm" title="Ouvir Timbre Sonoro das Harmônicas Ativas (M)">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg aria-hidden="true" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
               <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
             </svg>
@@ -159,8 +150,8 @@
 
           <!-- Botão Popover de Camadas -->
           <div class="relative">
-            <button id="btn-layers-toggle" type="button" class="ui-control px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg border text-[9px] sm:text-[10px] font-semibold flex items-center gap-1 shadow-sm" title="Alternar Camadas Visuais do Gráfico">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button id="btn-layers-toggle" type="button" popovertarget="layers-popover" aria-expanded="false" class="ui-control px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg border text-[9px] sm:text-[10px] font-semibold flex items-center gap-1 shadow-sm" title="Alternar Camadas Visuais do Gráfico">
+              <svg aria-hidden="true" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
                 <polyline points="2 17 12 22 22 17"></polyline>
                 <polyline points="2 12 12 17 22 12"></polyline>
@@ -168,8 +159,8 @@
               <span id="lbl-layers-btn">Camadas</span>
             </button>
 
-            <!-- Popover de Camadas 3D -->
-            <div id="layers-popover" class="hidden absolute right-0 mt-1 w-56 ui-surface backdrop-blur-xl border rounded-xl p-2.5 shadow-xl z-50 flex flex-col gap-2 text-xs">
+            <!-- Popover Nativo de Camadas 3D -->
+            <div id="layers-popover" popover="auto" class="layers-popover hidden ui-surface backdrop-blur-xl border rounded-xl p-2.5 shadow-xl z-50 flex flex-col gap-2 text-xs">
               <div id="lbl-layers-title" class="text-[10px] font-bold uppercase tracking-wider text-mut pb-1 border-b border-[var(--border-subtle)]">Camadas 3D</div>
               <label class="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" id="layer-cb-waterfall" class="rounded accent-[var(--c-conv)]">
@@ -178,6 +169,10 @@
               <label class="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" id="layer-cb-spectrumWall" class="rounded accent-[var(--c-conv)]">
                 <span id="lbl-layer-spectrum" class="text-xs">Parede de Espectro |Cₙ| / |Dₙ|</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="layer-cb-phaseSpectrum" class="rounded accent-[var(--c-conv)]">
+                <span id="lbl-layer-phase" class="text-xs">Espectro de Fase ∠X(ω)</span>
               </label>
               <label class="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" id="layer-cb-labels" class="rounded accent-[var(--c-conv)]">
@@ -196,7 +191,7 @@
 
           <!-- Botão Modo Foco / Zen -->
           <button id="btn-zen-mode" type="button" class="ui-control px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg border text-[9px] sm:text-[10px] font-semibold flex items-center gap-1 shadow-sm" title="Alternar Modo Foco no Gráfico 3D (Z)">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg aria-hidden="true" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="15 3 21 3 21 9"></polyline>
               <polyline points="9 21 3 21 3 15"></polyline>
               <line x1="21" y1="3" x2="14" y2="10"></line>
@@ -230,9 +225,9 @@
           <button id="zen-btn-fourier" type="button" class="px-2 py-0.5 rounded-md font-bold seg-btn">∑ Cₙ</button>
           <button id="zen-btn-ctft" type="button" class="px-2 py-0.5 rounded-md font-bold seg-btn">X(ω)</button>
         </div>
-        <button type="button" class="play-toggle-btn px-2 py-1 rounded-lg text-white font-semibold text-xs flex items-center gap-1 shadow" style="background: var(--c-conv)">
-          <svg class="icon-play w-3 h-3 hidden" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-          <svg class="icon-pause w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+        <button type="button" class="play-toggle-btn px-2 py-1 rounded-lg text-white font-semibold text-xs flex items-center gap-1 shadow" style="background: var(--c-conv)" aria-label="Reproduzir / Pausar">
+          <svg aria-hidden="true" class="icon-play w-3 h-3 hidden" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <svg aria-hidden="true" class="icon-pause w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
         </button>
         <span id="zen-t-readout" class="font-mono-code font-bold text-xs px-1.5 py-0.5 rounded bg-[var(--bg-control)] whitespace-nowrap">t = 1.50</span>
         <div class="flex items-center gap-1 text-[10px] font-bold">
@@ -255,10 +250,10 @@
             <div id="hud-target-dot" class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background: var(--c-x1)"></div>
             <!-- Pílulas de Alternância Direta de Sinal (Sem Título Redundante) -->
             <div id="hud-signal-switcher" class="flex items-center p-0.5 rounded-lg bg-[var(--bg-control)] border border-[var(--border-subtle)] text-[11px]" role="tablist">
-              <button id="hud-pill-x" type="button" class="hud-sig-pill px-2.5 py-0.5 rounded-md font-bold seg-btn active" style="color: var(--c-x1)" data-target="x">x(t)</button>
-              <button id="hud-pill-h" type="button" class="hud-sig-pill px-2.5 py-0.5 rounded-md font-bold seg-btn" style="color: var(--c-x2)" data-target="h">h(t)</button>
-              <button id="hud-pill-fourier" type="button" class="hud-sig-pill px-2.5 py-0.5 rounded-md font-bold seg-btn hidden" style="color: var(--c-x1)" data-target="fourier">f(t)</button>
-              <button id="hud-pill-ctft" type="button" class="hud-sig-pill px-2.5 py-0.5 rounded-md font-bold seg-btn hidden" style="color: var(--c-x1)" data-target="ctft">x(t)</button>
+              <button id="hud-pill-x" type="button" role="tab" aria-selected="true" class="hud-sig-pill px-2.5 py-0.5 rounded-md font-bold seg-btn active" style="color: var(--c-x1)" data-target="x">x(t)</button>
+              <button id="hud-pill-h" type="button" role="tab" aria-selected="false" class="hud-sig-pill px-2.5 py-0.5 rounded-md font-bold seg-btn" style="color: var(--c-x2)" data-target="h">h(t)</button>
+              <button id="hud-pill-fourier" type="button" role="tab" aria-selected="false" class="hud-sig-pill px-2.5 py-0.5 rounded-md font-bold seg-btn hidden" style="color: var(--c-x1)" data-target="fourier">f(t)</button>
+              <button id="hud-pill-ctft" type="button" role="tab" aria-selected="false" class="hud-sig-pill px-2.5 py-0.5 rounded-md font-bold seg-btn hidden" style="color: var(--c-x1)" data-target="ctft">x(t)</button>
             </div>
           </div>
 
@@ -276,15 +271,38 @@
           </div>
         </header>
 
-        <!-- 2. Linha de Equação Natural: Focar no <math-field> abre o teclado MathLive automaticamente -->
-        <div class="px-3 py-2 bg-[var(--bg-panel)] border-b border-[var(--border-subtle)] flex items-center gap-2 flex-shrink-0">
+        <!-- 2. Linha de Equação Natural: Focar no <math-field> ou alternar para Abc nativo -->
+        <div class="px-3 py-2 bg-[var(--bg-panel)] border-b border-[var(--border-subtle)] flex items-center gap-1.5 flex-shrink-0">
           <span id="hud-var-prefix" class="font-mono-code font-extrabold text-xs sm:text-sm flex-shrink-0" style="color: var(--c-x1)">x(t) =</span>
-          <div class="flex-1 min-w-0 relative flex items-center gap-1.5">
-            <math-field id="hud-mathfield" virtual-keyboard-mode="manual" class="w-full px-2.5 py-1 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-control)] text-primary text-sm"></math-field>
-            <button type="button" id="hud-key-backspace" class="ui-control px-2 py-1 rounded-lg border text-xs font-semibold flex-shrink-0" title="Apagar último caractere">⌫</button>
-            <button type="button" id="hud-key-clear" class="ui-control px-2 py-1 rounded-lg border text-[10px] font-semibold text-mut hover:text-primary flex-shrink-0" title="Limpar expressão">Limpar</button>
-            <input id="hud-free-input" type="text" class="hidden" aria-hidden="true" />
+          <div class="flex-1 min-w-0 relative flex items-center gap-1">
+            <math-field id="hud-mathfield" math-virtual-keyboard-policy="manual" class="w-full px-2.5 py-1 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-control)] text-primary text-sm"></math-field>
+            <input id="hud-free-input" type="text" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Ex: 2*rect(t/2)" aria-label="Expressão matemática em texto" class="hidden w-full px-2.5 py-1.5 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-control)] text-primary text-sm font-mono-code outline-none" />
+            <button type="button" id="hud-btn-keyboard" class="ui-control px-2 py-1 rounded-lg border text-xs font-semibold flex-shrink-0" title="Abrir/Fechar Teclado Matemático" aria-label="Abrir/Fechar Teclado Matemático" aria-pressed="false">⌨</button>
+            <button type="button" id="hud-btn-input-mode" class="ui-control px-1.5 py-1 rounded-lg border text-[10px] font-bold font-mono-code flex-shrink-0" title="Alternar modo de digitação (MathLive / Texto Nativo)" aria-pressed="false">Abc</button>
+            <button type="button" id="hud-key-backspace" class="ui-control px-2 py-1 rounded-lg border text-xs font-semibold flex-shrink-0" title="Apagar último caractere" aria-label="Apagar último caractere">⌫</button>
+            <button type="button" id="hud-key-clear" class="ui-control px-1.5 py-1 rounded-lg border text-[10px] font-semibold text-mut hover:text-primary flex-shrink-0" title="Limpar expressão">Limpar</button>
           </div>
+        </div>
+
+        <!-- 2.1 Barra Rápida de Funções (Toque único sem fechar o teclado) -->
+        <div id="hud-fn-quickbar" class="a11y-scroll-bar flex items-center gap-1 overflow-x-auto whitespace-nowrap px-3 py-1.5 bg-[var(--bg-card)] border-b border-[var(--border-subtle)] text-[11px] font-mono-code flex-shrink-0" role="group" aria-label="Atalhos de funções matemáticas">
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="u(#0)" data-text="u(t)">u(t)</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="\operatorname{rect}(#0)" data-text="rect(t)">rect(t)</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="\operatorname{tri}(#0)" data-text="tri(t)">tri(t)</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="\operatorname{sinc}(#0)" data-text="sinc(t)">sinc(t)</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="\delta(#0)" data-text="delta(t)">δ(t)</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="r(#0)" data-text="r(t)">r(t)</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="e^{-#0}" data-text="e^(-t)">e^(-t)</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="\sin(#0)" data-text="sin(t)">sin(t)</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="\cos(#0)" data-text="cos(t)">cos(t)</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="\pi" data-text="pi">π</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="t" data-text="t">t</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="(#0)" data-text="(t)">( )</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="+" data-text="+">+</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="-" data-text="-">−</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="\cdot " data-text="*">*</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="\frac{#0}{#?}" data-text="/">/</button>
+          <button type="button" class="hud-fn-chip ui-control px-2 py-0.5 rounded-md border font-semibold flex-shrink-0" data-latex="^{#0}" data-text="^">^</button>
         </div>
 
         <!-- 3. Corpo Único Enxuto: Osciloscópio 2D em Tempo Real + Construtor Paramétrico Aditivo -->
@@ -402,49 +420,51 @@
       <!-- 1. Cabeçalho Principal: Barra Superior Rolável + Título + Configurações Animadas + Segmented Control -->
       <header class="p-2 sm:p-2.5 border-b border-[var(--border-subtle)] flex flex-col gap-2 flex-shrink-0 bg-[var(--bg-card)]">
 
-        <!-- Barra Superior Responsiva com Scroll Horizontal e Engrenagem no Final do Fluxo -->
-        <div id="a11y-bar" role="region" aria-label="Barra de ferramentas e acessibilidade" aria-live="polite" class="a11y-scroll-bar flex flex-nowrap items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-1.5 border-b border-[var(--border-subtle)] text-[10px]">
-          <div class="flex items-center gap-1 font-mono-code flex-shrink-0">
-            <button id="btn-font-dec" type="button" class="a11y-btn ui-control px-1.5 py-0.5 rounded font-bold" title="Diminuir tamanho da fonte" aria-label="Diminuir tamanho da fonte">A−</button>
-            <button id="btn-font-reset" type="button" class="a11y-btn ui-control px-1.5 py-0.5 rounded font-bold min-w-[40px] text-center" title="Redefinir tamanho da fonte" aria-label="Redefinir tamanho da fonte">100%</button>
-            <button id="btn-font-inc" type="button" class="a11y-btn ui-control px-1.5 py-0.5 rounded font-bold" title="Aumentar tamanho da fonte" aria-label="Aumentar tamanho da fonte">A+</button>
+        <!-- Barra Superior Responsiva: Controles rápidos à esquerda + Idioma e Configurações fixos à direita -->
+        <div id="a11y-bar" role="toolbar" focusgroup="toolbar wrap" aria-label="Barra de ferramentas e acessibilidade" class="flex items-center justify-between gap-1.5 pb-1.5 border-b border-[var(--border-subtle)] text-[10px]">
+          <div id="a11y-scroll-strip" class="a11y-scroll-bar flex flex-nowrap items-center gap-1 overflow-x-auto whitespace-nowrap min-w-0 flex-1">
+            <div role="group" aria-label="Tamanho da fonte" class="flex items-center gap-1 font-mono-code flex-shrink-0">
+              <button id="btn-font-dec" type="button" class="a11y-btn ui-control px-1.5 py-0.5 rounded font-bold" title="Diminuir tamanho da fonte" aria-label="Diminuir tamanho da fonte">A−</button>
+              <button id="btn-font-reset" type="button" class="a11y-btn ui-control px-1.5 py-0.5 rounded font-bold min-w-[40px] text-center" title="Redefinir tamanho da fonte" aria-label="Redefinir tamanho da fonte">100%</button>
+              <button id="btn-font-inc" type="button" class="a11y-btn ui-control px-1.5 py-0.5 rounded font-bold" title="Aumentar tamanho da fonte" aria-label="Aumentar tamanho da fonte">A+</button>
+            </div>
+
+            <span role="separator" aria-orientation="vertical" class="text-mut opacity-40 select-none flex-shrink-0">|</span>
+
+            <!-- Botão Toggle de Tema com Ícone SVG -->
+            <button id="btn-theme-cycle" type="button" class="a11y-btn theme-cycle-btn ui-control px-2 py-0.5 rounded font-semibold flex items-center gap-1 flex-shrink-0" title="Alternar Tema Visual (Projetor / Escuro / Claro)">
+              <span id="theme-cycle-icon" class="theme-icon-anim inline-flex items-center justify-center">
+                <svg aria-hidden="true" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><circle cx="12" cy="10" r="3"/></svg>
+              </span>
+              <span id="lbl-theme-cycle">Projetor</span>
+            </button>
+
+            <!-- Alto Contraste e Redução de Movimento com SVGs -->
+            <button id="btn-a11y-contrast" type="button" class="a11y-btn ui-control px-1.5 py-0.5 rounded font-semibold flex items-center gap-1 flex-shrink-0" title="Alternar Alto Contraste" aria-label="Alternar Alto Contraste" aria-pressed="false">
+              <svg aria-hidden="true" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18V4c4.41 0 8 3.59 8 8s-3.59 8-8 8z"/></svg>
+              <span id="lbl-a11y-contrast">Contraste</span>
+            </button>
+            <button id="btn-a11y-motion" type="button" class="a11y-btn ui-control px-1.5 py-0.5 rounded font-semibold flex items-center gap-1 flex-shrink-0" title="Reduzir/Pausar Movimento" aria-label="Reduzir/Pausar Movimento" aria-pressed="false">
+              <svg aria-hidden="true" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="10" y1="15" x2="10" y2="9"/><line x1="14" y1="15" x2="14" y2="9"/></svg>
+              <span id="lbl-a11y-motion">Movimento</span>
+            </button>
           </div>
 
-          <span class="text-mut opacity-40 select-none flex-shrink-0">|</span>
+          <div role="group" aria-label="Idioma e configurações" class="flex items-center gap-1 flex-shrink-0 pl-1 border-l border-[var(--border-subtle)]">
+            <!-- Alternar Idioma na Barra com SVG -->
+            <button id="btn-lang-toggle" type="button" title="Switch Language / Alternar Idioma" aria-label="Alternar Idioma" class="a11y-btn ui-control px-1.5 py-0.5 rounded font-bold font-mono-code flex items-center gap-1 flex-shrink-0">
+              <svg aria-hidden="true" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              <span id="lang-btn-text">EN</span>
+            </button>
 
-          <!-- Botão Toggle de Tema com Ícone SVG -->
-          <button id="btn-theme-cycle" type="button" class="a11y-btn theme-cycle-btn ui-control px-2 py-0.5 rounded font-semibold flex items-center gap-1.5 flex-shrink-0" title="Alternar Tema Visual (Projetor / Escuro / Claro)">
-            <span id="theme-cycle-icon" class="theme-icon-anim inline-flex items-center justify-center">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><circle cx="12" cy="10" r="3"/></svg>
-            </span>
-            <span id="lbl-theme-cycle">Projetor</span>
-          </button>
-
-          <!-- Alto Contraste e Redução de Movimento com SVGs -->
-          <button id="btn-a11y-contrast" type="button" class="a11y-btn ui-control px-1.5 py-0.5 rounded font-semibold flex items-center gap-1 flex-shrink-0" title="Alternar Alto Contraste" aria-label="Alternar Alto Contraste" aria-pressed="false">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18V4c4.41 0 8 3.59 8 8s-3.59 8-8 8z"/></svg>
-            <span id="lbl-a11y-contrast">Contraste</span>
-          </button>
-          <button id="btn-a11y-motion" type="button" class="a11y-btn ui-control px-1.5 py-0.5 rounded font-semibold flex items-center gap-1 flex-shrink-0" title="Reduzir/Pausar Movimento" aria-label="Reduzir/Pausar Movimento" aria-pressed="false">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="10" y1="15" x2="10" y2="9"/><line x1="14" y1="15" x2="14" y2="9"/></svg>
-            <span id="lbl-a11y-motion">Movimento</span>
-          </button>
-
-          <!-- Alternar Idioma na Barra com SVG -->
-          <button id="btn-lang-toggle" type="button" title="Switch Language / Alternar Idioma" class="a11y-btn ui-control px-2 py-0.5 rounded font-bold font-mono-code flex items-center gap-1 flex-shrink-0">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            <span id="lang-btn-text">EN</span>
-          </button>
-
-          <span class="text-mut opacity-40 select-none flex-shrink-0">|</span>
-
-          <!-- Engrenagem Mecânica Técnica (Último Ícone da Barra no Fluxo de Rolagem) -->
-          <button id="btn-settings-toggle" type="button" popovertarget="settings-popover" title="Configurações e Personalização" aria-label="Configurações e Personalização" class="settings-gear-btn ui-control p-1 rounded-lg border text-sec flex items-center justify-center flex-shrink-0">
-            <svg class="settings-gear-icon w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
+            <!-- Engrenagem Mecânica Técnica (Sempre Visível) -->
+            <button id="btn-settings-toggle" type="button" popovertarget="settings-popover" aria-expanded="false" title="Configurações e Personalização" aria-label="Configurações e Personalização" class="settings-gear-btn ui-control p-1 rounded-lg border text-sec flex items-center justify-center flex-shrink-0">
+              <svg aria-hidden="true" class="settings-gear-icon w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- Popover Nativo de Configurações (Modern Web Guidance) -->
@@ -510,20 +530,20 @@
         <!-- Barra de Título (Sem poluição de botões) -->
         <div class="flex items-center gap-1.5 min-w-0 py-0.5">
           <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background: var(--c-conv)"></div>
-          <span class="text-xs font-bold tracking-tight truncate" id="app-heading">Sinais &amp; Sistemas 3D</span>
+          <h1 class="text-xs font-bold tracking-tight truncate m-0" id="app-heading">Sinais &amp; Sistemas 3D</h1>
         </div>
 
         <!-- SEGMENTED CONTROL: Pílula Deslizante de Alto Destaque -->
         <nav id="module-switcher" class="p-1 rounded-xl bg-[var(--bg-control)] border border-[var(--border-strong)] grid grid-cols-3 gap-1" role="tablist">
-          <button id="mod-btn-conv" type="button" role="tab" class="module-pill-btn active py-1.5 px-1.5 rounded-lg border text-left flex flex-col justify-center">
+          <button id="mod-btn-conv" type="button" role="tab" aria-selected="true" class="module-pill-btn active py-1.5 px-1.5 rounded-lg border text-left flex flex-col justify-center">
             <span class="text-xs font-bold leading-tight" id="mod-conv-title">Convolução</span>
             <span class="text-[9px] font-mono-code opacity-75 truncate" id="mod-conv-sub">x(t) ∗ h(t)</span>
           </button>
-          <button id="mod-btn-fourier" type="button" role="tab" class="module-pill-btn py-1.5 px-1.5 rounded-lg border text-left flex flex-col justify-center">
+          <button id="mod-btn-fourier" type="button" role="tab" aria-selected="false" class="module-pill-btn py-1.5 px-1.5 rounded-lg border text-left flex flex-col justify-center">
             <span class="text-xs font-bold leading-tight" id="mod-fourier-title">Série Fourier</span>
             <span class="text-[9px] font-mono-code opacity-75 truncate" id="mod-fourier-sub">∑ Cₙ cos</span>
           </button>
-          <button id="mod-btn-ctft" type="button" role="tab" class="module-pill-btn py-1.5 px-1.5 rounded-lg border text-left flex flex-col justify-center">
+          <button id="mod-btn-ctft" type="button" role="tab" aria-selected="false" class="module-pill-btn py-1.5 px-1.5 rounded-lg border text-left flex flex-col justify-center">
             <span class="text-xs font-bold leading-tight" id="mod-ctft-title">Transformada</span>
             <span class="text-[9px] font-mono-code opacity-75 truncate" id="mod-ctft-sub">X(ω) = ∫ x e^{-jωt}</span>
           </button>
@@ -555,8 +575,8 @@
         <!-- Linha de Sliders & Play/Pause -->
         <div class="flex flex-wrap items-center gap-1.5">
           <button type="button" class="play-toggle-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1 flex-shrink-0 text-white shadow-sm" style="background: var(--c-conv)" title="Reproduzir / Pausar (Espaço)">
-            <svg class="icon-play w-3 h-3 hidden" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            <svg class="icon-pause w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+            <svg aria-hidden="true" class="icon-play w-3 h-3 hidden" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <svg aria-hidden="true" class="icon-pause w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
             <span id="lbl-play">Pausar</span>
           </button>
 
@@ -579,7 +599,7 @@
           </div>
 
           <!-- Controles de Fourier: Harmônicas N + Período T₀ -->
-          <div id="fourier-slider-row" class="hidden flex items-center gap-2 w-full sm:w-auto sm:flex-1 min-w-[155px]">
+          <div id="fourier-slider-row" class="hidden flex items-center gap-2 w-full pt-1">
             <div class="flex-1 flex flex-col gap-0.5 min-w-0">
               <div class="flex items-center justify-between gap-1 text-[10px]">
                 <span id="lbl-fourier-harmonics" class="text-sec font-medium truncate">Harmônicas N</span>
@@ -615,7 +635,7 @@
         <section id="section-notebook" class="ui-card rounded-xl border p-2.5 space-y-2">
           <div class="flex items-center justify-between gap-2 border-b border-[var(--border-subtle)] pb-1.5">
             <div class="flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5 text-[var(--c-conv)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg aria-hidden="true" class="w-3.5 h-3.5 text-[var(--c-conv)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
                 <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
                 <path d="M2 2l7.586 7.586"></path>

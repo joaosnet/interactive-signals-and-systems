@@ -17,7 +17,7 @@ export const BUILTIN_CONV_PRESETS = {
     latexH: 'u(t) - u(t-3)',
     fnX: (tau) => (tau >= 0 ? Math.exp(-tau) : 0),
     fnH: (tau) => (tau >= 0 && tau <= 3 ? 1.0 : 0),
-    supportX: [0, 6],
+    supportX: [0, Infinity],
     supportH: [0, 3],
     conv: (t) => {
       if (t < 0) return 0;
@@ -42,8 +42,8 @@ export const BUILTIN_CONV_PRESETS = {
     latexH: 'u(t)',
     fnX: (tau) => (tau >= 0 ? Math.exp(-tau) : 0),
     fnH: (tau) => (tau >= 0 ? 1.0 : 0),
-    supportX: [0, 6],
-    supportH: [0, 6],
+    supportX: [0, Infinity],
+    supportH: [0, Infinity],
     conv: (t) => (t >= 0 ? 1 - Math.exp(-t) : 0),
     regions: [
       { range: 't < 0', test: (t) => t < 0, sampleT: -1.0, latex: 'y(t) = 0' },
@@ -89,8 +89,8 @@ export const BUILTIN_CONV_PRESETS = {
     latexH: 'e^{-2t}u(t)',
     fnX: (tau) => (tau >= 0 ? Math.exp(-tau) : 0),
     fnH: (tau) => (tau >= 0 ? Math.exp(-2 * tau) : 0),
-    supportX: [0, 6],
-    supportH: [0, 4],
+    supportX: [0, Infinity],
+    supportH: [0, Infinity],
     conv: (t) => (t >= 0 ? Math.exp(-t) - Math.exp(-2 * t) : 0),
     regions: [
       { range: 't < 0', test: (t) => t < 0, sampleT: -0.8, latex: 'y(t) = 0' },
@@ -228,7 +228,7 @@ export const BUILTIN_FOURIER_PRESETS = {
     titleEn: 'Sinc Pulse Train',
     subtitle: 'Pulsos limitados em banda periódicos',
     subtitleEn: 'Periodic bandlimited sinc pulses',
-    expr: 'sinc(2*t - 2) * (u(t) - u(t-2))',
+    expr: 'sinc(2*pi*(t - 1)) * (u(t) - u(t-2))',
     T0: 2.0,
     N: 11
   }
@@ -270,17 +270,17 @@ export const BUILTIN_CTFT_PRESETS = {
     id: 'tri',
     title: 'Pulso Triangular Simétrico',
     titleEn: 'Symmetric Triangular Pulse',
-    subtitle: 'x(t) = tri(t/τ₀) ↔ X(ω) = τ₀ sinc²(ωτ₀/4)',
-    subtitleEn: 'x(t) = tri(t/τ₀) ↔ X(ω) = τ₀ sinc²(ωτ₀/4)',
-    expr: 'tri(t/2)',
-    latexX: '\\operatorname{tri}(t/2)',
-    latexCTFT: '2\\operatorname{sinc}^2(\\omega/2)',
-    tau0: 2.0,
+    subtitle: 'x(t) = tri(t/a) ↔ X(ω) = a sinc²(ωa/2)',
+    subtitleEn: 'x(t) = tri(t/a) ↔ X(ω) = a sinc²(ωa/2)',
+    expr: 'tri(t)',
+    latexX: '\\operatorname{tri}(t)',
+    latexCTFT: '\\operatorname{sinc}^2(\\omega/2)',
+    tau0: 1.0,
     fnX: (t) => (Math.abs(t) <= 1.0 ? 1.0 - Math.abs(t) : 0),
-    mag: (w, tau = 2.0) => {
-      const arg = (w * tau) / 4;
-      const s = arg === 0 ? 1.0 : Math.sin(arg) / arg;
-      return tau * s * s;
+    mag: (w, a = 1.0) => {
+      const arg = (w * a) / 2;
+      const s = Math.abs(arg) < 1e-7 ? 1.0 : Math.sin(arg) / arg;
+      return a * s * s;
     },
     phase: () => 0
   },
