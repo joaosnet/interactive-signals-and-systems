@@ -186,6 +186,7 @@ Module features:
 - **Mobile Architecture**: Responsive bottom-sheet layout with touch orbit gestures, a docked MathLive virtual keyboard (`⌨`), quick function chips (`u(t)`, `rect(t)`, `tri(t)`, `δ(t)`, `sinc(t)`), and native system keyboard toggle (`Abc`).
 - **Zen Focus Mode (`Z`)**: Minimizes panels to leave 100% of the screen dedicated to the 3D stage.
 - **Bilingual System**: English and Brazilian Portuguese interface switching with persistent preferences via `localStorage`.
+- **Notebook in Focus**: The "Open notebook" button moves the derivation out of the panel and onto the stage area, as a ruled sheet where each line is handwritten with the pen following the stroke. Changing steps turns the page; moving the slider updates the numbers in place.
 
 ---
 

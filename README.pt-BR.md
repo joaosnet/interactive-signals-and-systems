@@ -186,6 +186,7 @@ Recursos do módulo:
 - **Experiência Móvel**: Layout com painel retrátil inferior (*bottom-sheet*), gestos de toque na órbita 3D, teclado matemático virtual (`⌨`), barra rápida de funções (`u(t)`, `rect(t)`, `tri(t)`, `δ(t)`, `sinc(t)`) e alternância para teclado nativo (`Abc`).
 - **Modo Zen (`Z`)**: Oculta barras laterais e dedica 100% da viewport ao palco 3D.
 - **Interface Bilíngue**: Suporte a Inglês e Português do Brasil com armazenamento local de preferências (`localStorage`).
+- **Caderno em Foco**: O botão "Abrir caderno" tira a dedução do painel e a põe no lugar do palco, como uma folha pautada em que cada linha é escrita à mão, com a caneta acompanhando o traço. Trocar de passo vira uma página nova; mexer no slider atualiza os números no lugar.
 
 ---
 

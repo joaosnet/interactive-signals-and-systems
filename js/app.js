@@ -7,6 +7,7 @@ import { init3DStage, updateScene3D } from './stage-3d.js';
 import { activeModule, moduleFromHash } from './modules/index.js';
 import { updateNotebookUI } from './notebook.js';
 import './feedback.js';
+import './notebook-sheet.js';
 import {
   switchModule,
   setStep,

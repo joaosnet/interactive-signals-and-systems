@@ -1172,3 +1172,84 @@ body.a11y-reduce-motion .animate-pulse { animation: none; }
 .feedback-fix:focus { outline: none; }
 .feedback-fix h3 { font-size: 0.875rem; font-weight: 700; }
 .feedback-fix ol { margin: 0.4rem 0 0.2rem 1.2rem; list-style: decimal; display: flex; flex-direction: column; gap: 0.25rem; }
+
+/* ---- Caderno em foco: folha pautada no lugar do palco (js/notebook-sheet.js) ---- */
+.notebook-sheet {
+  position: absolute; inset: 0; z-index: 40;
+  display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+  padding: 0.75rem; background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(3px);
+}
+.notebook-sheet[hidden] { display: none; }
+.sheet-paper {
+  --rule: 32px;
+  --ink: #1b2a6b;
+  flex: 1; min-height: 0; width: min(100%, 52rem);
+  display: flex; border-radius: 6px; overflow: hidden;
+  background-color: #fdfbf3;
+  /* margem vermelha + pautas azuis, como em folha de caderno */
+  background-image:
+    linear-gradient(90deg, transparent 3.25rem, #e2717c 3.25rem, #e2717c calc(3.25rem + 2px), transparent calc(3.25rem + 2px)),
+    repeating-linear-gradient(180deg, transparent 0, transparent calc(var(--rule) - 1px), #b9cdea calc(var(--rule) - 1px), #b9cdea var(--rule));
+  background-attachment: local, local;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.08);
+  color: var(--ink);
+}
+.sheet-page {
+  flex: 1; overflow-y: auto; padding: 0 1.25rem var(--rule, 32px) 4rem;
+  background: inherit; background-attachment: local, local;
+  scrollbar-color: #b9cdea transparent;
+}
+.sheet-page:focus-visible { outline: 3px solid #0369a1; outline-offset: -3px; }
+.sheet-row { display: flex; flex-direction: column; justify-content: flex-end; }
+.sheet-title {
+  flex-direction: row; align-items: flex-end; justify-content: space-between; gap: 1rem;
+  font-family: 'Kalam', 'Segoe Print', 'Comic Sans MS', cursive;
+  font-weight: 700; font-size: 1.5rem; line-height: 32px; padding-top: 32px;
+}
+.sheet-date { font-size: 1rem; font-weight: 400; color: #b4232f; white-space: nowrap; }
+.sheet-label {
+  font-family: 'Kalam', 'Segoe Print', 'Comic Sans MS', cursive;
+  font-size: 1.0625rem; line-height: 32px; color: #b4232f;
+}
+.sheet-formula {
+  position: relative; align-self: flex-start; max-width: 100%;
+  font-size: 1.125rem; padding: 2px 0; overflow-x: auto; overflow-y: hidden;
+}
+.sheet-formula .katex { color: var(--ink); }
+.sheet-line.is-pending { visibility: hidden; }
+.sheet-line.is-writing .sheet-formula { clip-path: inset(-8px 100% -8px 0); overflow: visible; }
+.sheet-line.is-writing .sheet-formula.is-inking {
+  clip-path: inset(-8px -40px -8px 0);
+  transition: clip-path var(--write-ms, 800ms) linear;
+}
+.sheet-pen {
+  position: absolute; left: 0; bottom: 2px; width: 22px; height: 22px; color: #0f172a;
+  transform: translate(0, 0) rotate(-8deg); pointer-events: none;
+}
+.sheet-formula.is-inking .sheet-pen {
+  transform: translate(var(--write-px, 200px), 0) rotate(-8deg);
+  transition: transform var(--write-ms, 800ms) linear;
+}
+.sheet-pen svg { width: 100%; height: 100%; }
+.sheet-toolbar {
+  display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem;
+  border-radius: 0.75rem; background: var(--bg-panel); border: 1px solid var(--border-strong);
+}
+.sheet-btn {
+  min-width: 2.5rem; min-height: 2.5rem; padding: 0 0.7rem; border-radius: 0.5rem;
+  border: 1px solid var(--border-subtle); color: var(--text-primary); font-weight: 700; font-size: 0.875rem;
+}
+.sheet-btn:hover:not(:disabled) { background: var(--bg-hover); }
+.sheet-btn:focus-visible { outline: 2px solid var(--c-x1); outline-offset: 2px; }
+.sheet-btn:disabled { opacity: 0.4; }
+#btn-notebook-focus { border: 1px solid var(--c-conv); color: var(--c-conv); }
+#btn-notebook-focus[aria-pressed="true"] { background: var(--accent-bg); }
+/* No celular a folha ocupa a tela inteira, acima do painel de controles */
+@media (max-width: 767px) {
+  .notebook-sheet { position: fixed; z-index: 60; padding: 0.4rem; }
+  .sheet-page { padding-left: 3.75rem; padding-right: 0.75rem; }
+  .sheet-title { font-size: 1.25rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet-line.is-writing .sheet-formula.is-inking, .sheet-formula.is-inking .sheet-pen { transition: none; }
+}
