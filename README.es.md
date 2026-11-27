@@ -128,6 +128,21 @@ Recursos del módulo:
 
 ---
 
+### 6. Convolución Discreta (`#dconv`)
+
+La suma de convolución, muestra a muestra:
+
+$$y[n] = x[n] * h[n] = \sum_{k=-\infty}^{+\infty} x[k]\, h[n-k]$$
+
+Recursos del módulo:
+- **Cuatro Carriles de Muestras**: $x[k]$, $h[n-k]$, los productos $x[k]\,h[n-k]$ e $y[n]$ comparten el mismo eje $k$, de modo que $y[n]$ nace justo bajo el origen de $h[n-k]$.
+- **Paso a Paso**: Cambio de variable $n \to k$, reflexión $h[-k]$, desplazamiento $h[n-k]$ y sumatoria, con la franja de solapamiento destacada en el piso.
+- **La Suma Desarrollada**: Para cada $n$, el cuaderno muestra los productos que entran en la suma, junto con la regla de la longitud $L_y = L_x + L_h - 1$.
+- **Tabla Clicable de $y[n]$**: Cada fila muestra el rango de $k$ que se solapa y lleva el escenario directamente a esa muestra.
+- **Siete Ejemplos, una Idea Cada Uno**: Rectángulo con rectángulo (triángulo), rectángulo con exponencial, impulso (identidad), retardo, media móvil, primera diferencia y eco.
+
+---
+
 ## Fundamentos Didácticos y de Interfaz
 
 - **Proyecciones de Cámara**: Cambio inmediato entre `3D Libre`, `2D Tiempo (Frontal)`, `2D Espectro (Lateral)` y `Vista Superior`.
@@ -145,7 +160,7 @@ Recursos del módulo:
 | :--- | :--- |
 | `Espacio` | Reproducir o pausar simulación |
 | `1`, `2`, `3`, `4` | Salto directo a los pasos 1 a 4 de Convolución |
-| `[` / `]` | Alternar módulo: Convolución $\to$ Fourier $\to$ CTFT $\to$ Laplace $\to$ Z |
+| `[` / `]` | Alternar módulo: Convolución $\to$ Convolución Discreta $\to$ Fourier $\to$ CTFT $\to$ Laplace $\to$ Z |
 | `Z` | Alternar modo pantalla completa / Zen |
 | `M` | Activar o desactivar sintetizador Web Audio |
 | `←` / `→` | Ajuste fino del parámetro de tiempo $t$ o frecuencia $\omega$ |

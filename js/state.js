@@ -182,6 +182,11 @@ export const state = {
   zR: 1.3,             // raio do corte circular |z| = r
   zCalculated: null,
 
+  // Convolução discreta
+  dconvPresetKey: 'rect_rect',
+  dconvN: 1,           // deslocamento n (inteiro) de h[n-k]
+  dconvCalculated: null,
+
   // Customização de Interface (ver apenas o que quer)
   visibleSections: initialVisibleSections,
   layers: initialLayers

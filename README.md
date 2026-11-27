@@ -128,6 +128,21 @@ Module features:
 
 ---
 
+### 6. Discrete Convolution (`#dconv`)
+
+The convolution sum, sample by sample:
+
+$$y[n] = x[n] * h[n] = \sum_{k=-\infty}^{+\infty} x[k]\, h[n-k]$$
+
+Module features:
+- **Four Stem Lanes**: $x[k]$, $h[n-k]$, the products $x[k]\,h[n-k]$ and $y[n]$ share the same $k$ axis, so $y[n]$ is born right under the origin of $h[n-k]$.
+- **Step by Step**: Change of variable $n \to k$, reversal $h[-k]$, shift $h[n-k]$ and summation, with the overlap band highlighted on the floor.
+- **The Sum Written Out**: For each $n$, the notebook lists the products being added, along with the length rule $L_y = L_x + L_h - 1$.
+- **Clickable $y[n]$ Table**: Each row shows the overlapping range of $k$ and takes the stage straight to that sample.
+- **Seven Examples, One Idea Each**: Rectangle with rectangle (triangle), rectangle with exponential, impulse (identity), delay, moving average, first difference and echo.
+
+---
+
 ## Interface and Display Systems
 
 - **Camera Projections**: Instant selection among `3D Free Orbit`, `2D Time (Front)`, `2D Spectrum (Lateral)`, and `Top Plan`.
@@ -145,7 +160,7 @@ Module features:
 | :--- | :--- |
 | `Space` | Play or pause simulation loop |
 | `1`, `2`, `3`, `4` | Direct jump to Convolution steps 1 through 4 |
-| `[` / `]` | Cycle modules: Convolution $\to$ Fourier $\to$ CTFT $\to$ Laplace $\to$ Z |
+| `[` / `]` | Cycle modules: Convolution $\to$ Discrete Convolution $\to$ Fourier $\to$ CTFT $\to$ Laplace $\to$ Z |
 | `Z` | Toggle Zen full-screen mode |
 | `M` | Toggle Web Audio synthesizer |
 | `←` / `→` | Incremental step of time parameter $t$ or frequency $\omega$ |
