@@ -2,7 +2,6 @@
 // PRESETS.JS — Casos Clássicos das Notas de Aula, Provas UFPA e Livro Lathi
 // ============================================================================
 
-import { exprToLatex, integrateSimpson } from './math-engine.js';
 
 export const BUILTIN_CONV_PRESETS = {
   ex8: {
@@ -206,7 +205,7 @@ export const BUILTIN_FOURIER_PRESETS = {
     id: 'full_wave',
     title: 'Retificada Onda Completa',
     titleEn: 'Full-Wave Rectified',
-    subtitle: '|sin(πt)| com período duplicado T₀ = 1',
+    subtitle: '|sin(πt)| com período reduzido à metade, T₀ = 1',
     subtitleEn: '|sin(πt)| with doubled period T₀ = 1',
     expr: 'abs(sin(pi*t)) * (u(t) - u(t-1.0))',
     T0: 1.0,

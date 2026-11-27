@@ -3,9 +3,8 @@
 // ============================================================================
 
 import { state } from './state.js';
-import { renderMath } from './math-engine.js';
-import { BUILTIN_CONV_PRESETS, BUILTIN_FOURIER_PRESETS } from './presets.js';
-import { compileSignalExpr, detectSupportAndRegions, integrateSimpson } from './math-engine.js';
+import { renderMath, compileSignalExpr, detectSupportAndRegions, makeConvolver } from './math-engine.js';
+import { BUILTIN_CONV_PRESETS } from './presets.js';
 
 let canvasContainer = null;
 let stageCanvas = null;
@@ -72,39 +71,38 @@ export function setCameraPreset(presetName) {
   }
 }
 
+// Compilar as expressões e detectar suportes custa ~5000 avaliações; como
+// getEffectiveSignals roda a cada frame, o resultado fica em cache por expressão.
+let customSignalCache = { key: null, value: null };
+
+function buildCustomSignals(base, exprX, exprH) {
+  const key = `${base.id}|${exprX}|${exprH}|${state.isCommuted}`;
+  if (customSignalCache.key === key) return customSignalCache.value;
+  const fnX = compileSignalExpr(exprX);
+  const fnH = compileSignalExpr(exprH);
+  const auto = detectSupportAndRegions(fnX, fnH, exprX, exprH, state.isCommuted);
+  const value = {
+    ...base,
+    exprX,
+    exprH,
+    fnX,
+    fnH,
+    supportX: auto.supportX,
+    supportH: auto.supportH,
+    conv: makeConvolver(fnX, fnH, auto.supportX, auto.supportH),
+    regions: auto.regions
+  };
+  customSignalCache = { key, value };
+  return value;
+}
+
 export function getEffectiveSignals() {
   let p = BUILTIN_CONV_PRESETS[state.presetKey];
   if (!p) {
     const foundCustom = state.customPresets.find(cp => cp.id === state.presetKey);
-    if (foundCustom) {
-      const fnX = compileSignalExpr(foundCustom.exprX);
-      const fnH = compileSignalExpr(foundCustom.exprH);
-      const auto = detectSupportAndRegions(fnX, fnH, foundCustom.exprX, foundCustom.exprH, state.isCommuted);
-      p = {
-        ...foundCustom,
-        fnX,
-        fnH,
-        supportX: auto.supportX,
-        supportH: auto.supportH,
-        conv: (tVal) => integrateSimpson(fnX, fnH, tVal),
-        regions: auto.regions
-      };
-    } else {
-      const fnX = compileSignalExpr(state.exprX);
-      const fnH = compileSignalExpr(state.exprH);
-      const auto = detectSupportAndRegions(fnX, fnH, state.exprX, state.exprH, state.isCommuted);
-      p = {
-        id: 'custom_live',
-        exprX: state.exprX,
-        exprH: state.exprH,
-        fnX,
-        fnH,
-        supportX: auto.supportX,
-        supportH: auto.supportH,
-        conv: (tVal) => integrateSimpson(fnX, fnH, tVal),
-        regions: auto.regions
-      };
-    }
+    p = foundCustom
+      ? buildCustomSignals(foundCustom, foundCustom.exprX, foundCustom.exprH)
+      : buildCustomSignals({ id: 'custom_live' }, state.exprX, state.exprH);
   }
 
   if (!state.isCommuted) {
@@ -1227,8 +1225,11 @@ export function renderCTFTScene3D(dt = 0.016) {
   // Preenchimento de área sob x(t)
   const timeArea = buildCurveAreaPolygon(timePts);
   if (timeArea.length > 2) {
-    draw3DPolygon(timeArea, 'rgba(56, 189, 248, 0.16)', null, 0);
+    draw3DPolygon(timeArea, pal.x1Fill, null, 0);
   }
+
+  // Modo foco: só x(t) fica em destaque; o restante da cena esmaece (como na série de Fourier)
+  if (isFocusActive) ctx3d.globalAlpha = 0.28;
 
   // 2.1 Sonda de Frequência Ativa (Passos 1 a 3): Produto x(t)*cos(w*t) no plano intermediário z = 2.2
   const W_SPAN = 16.0;
@@ -1256,7 +1257,7 @@ export function renderCTFTScene3D(dt = 0.016) {
   // Preenchimento sob o espectro de magnitude
   const magArea = buildCurveAreaPolygon(magPts);
   if (magArea.length > 2) {
-    draw3DPolygon(magArea, 'rgba(16, 185, 129, 0.18)', null, 0);
+    draw3DPolygon(magArea, pal.convFill, null, 0);
   }
 
   // 3.1 Espectro Contínuo de Fase ∠X(w) (escala [-pi, pi] -> [-0.88, 0.88] em z = Z_MAX - 0.75)

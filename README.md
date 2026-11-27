@@ -112,7 +112,7 @@ Key operational capabilities:
 | :--- | :--- |
 | `Space` | Play or pause simulation loop |
 | `1`, `2`, `3`, `4` | Direct jump to Convolution steps 1 through 4 |
-| `Tab` | Cycle modules: Convolution $\to$ Fourier $\to$ CTFT |
+| `[` / `]` | Cycle modules: Convolution $\to$ Fourier $\to$ CTFT |
 | `Z` | Toggle Zen full-screen mode |
 | `M` | Toggle Web Audio synthesizer |
 | `←` / `→` | Incremental step of time parameter $t$ or frequency $\omega$ |

@@ -4,9 +4,10 @@
 
 import { state } from './state.js';
 import { I18N } from './i18n.js';
-import { renderMath, latexToHtml, exprToLatex, formatSymbolic } from './math-engine.js';
+import { renderMath, latexToHtml, exprToLatex, formatSymbolic, isZeroRegion } from './math-engine.js';
 import { BUILTIN_CTFT_PRESETS } from './presets.js';
 import { getEffectiveSignals, updateScene3D } from './stage-3d.js';
+import { updateAudioSynth } from './audio.js';
 
 let handwritingTimer = null;
 const PEN_SVG = `<span class="pen-nib"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg></span>`;
@@ -249,12 +250,13 @@ function buildNotebookLinesConvolution(sig) {
   }
 
   // Step 4 — Template Oficial UFPA (Prof. Agostinho Castro / MA2)
-  const lowNum = Math.max(Number.isFinite(fA) ? fA : -99, Number.isFinite(mB) ? tNow - mB : -99);
-  const highNum = Math.min(Number.isFinite(fB) ? fB : 99, Number.isFinite(mA) ? tNow - mA : 99);
+  const lowNum = Math.max(Number.isFinite(fA) ? fA : -Infinity, Number.isFinite(mB) ? tNow - mB : -Infinity);
+  const highNum = Math.min(Number.isFinite(fB) ? fB : Infinity, Number.isFinite(mA) ? tNow - mA : Infinity);
   const hasOverlap = highNum > lowNum;
 
-  const lowStr = hasOverlap ? lowNum.toFixed(2) : '-';
-  const highStr = hasOverlap ? highNum.toFixed(2) : '-';
+  const fmtLimit = (v) => (Number.isFinite(v) ? v.toFixed(2) : (v < 0 ? '-\\infty' : '+\\infty'));
+  const lowStr = hasOverlap ? fmtLimit(lowNum) : '-';
+  const highStr = hasOverlap ? fmtLimit(highNum) : '-';
 
   const activeRegion =
     (sig.regions || []).find((r) => r.test(tNow)) ||
@@ -293,7 +295,7 @@ function buildNotebookLinesConvolution(sig) {
       if (diff > maxJump) maxJump = diff;
     }
   }
-  const tkStr = Number.isInteger(sampleTk) ? String(sampleTk) : sampleTk.toFixed(1);
+  const tkStr = String(Math.round(sampleTk * 100) / 100);
   let boundaryProof;
   if (critPts.length === 0) {
     boundaryProof = isEn
@@ -336,14 +338,26 @@ function buildNotebookLinesCTFT(calc) {
   const isEn = state.lang === 'en';
   const x0Val = calc.valX0 !== undefined ? calc.valX0 : calc.fnMag(0);
 
+  // Sinal customizado que não decai: os números são de uma versão truncada.
+  const truncNote = calc.isTruncated
+    ? [{
+        label: isEn ? '⚠ Truncated signal:' : '⚠ Sinal truncado:',
+        latex: isEn
+          ? '\\text{x(t) does not decay inside } |t| \\le 7 \\text{: energy and } X(\\omega) \\text{ refer to the truncated window.}'
+          : '\\text{x(t) não decai em } |t| \\le 7 \\text{: a energia e } X(\\omega) \\text{ são da janela truncada.}'
+      }]
+    : [];
+
   if (state.step === 1) {
-    return [
+    const lines = [
       {
         label: isEn ? '1.1 Continuous-Time Fourier Transform (CTFT) Definition:' : '1.1 Definição Canônica da Transformada de Fourier:',
         latex: 'X(\\omega) = \\mathcal{F}\\{x(t)\\} = \\int_{-\\infty}^{+\\infty} x(t) e^{-j\\omega t}\\,dt'
       },
       {
-        label: isEn ? '1.2 Time-Domain Signal x(t):' : '1.2 Sinal de Entrada no Domínio do Tempo x(t):',
+        label: calc.latexPeriodic
+          ? (isEn ? '1.2 Base Pulse x(t) (one period):' : '1.2 Pulso-Base x(t) (um período):')
+          : (isEn ? '1.2 Time-Domain Signal x(t):' : '1.2 Sinal de Entrada no Domínio do Tempo x(t):'),
         latex: `x(t) = ${calc.latexTime}`
       },
       {
@@ -351,6 +365,13 @@ function buildNotebookLinesCTFT(calc) {
         latex: `E_x = \\int_{-\\infty}^{+\\infty} |x(t)|^2\\,dt = ${calc.energyTime.toFixed(4)}\\text{ J}`
       }
     ];
+    if (calc.latexPeriodic) {
+      lines.push({
+        label: isEn ? '1.4 Periodic Extension Drawn on Stage:' : '1.4 Extensão Periódica Desenhada no Palco:',
+        latex: `x_{T_0}(t) = ${calc.latexPeriodic}`
+      });
+    }
+    return [...lines, ...truncNote];
   }
 
   if (state.step === 2) {
@@ -366,7 +387,8 @@ function buildNotebookLinesCTFT(calc) {
       {
         label: isEn ? '2.3 DC Level / Net Area X(0):' : '2.3 Nível Médio Contínuo / Área Líquida X(0):',
         latex: `X(0) = \\int_{-\\infty}^{+\\infty} x(t)\\,dt = ${x0Val.toFixed(4)}`
-      }
+      },
+      ...truncNote
     ];
   }
 
@@ -617,6 +639,7 @@ export function updateNotebookUI(animateHandwriting = false) {
 
           btn.addEventListener('click', () => {
             state.highlightedHarmonic = state.highlightedHarmonic === h.n ? null : h.n;
+            updateAudioSynth(); // toca só a harmônica isolada (ou volta ao sinal completo)
             updateNotebookUI(false);
             updateScene3D();
           });
@@ -640,7 +663,7 @@ export function updateNotebookUI(animateHandwriting = false) {
       const [mA, mB] = sig.supportMoving;
       const bothFinite = Number.isFinite(fA) && Number.isFinite(fB) && Number.isFinite(mA) && Number.isFinite(mB);
       const activeIndices = regionsList
-        .map((r, i) => (!r.latex.includes('y(t) = 0') ? i : -1))
+        .map((r, i) => (!isZeroRegion(r) ? i : -1))
         .filter((i) => i !== -1);
 
       regionsList.forEach((reg, idx) => {
@@ -650,7 +673,7 @@ export function updateNotebookUI(animateHandwriting = false) {
         btn.className = `region-row w-full text-left px-2 py-1.5 rounded-lg grid grid-cols-3 items-center gap-2 ui-control ${isCurrent ? 'active font-semibold' : ''}`;
 
         let regimeLabel = isEn ? 'Full Overlap' : 'Sobreposição Total';
-        if (reg.latex.includes('y(t) = 0')) {
+        if (isZeroRegion(reg)) {
           regimeLabel = idx === 0
             ? (isEn ? 'No Overlap (t < tin)' : 'Sem Sobreposição (t < tin)')
             : (isEn ? 'No Overlap (t > tout)' : 'Sem Sobreposição (t > tout)');

@@ -204,7 +204,10 @@ export function latexToExpr(latex) {
 
   // Insere multiplicação explícita onde há multiplicação implícita:
   // 1) Número seguido de letra ou '(' (ex: 2t -> 2*t, 2u(t) -> 2*u(t), 2(t-1) -> 2*(t-1))
-  s = s.replace(/(\d)\s*([a-zA-Z(])/g, '$1*$2');
+  //    Preserva notação científica (1e-3, 2.5E4): 'e' seguido de dígito não é a constante de Euler.
+  s = s.replace(/(\d)\s*([a-zA-Z(])/g, (m, d, c, off, str) => (
+    m.length === 2 && /^[eE][+-]?\d/.test(str.slice(off + 1)) ? m : `${d}*${c}`
+  ));
   // 2) ')' seguido de '(' ou letra ou número (ex: (t)(u(t)) -> (t)*(u(t)), e^(-t)u(t) -> e^(-t)*u(t))
   s = s.replace(/\)\s*(\(|[a-zA-Z0-9])/g, ')*$1');
   // 3) 'pi' ou 't' isolados seguidos de letra ou '(' (ex: pi t -> pi*t, t u(t) -> t*u(t), t(u(t)) -> t*(u(t)))
@@ -231,6 +234,11 @@ const SIGNAL_HELPERS = {
   }
 };
 
+const ALLOWED_IDENTIFIERS = new Set([
+  't', 'u', 'r', 'rect', 'tri', 'sinc', 'sincpi', 'sign', 'sgn', 'delta',
+  'sin', 'cos', 'exp', 'sqrt', 'abs', 'e'
+]);
+
 function buildSignalEvaluator(expr) {
   const raw = (expr || '0').trim();
   const clean = (raw.includes('\\') || raw.includes('{') || /\)\s*[a-zA-Z(]/.test(raw) || /\d\s*[a-zA-Z(]/.test(raw))
@@ -241,13 +249,23 @@ function buildSignalEvaluator(expr) {
   jsExpr = replaceBalancedCall(jsExpr, 'e^(', 'exp(', ')');
   jsExpr = jsExpr.replace(/e\^([a-zA-Z0-9_\\+-]+)/g, 'exp($1)');
 
-  let pGuard = 0;
-  while (jsExpr.includes('^') && pGuard++ < 8) {
-    const prev = jsExpr;
-    jsExpr = jsExpr.replace(/(\([^()]+\)|[a-zA-Z0-9_.]+)\s*\^\s*(\([^()]+\)|[a-zA-Z0-9_.]+)/g, 'Math.pow($1, $2)');
-    if (jsExpr === prev) break;
+  // Whitelist: a expressão vem do usuário (e do localStorage) e é compilada com new Function,
+  // então só passam números, operadores aritméticos e os identificadores conhecidos.
+  if (/[^\w\s+\-*/^().,]/.test(jsExpr)) {
+    throw new SyntaxError('Caractere não permitido na expressão');
   }
-  jsExpr = jsExpr.replace(/\^/g, '**');
+  const idents = jsExpr.match(/(?<!\w)[A-Za-z_$][\w$]*/g) || [];
+  for (const id of idents) {
+    if (!ALLOWED_IDENTIFIERS.has(id) && id.toLowerCase() !== 'pi') {
+      throw new ReferenceError(`Identificador não permitido: ${id}`);
+    }
+  }
+
+  // Potência: '^' vira '**'. Em JS '-t**2' é erro de sintaxe, então o menos unário
+  // vira '(-1)*', o que também preserva a convenção matemática -t^2 = -(t^2).
+  jsExpr = jsExpr.replace(/\s+/g, '');
+  jsExpr = jsExpr.replace(/(?<=^|[(,+\-/]|(?<!\*)\*)-/g, '(-1)*');
+  jsExpr = jsExpr.replace(/\^\(-1\)\*/g, '^-').replace(/\^/g, '**');
 
   jsExpr = jsExpr
     .replace(/\bpi\b/gi, 'Math.PI')
@@ -423,15 +441,22 @@ export function formatSymbolic(val) {
   const signStr = val < 0 ? '-' : '';
   const absVal = Math.abs(val);
 
-  // Testa frações simples p/q com q <= 24
-  for (let q = 1; q <= 24; q++) {
-    const p = Math.round(absVal * q);
-    if (Math.abs(absVal - p / q) < 1e-3) {
-      if (q === 1) return `${signStr}${p}`;
-      return `${signStr}\\frac{${p}}{${q}}`;
+  const tryRational = (maxQ) => {
+    for (let q = 1; q <= maxQ; q++) {
+      const p = Math.round(absVal * q);
+      if (p > 0 && Math.abs(absVal - p / q) < 1e-3) {
+        return q === 1 ? `${signStr}${p}` : `${signStr}\\frac{${p}}{${q}}`;
+      }
     }
-  }
+    return null;
+  };
 
+  // Frações de denominador pequeno (1/2, 2/3, 5/6...) têm prioridade
+  const simple = tryRational(6);
+  if (simple) return simple;
+
+  // Formas com pi vêm ANTES das frações de denominador grande:
+  // senão 2/pi vira 7/11 e 1/pi vira 7/22.
   // Testa múltiplos de pi: (p/q) * pi
   const overPi = absVal / Math.PI;
   for (let q = 1; q <= 12; q++) {
@@ -452,6 +477,10 @@ export function formatSymbolic(val) {
       return `${signStr}\\frac{${p}}{${q}\\pi}`;
     }
   }
+
+  // Demais frações p/q com q <= 24
+  const rational = tryRational(24);
+  if (rational) return rational;
 
   return val.toFixed(3);
 }
@@ -488,15 +517,44 @@ function buildConvolutionIntegralLatex(f1, f2, m1, m2, fSym = 'x', mSym = 'h') {
   return `y(t) = \\int_{${lowExpr}}^{${highExpr}} ${fSym}(\\tau)${mSym}(t-\\tau)\\,d\\tau`;
 }
 
+/**
+ * Região de convolução com resultado identicamente nulo ("y(t) = 0 ...").
+ * Um ramo como "y(t) = 0.5t" não é nulo.
+ */
+export function isZeroRegion(region) {
+  return /^y\(t\)\s*=\s*0(?![.\d\w])/.test((region && region.latex) || '');
+}
+
+/**
+ * Cria y(t) = (x * h)(t) com os limites de integração derivados dos suportes:
+ * x(τ) ≠ 0 em [x1, x2] e h(t-τ) ≠ 0 em [t-h2, t-h1]. Sem isso a janela fixa
+ * cortava sinais deslocados para longe da origem.
+ */
+export function makeConvolver(fnX, fnH, supportX, supportH) {
+  const [x1, x2] = supportX;
+  const [h1, h2] = supportH;
+  const PAD = 0.06; // o suporte detectado é arredondado para a grade de 0.05
+  const SPAN = 18;  // janela usada no lado ilimitado
+  return (tVal) => {
+    let lo = Math.max(x1, tVal - h2) - PAD;
+    let hi = Math.min(x2, tVal - h1) + PAD;
+    if (!Number.isFinite(lo) && !Number.isFinite(hi)) return integrateSimpson(fnX, fnH, tVal);
+    if (!Number.isFinite(lo)) lo = hi - SPAN;
+    if (!Number.isFinite(hi)) hi = lo + SPAN;
+    if (hi <= lo) return 0;
+    return integrateSimpson(fnX, fnH, tVal, lo, hi);
+  };
+}
+
 // Detector Automático de Suporte e Regiões Críticas de Convolução
 export function detectSupportAndRegions(fnX, fnH, exprX = '', exprH = '', isCommuted = false) {
   const scanSupport = (fn) => {
     let a = null;
     let b = null;
     const step = 0.025;
-    for (let t = -10.0; t <= 10.0; t += step) {
+    for (let t = -30.0; t <= 30.0; t += step) {
       if (Math.abs(fn(t)) > 1e-3) {
-        const snap = Math.round(t * 20) / 20;
+        const snap = (Math.round(t * 20) / 20) || 0; // "|| 0" normaliza -0
         if (a === null) a = snap;
         b = snap;
       }
@@ -504,8 +562,8 @@ export function detectSupportAndRegions(fnX, fnH, exprX = '', exprH = '', isComm
     if (a === null) {
       return { support: [0, 0], isEmpty: true };
     }
-    const leftInf = Math.abs(fn(-15.5)) > 0 && Math.abs(fn(-22.0)) > 0;
-    const rightInf = Math.abs(fn(15.5)) > 0 && Math.abs(fn(22.0)) > 0;
+    const leftInf = Math.abs(fn(-31.5)) > 0 && Math.abs(fn(-37.0)) > 0;
+    const rightInf = Math.abs(fn(31.5)) > 0 && Math.abs(fn(37.0)) > 0;
     return {
       support: [leftInf ? -Infinity : a, rightInf ? Infinity : b],
       isEmpty: false
@@ -781,6 +839,8 @@ export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decay
   // 2. Transformada Contínua X(w) = Mag * e^(j*Phase)
   let fnMag = (w) => 0;
   let fnPhase = (w) => 0;
+  let latexPeriodic = null; // só no preset 'bridge': extensão periódica do pulso-base
+  let isTruncated = false;  // sinal customizado que não decai dentro da janela de integração
 
   if (presetKey === 'custom_ctft' && customExpr) {
     const valRes = validateSignalExpression(customExpr);
@@ -804,6 +864,11 @@ export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decay
       calcEnergy += xv * xv * dt;
     }
     energyTime = calcEnergy > 1e-6 ? calcEnergy : (valRes.energy || 0);
+    // Se o sinal ainda é relevante na borda da janela (u(t), cos(t), e^{-0.2t}u(t)...),
+    // a energia e X(ω) exibidos são de uma versão truncada, não do sinal real.
+    const edgeTol = 0.02 * (valRes.maxAmp || 1);
+    isTruncated = Math.abs(fnTime(tStart)) > edgeTol || Math.abs(fnTime(tEnd)) > edgeTol
+      || Math.abs(fnTime(tStart - 3)) > edgeTol || Math.abs(fnTime(tEnd + 3)) > edgeTol;
 
     const evalCustomX = (w) => {
       if (tEnd <= tStart + 1e-4) return { re: 0, im: 0 };
@@ -873,7 +938,12 @@ export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decay
       return Math.abs(wrapped) <= tau / 2 ? 1.0 : 0;
     };
     timeSupport = [-tau / 2, tau / 2];
+    // x(t) é o pulso-base (um período); energia, X(ω) e X(0) referem-se a ele.
+    // O trem periódico desenhado é x_{T0}(t), cujas raias T0·Dn amostram X(ω).
     latexTime = tau === 1.0
+      ? '\\operatorname{rect}(t)'
+      : `\\operatorname{rect}\\left(\\frac{t}{${tau.toFixed(1)}}\\right)`;
+    latexPeriodic = tau === 1.0
       ? '\\sum_{k} \\operatorname{rect}(t - k T_0)'
       : `\\sum_{k} \\operatorname{rect}\\left(\\frac{t - k T_0}{${tau.toFixed(1)}}\\right)`;
     latexCTFT = tau === 1.0
@@ -938,7 +1008,18 @@ export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decay
     const m = fnMag(wVal);
     energyFreqSum += m * m;
   }
-  const energyFreq = (energyFreqSum * dw) / (2 * Math.PI);
+  // Cauda |ω| > wMax: para espectros que caem como K/ω² (rect, exp) ela vale 2·K/wMax.
+  // K é a média de |X|²·ω² na última fatia da malha (a média absorve a oscilação do sinc).
+  let tailK = 0;
+  let tailCount = 0;
+  for (let i = Math.floor(numWSamples * 0.95); i < numWSamples; i++) {
+    const wVal = -wMax + (i + 0.5) * dw;
+    const m = fnMag(wVal);
+    tailK += m * m * wVal * wVal;
+    tailCount++;
+  }
+  const tailEnergy = tailCount > 0 ? (2 * (tailK / tailCount)) / wMax : 0;
+  const energyFreq = (energyFreqSum * dw + tailEnergy) / (2 * Math.PI);
 
   return {
     presetKey,
@@ -950,6 +1031,8 @@ export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decay
     fnTime,
     timeSupport,
     latexTime,
+    latexPeriodic,
+    isTruncated,
     latexCTFT,
     energyTime,
     energyFreq,
