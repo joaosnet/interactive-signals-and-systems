@@ -175,6 +175,13 @@ export const state = {
   laplaceSigma: 0.5,   // posição do corte vertical Re{s} = σ
   laplaceCalculated: null,
 
+  // Transformada Z
+  zPresetKey: 'exp',
+  zA: 0.8,             // base da exponencial / raio dos polos
+  zW0: 0.8,            // frequência Ω₀ (rad/amostra) dos pares senoidais
+  zR: 1.3,             // raio do corte circular |z| = r
+  zCalculated: null,
+
   // Customização de Interface (ver apenas o que quer)
   visibleSections: initialVisibleSections,
   layers: initialLayers

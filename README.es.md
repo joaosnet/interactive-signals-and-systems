@@ -111,6 +111,23 @@ Recursos del módulo:
 
 ---
 
+### 5. Transformada Z (`#z`)
+
+La contraparte discreta de Laplace, en el plano complejo $z$:
+
+$$X(z) = \sum_{n=-\infty}^{+\infty} x[n]\, z^{-n}, \qquad z = r\,e^{j\Omega}$$
+
+Recursos del módulo:
+- **Plano $z$ en el Piso del Escenario**: $\operatorname{Re}\{z\}$ en horizontal e $\operatorname{Im}\{z\}$ en profundidad, con polos ($\times$), ceros ($\circ$), el círculo unitario y la región de convergencia (ROC) sombreada como un anillo.
+- **Muestras de $x[n]$**: La pared del fondo muestra la secuencia muestra a muestra y, en el corte, la secuencia $x[n]\,r^{-n}$ que realmente se suma.
+- **Superficie $|X(z)|$ en Malla Polar**: La magnitud se convierte en altura; los polos aparecen como "mástiles de carpa".
+- **Corte Circular en $|z| = r$**: La curva $|X(r e^{j\Omega})|$ es la DTFT de $x[n]\,r^{-n}$, enrollada alrededor del círculo (por eso es periódica en $\Omega$). Fuera de la ROC el corte se vuelve rojo y discontinuo porque la suma diverge.
+- **Puente con la DTFT y Estabilidad**: En el paso 4 el corte es el propio círculo unitario. Deslizar el polo a través de él muestra cuándo la DTFT deja de existir y el sistema deja de ser estable.
+- **Misma $X(z)$, Secuencias Distintas**: Los pares causal y anticausal comparten $\frac{z}{z-a}$ y solo difieren en la ROC.
+- **Pares Notables**: Impulso, escalón, rampa, exponenciales causal, anticausal y bilateral, seno y coseno causales y amortiguados.
+
+---
+
 ## Fundamentos Didácticos y de Interfaz
 
 - **Proyecciones de Cámara**: Cambio inmediato entre `3D Libre`, `2D Tiempo (Frontal)`, `2D Espectro (Lateral)` y `Vista Superior`.
@@ -128,7 +145,7 @@ Recursos del módulo:
 | :--- | :--- |
 | `Espacio` | Reproducir o pausar simulación |
 | `1`, `2`, `3`, `4` | Salto directo a los pasos 1 a 4 de Convolución |
-| `[` / `]` | Alternar módulo: Convolución $\to$ Fourier $\to$ CTFT $\to$ Laplace |
+| `[` / `]` | Alternar módulo: Convolución $\to$ Fourier $\to$ CTFT $\to$ Laplace $\to$ Z |
 | `Z` | Alternar modo pantalla completa / Zen |
 | `M` | Activar o desactivar sintetizador Web Audio |
 | `←` / `→` | Ajuste fino del parámetro de tiempo $t$ o frecuencia $\omega$ |
