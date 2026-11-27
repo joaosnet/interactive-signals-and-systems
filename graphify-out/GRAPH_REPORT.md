@@ -1,17 +1,17 @@
 # Graph Report - Sinais e Sistemas forma interativa  (2026-11-27)
 
 ## Corpus Check
-- 55 files · ~86,150 words
+- 58 files · ~92,064 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 6 file(s) not represented in the graph (top: (none) 2, .css 2, .xml 1)
 
 ## Summary
-- 588 nodes · 1353 edges · 22 communities
+- 622 nodes · 1473 edges · 22 communities
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 16 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `49841b6f`
+- Built from commit: `17c2278d`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -20,7 +20,7 @@
 - Sinais e Sistemas de Forma Interativa
 - z.js
 - ui.js
-- Sinais e Sistemas de Forma Interativa
+- Interactive Signals and Systems
 - dft.js
 - manifest.json
 - math-engine.js
@@ -49,19 +49,19 @@
 7. `state` - 18 edges
 8. `activeModule()` - 18 edges
 9. `setHUDExpressionLive()` - 16 edges
-10. `applyLanguage()` - 15 edges
+10. `buildLaplaceCustom()` - 15 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `rect()` --calls--> `calculateCTFTData()`  [EXTRACTED]
-  tests/ctft-extras.test.js → js/math-engine.js
 - `expo()` --calls--> `calculateCTFTData()`  [EXTRACTED]
+  tests/ctft-extras.test.js → js/math-engine.js
+- `rect()` --calls--> `calculateCTFTData()`  [EXTRACTED]
   tests/ctft-extras.test.js → js/math-engine.js
 - `tri()` --calls--> `calculateCTFTData()`  [EXTRACTED]
   tests/ctft-extras.test.js → js/math-engine.js
 - `assertMatchesSum()` --calls--> `numericZ()`  [EXTRACTED]
   tests/z-engine.test.js → js/z-engine.js
 - `renderGallery()` --calls--> `renderMath()`  [EXTRACTED]
-  js/modules/dconv.js → js/math-engine.js
+  js/modules/laplace.js → js/math-engine.js
 
 ## Import Cycles
 - None detected.
@@ -77,19 +77,19 @@ Cohesion: 0.06
 Nodes (35): 1. Feedback pelo site, 2. Corrigir pelo navegador, 3. Rodar o projeto no seu computador, Como contribuir, Convenções, Cuidados com fórmulas, Dúvidas, Onde fica cada coisa (+27 more)
 
 ### Community 2 - "z.js"
-Cohesion: 0.11
-Nodes (32): auxSlider(), calc(), CAUSALITY_TEXT, circlePts(), complexLatex(), cutRadius(), floorPt(), height() (+24 more)
+Cohesion: 0.06
+Nodes (48): AUX_SLIDER_ROW, bind(), syncAuxSlider(), auxSlider(), calc(), CAUSALITY_TEXT, circlePts(), complexLatex() (+40 more)
 
 ### Community 3 - "ui.js"
-Cohesion: 0.09
-Nodes (66): animationLoop(), lastFrameTime, initAudioContext(), killOscillator(), stopAudio(), toggleAudio(), updateAudioSynth(), exprToLatex() (+58 more)
+Cohesion: 0.08
+Nodes (71): animationLoop(), lastFrameTime, initAudioContext(), killOscillator(), stopAudio(), toggleAudio(), updateAudioSynth(), calculateFourierData() (+63 more)
 
-### Community 4 - "Sinais e Sistemas de Forma Interativa"
+### Community 4 - "Interactive Signals and Systems"
 Cohesion: 0.11
-Nodes (18): 1. Convolução Contínua (`#convolution`), 2. Analisador de Séries de Fourier (`#fourier`), 3. Transformada de Fourier Contínua (`#ctft`), 4. Transformada de Laplace (`#laplace`), 5. Transformada Z (`#z`), 6. Convolução Discreta (`#dconv`), 7. Transformada de Fourier de Tempo Discreto (`#dtft`), 8. DFT e FFT (`#dft`) (+10 more)
+Nodes (18): 1. Continuous Convolution (`#convolution`), 2. Fourier Series Analyzer (`#fourier`), 3. Continuous-Time Fourier Transform (`#ctft`), 4. Laplace Transform (`#laplace`), 5. Z-Transform (`#z`), 6. Discrete Convolution (`#dconv`), 7. Discrete-Time Fourier Transform (`#dtft`), 8. DFT and FFT (`#dft`) (+10 more)
 
 ### Community 5 - "dft.js"
-Cohesion: 0.14
+Cohesion: 0.15
 Nodes (23): bitReverse(), calculateDFTData(), DFT_MAX_BITS, DFT_MIN_BITS, DFT_PRESETS, DFT_WINDOW_KEYS, DFT_WINDOWS, dftNaive() (+15 more)
 
 ### Community 6 - "manifest.json"
@@ -105,15 +105,15 @@ Cohesion: 0.22
 Nodes (5): __dirname, __filename, MIME_TYPES, send(), server
 
 ### Community 9 - "laplace.js"
-Cohesion: 0.05
-Nodes (49): calculateLaplaceData(), expArg(), fmt(), LAPLACE_PRESETS, numericLaplace(), rocLatex(), sPlus(), AUX_SLIDER_ROW (+41 more)
+Cohesion: 0.07
+Nodes (55): calculateLaplaceData(), expArg(), fmt(), LAPLACE_PRESETS, numericLaplace(), rocLatex(), sPlus(), auxSlider() (+47 more)
 
 ### Community 10 - "package.json"
 Cohesion: 0.29
 Nodes (6): name, scripts, start, test, type, version
 
 ### Community 11 - "dtft.js"
-Cohesion: 0.09
+Cohesion: 0.08
 Nodes (34): calculateDTFTData(), customPreset(), DTFT_PRESETS, fmt(), numericDTFT(), spectralEnergy(), wrapOmega(), cached() (+26 more)
 
 ### Community 12 - "dconv.js"
@@ -129,8 +129,8 @@ Cohesion: 0.11
 Nodes (36): buildContext(), buildIssueUrl(), buildPayload(), buildTitle(), CONTRIBUTING_URL, DEFAULT_BRANCH, editUrl(), FEEDBACK_ENDPOINT (+28 more)
 
 ### Community 15 - "math-engine.js"
-Cohesion: 0.13
-Nodes (28): ALLOWED_IDENTIFIERS, buildConvolutionIntegralLatex(), buildSignalEvaluator(), calculateFourierData(), compileSignalExpr(), detectSupportAndRegions(), extractBraceGroup(), fmtBound() (+20 more)
+Cohesion: 0.11
+Nodes (31): ALLOWED_IDENTIFIERS, buildConvolutionIntegralLatex(), buildSignalEvaluator(), compileSignalExpr(), detectSupportAndRegions(), extractBraceGroup(), fmtBound(), formatSymbolic() (+23 more)
 
 ### Community 17 - "bug.yml"
 Cohesion: 0.14
@@ -160,16 +160,16 @@ Nodes (14): I18N, el(), headerText(), init(), keyOf(), refreshPage(), setNoteboo
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `renderMath()` connect `stage-3d.js` to `z.js`, `ui.js`, `dft.js`, `math-engine.js`, `laplace.js`, `dtft.js`, `dconv.js`, `math-engine.js`, `notebook-sheet.js`?**
-  _High betweenness centrality (0.054) - this node is a cross-community bridge._
+  _High betweenness centrality (0.047) - this node is a cross-community bridge._
 - **Should `stage-3d.js` be split into smaller, more focused modules?**
   _Cohesion score 0.14623655913978495 - nodes in this community are weakly interconnected._
-- **Why does `state` connect `laplace.js` to `stage-3d.js`, `z.js`, `ui.js`, `dft.js`, `math-engine.js`, `dtft.js`, `dconv.js`, `feedback.js`, `math-engine.js`, `notebook-sheet.js`?**
-  _High betweenness centrality (0.048) - this node is a cross-community bridge._
+- **Why does `state` connect `z.js` to `stage-3d.js`, `ui.js`, `dft.js`, `math-engine.js`, `laplace.js`, `dtft.js`, `dconv.js`, `feedback.js`, `math-engine.js`, `notebook-sheet.js`?**
+  _High betweenness centrality (0.043) - this node is a cross-community bridge._
 - **Should `Sinais e Sistemas de Forma Interativa` be split into smaller, more focused modules?**
   _Cohesion score 0.05641025641025641 - nodes in this community are weakly interconnected._
-- **Why does `activeModule()` connect `ui.js` to `laplace.js`, `feedback.js`, `notebook-sheet.js`?**
+- **Why does `registerModule()` connect `math-engine.js` to `z.js`, `ui.js`, `dft.js`, `math-engine.js`, `laplace.js`, `dtft.js`, `dconv.js`?**
   _High betweenness centrality (0.010) - this node is a cross-community bridge._
 - **Should `z.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.1066066066066066 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06233766233766234 - nodes in this community are weakly interconnected._
 - **Should `ui.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.09225225225225225 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08139876579488686 - nodes in this community are weakly interconnected._

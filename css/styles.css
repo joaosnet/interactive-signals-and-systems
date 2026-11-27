@@ -1284,3 +1284,45 @@ body.a11y-reduce-motion .animate-pulse { animation: none; }
 .seq-editor-apply:focus-visible { outline: 2px solid var(--c-x1); outline-offset: 2px; }
 .seq-editor-status { font-size: 0.6875rem; font-weight: 600; }
 .seq-editor-status.is-error { color: var(--c-x2); }
+
+/* ---- Editor de polos e zeros na galeria (js/modules/pz-editor.js) ---- */
+.pz-editor { display: flex; flex-direction: column; gap: 0.4rem; cursor: default; }
+.pz-editor.is-active { border-color: var(--c-conv); }
+.pz-tools { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.pz-tool {
+  min-height: 1.9rem; padding: 0.15rem 0.55rem; border-radius: 0.45rem; font-size: 0.6875rem; font-weight: 600;
+  border: 1px solid var(--border-strong); color: var(--text-primary); cursor: pointer;
+}
+.pz-tool:hover { background: var(--bg-hover); }
+.pz-tool[aria-pressed="true"] { background: var(--accent-bg); border-color: var(--c-conv); color: var(--c-conv); }
+.pz-tool:focus-visible, .pz-select:focus-visible, .pz-gain:focus-visible { outline: 2px solid var(--c-x1); outline-offset: 2px; }
+.pz-reset { margin-left: auto; color: var(--text-secondary); }
+.pz-hint, .pz-readout { font-size: 0.625rem; color: var(--text-secondary); line-height: 1.35; }
+.pz-readout { font-family: 'JetBrains Mono', monospace; }
+.pz-plane {
+  width: 100%; max-width: 17rem; aspect-ratio: 1; align-self: center; touch-action: none; user-select: none;
+  border: 1px solid var(--border-strong); border-radius: 0.5rem; background: var(--bg-card);
+}
+.pz-plane[data-tool="pole"], .pz-plane[data-tool="zero"] { cursor: crosshair; }
+.pz-grid { stroke: var(--border-subtle); stroke-width: 0.6; }
+.pz-axis { stroke: var(--text-secondary); stroke-width: 1; }
+.pz-unit { fill: none; stroke: var(--text-secondary); stroke-width: 1; stroke-dasharray: 4 3; }
+.pz-axis-label { fill: var(--text-secondary); font-size: 9px; font-family: 'JetBrains Mono', monospace; }
+.pz-roc { fill: var(--c-conv); opacity: 0.18; }
+.pz-mark { cursor: grab; outline: none; }
+.pz-plane[data-tool="erase"] .pz-mark { cursor: not-allowed; }
+.pz-hit { fill: transparent; stroke: none; }
+.pz-pole line { stroke: var(--c-x2); stroke-width: 2.6; stroke-linecap: round; }
+.pz-zero circle:not(.pz-hit) { fill: var(--bg-card); stroke: var(--c-x1); stroke-width: 2.4; }
+.pz-mark:focus-visible .pz-hit { stroke: var(--c-x1); stroke-width: 2; }
+.pz-fields { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; }
+.pz-label { font-size: 0.6875rem; font-weight: 600; }
+.pz-select, .pz-gain {
+  min-height: 1.9rem; padding: 0.15rem 0.4rem; border-radius: 0.45rem; font-size: 0.6875rem;
+  border: 1px solid var(--border-strong); background: var(--bg-card); color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+}
+.pz-select { flex: 1 1 7rem; min-width: 0; }
+.pz-gain { width: 4rem; text-align: center; }
+.pz-status { font-size: 0.6875rem; font-weight: 600; min-height: 1rem; }
+.pz-status.is-error { color: var(--c-x2); }

@@ -11,6 +11,8 @@
 // Sem dependência de DOM: pode ser testado com node --test.
 // ============================================================================
 
+import { buildZCustom } from './pz-engine.js';
+
 const EPS = 1e-9;
 
 const fmt = (v, digits = 2) => {
@@ -189,9 +191,12 @@ function rocLatex(roc) {
  * @returns dados do par: polos, zeros, ROC, x[n], X(z) avaliável em qualquer z,
  *          e as conclusões que dependem da ROC (existência da DTFT, estabilidade).
  */
-export function calculateZData(presetKey = 'exp', aVal = 0.8, w0Val = 0.8) {
-  const key = Z_PRESETS[presetKey] ? presetKey : 'exp';
-  const preset = Z_PRESETS[key];
+export function calculateZData(presetKey = 'exp', aVal = 0.8, w0Val = 0.8, custom = null) {
+  // Sequência montada pelo aluno (polos, zeros, ganho e ROC): se for inválida, cai no par padrão
+  const customResult = presetKey === 'custom' && custom ? buildZCustom(custom) : null;
+  const isCustom = Boolean(customResult?.ok);
+  const key = isCustom ? 'custom' : (Z_PRESETS[presetKey] ? presetKey : 'exp');
+  const preset = isCustom ? { params: {}, build: () => customResult.built } : Z_PRESETS[key];
   const clampParam = (name, value, fallback) => {
     const spec = preset.params[name];
     if (!spec) return fallback;
@@ -242,6 +247,7 @@ export function calculateZData(presetKey = 'exp', aVal = 0.8, w0Val = 0.8) {
 
   return {
     presetKey: key,
+    rocIndex: isCustom ? customResult.rocIndex : null,
     a,
     w0,
     hasParamA: Boolean(preset.params.a),

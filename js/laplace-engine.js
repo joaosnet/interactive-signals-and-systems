@@ -10,6 +10,8 @@
 // Sem dependência de DOM: pode ser testado com node --test.
 // ============================================================================
 
+import { buildLaplaceCustom } from './pz-engine.js';
+
 const fmt = (v, digits = 1) => {
   const r = Math.round(v * 10 ** digits) / 10 ** digits;
   return Object.is(r, -0) ? '0' : String(r);
@@ -160,9 +162,12 @@ function rocLatex(roc) {
  * @returns dados do par: polos, zeros, ROC, x(t), X(s) avaliável em qualquer s,
  *          e as conclusões que dependem da ROC (existência de Fourier, estabilidade).
  */
-export function calculateLaplaceData(presetKey = 'exp', aVal = 1, w0Val = 2) {
-  const key = LAPLACE_PRESETS[presetKey] ? presetKey : 'exp';
-  const preset = LAPLACE_PRESETS[key];
+export function calculateLaplaceData(presetKey = 'exp', aVal = 1, w0Val = 2, custom = null) {
+  // Sinal montado pelo aluno (polos, zeros, ganho e ROC): se for inválido, cai no par padrão
+  const customResult = presetKey === 'custom' && custom ? buildLaplaceCustom(custom) : null;
+  const isCustom = Boolean(customResult?.ok);
+  const key = isCustom ? 'custom' : (LAPLACE_PRESETS[presetKey] ? presetKey : 'exp');
+  const preset = isCustom ? { params: {}, build: () => customResult.built } : LAPLACE_PRESETS[key];
   const clampParam = (name, value, fallback) => {
     const spec = preset.params[name];
     if (!spec) return fallback;
@@ -211,6 +216,7 @@ export function calculateLaplaceData(presetKey = 'exp', aVal = 1, w0Val = 2) {
 
   return {
     presetKey: key,
+    rocIndex: isCustom ? customResult.rocIndex : null,
     a,
     w0,
     hasParamA: Boolean(preset.params.a),

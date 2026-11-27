@@ -177,6 +177,9 @@ export const state = {
   laplaceW0: 2.0,      // frequência de oscilação dos pares senoidais
   laplaceSigma: 0.5,   // posição do corte vertical Re{s} = σ
   laplaceCalculated: null,
+  // Sinal montado pelo aluno: `Draft` é o que está no editor; `Custom` é a última montagem válida
+  laplaceCustom: { poles: [{ re: -1, im: 2 }], zeros: [], gain: 1, rocIndex: null },
+  laplaceDraft: { poles: [{ re: -1, im: 2 }], zeros: [], gain: 1, rocIndex: null },
 
   // Transformada Z
   zPresetKey: 'exp',
@@ -184,6 +187,8 @@ export const state = {
   zW0: 0.8,            // frequência Ω₀ (rad/amostra) dos pares senoidais
   zR: 1.3,             // raio do corte circular |z| = r
   zCalculated: null,
+  zCustom: { poles: [{ re: 0.6, im: 0.5 }], zeros: [{ re: 0, im: 0 }], gain: 1, rocIndex: null },
+  zDraft: { poles: [{ re: 0.6, im: 0.5 }], zeros: [{ re: 0, im: 0 }], gain: 1, rocIndex: null },
 
   // Convolução discreta
   dconvPresetKey: 'rect_rect',

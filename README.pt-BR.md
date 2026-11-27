@@ -111,6 +111,7 @@ Recursos do módulo:
 - **Ponte com Fourier e Estabilidade**: No passo 4 o corte é o próprio eixo $j\omega$. Deslizar o polo através dele mostra quando a Transformada de Fourier deixa de existir e o sistema deixa de ser estável.
 - **Mesma $X(s)$, Sinais Diferentes**: Os pares causal e anticausal compartilham $\frac{1}{s+a}$ e diferem apenas na ROC.
 - **Pares Notáveis**: Degrau, rampa, exponenciais causal, anticausal e bilateral, seno e cosseno causais e amortecidos.
+- **Monte o Seu Sinal**: Um mini-plano na galeria permite adicionar e arrastar polos e zeros e escolher a ROC; o palco e o caderno acompanham ao vivo.
 
 ---
 
