@@ -9,6 +9,17 @@ let masterGain = null;
 let currentOsc = null;
 let stopTimer = null;
 let synthTimer = null;
+let fadingOsc = null; // oscilador em fade-out aguardando o stopTimer
+
+function killOscillator(osc) {
+  if (!osc) return;
+  try {
+    osc.stop();
+    osc.disconnect();
+  } catch (e) {
+    // já parado/desconectado
+  }
+}
 
 export function initAudioContext() {
   if (!audioCtx) {
@@ -42,24 +53,24 @@ export function stopAudio() {
     synthTimer = null;
   }
   if (stopTimer) {
+    // Chamadas em sequência rápida (slider de N, digitação): o oscilador que estava
+    // em fade-out é parado na hora, senão ficaria órfão tocando para sempre.
     clearTimeout(stopTimer);
     stopTimer = null;
+    killOscillator(fadingOsc);
+    fadingOsc = null;
   }
   if (currentOsc) {
-    const oscToStop = currentOsc;
+    fadingOsc = currentOsc;
     currentOsc = null;
-    try {
-      if (masterGain && audioCtx) {
-        masterGain.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.05);
-      }
-      stopTimer = setTimeout(() => {
-        try {
-          oscToStop.stop();
-          oscToStop.disconnect();
-        } catch (e) {}
-        stopTimer = null;
-      }, 80);
-    } catch (e) {}
+    if (masterGain && audioCtx) {
+      masterGain.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.05);
+    }
+    stopTimer = setTimeout(() => {
+      killOscillator(fadingOsc);
+      fadingOsc = null;
+      stopTimer = null;
+    }, 80);
   }
 }
 

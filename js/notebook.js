@@ -7,6 +7,7 @@ import { I18N } from './i18n.js';
 import { renderMath, latexToHtml, exprToLatex, formatSymbolic, isZeroRegion } from './math-engine.js';
 import { BUILTIN_CTFT_PRESETS } from './presets.js';
 import { getEffectiveSignals, updateScene3D } from './stage-3d.js';
+import { updateAudioSynth } from './audio.js';
 
 let handwritingTimer = null;
 const PEN_SVG = `<span class="pen-nib"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg></span>`;
@@ -638,6 +639,7 @@ export function updateNotebookUI(animateHandwriting = false) {
 
           btn.addEventListener('click', () => {
             state.highlightedHarmonic = state.highlightedHarmonic === h.n ? null : h.n;
+            updateAudioSynth(); // toca só a harmônica isolada (ou volta ao sinal completo)
             updateNotebookUI(false);
             updateScene3D();
           });

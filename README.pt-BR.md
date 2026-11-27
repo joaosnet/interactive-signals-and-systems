@@ -112,7 +112,7 @@ Recursos do módulo:
 | :--- | :--- |
 | `Espaço` | Reproduzir ou pausar o loop de simulação |
 | `1`, `2`, `3`, `4` | Salto direto para as etapas 1 a 4 da Convolução |
-| `Tab` | Alternar módulo: Convolução $\to$ Fourier $\to$ CTFT |
+| `[` / `]` | Alternar módulo: Convolução $\to$ Fourier $\to$ CTFT |
 | `Z` | Alternar tela cheia / Modo Zen |
 | `M` | Ligar ou desligar sintetizador de áudio Web Audio |
 | `←` / `→` | Ajuste incremental do parâmetro de tempo $t$ ou frequência $\omega$ |

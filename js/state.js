@@ -24,23 +24,28 @@ const initialTheme = (function () {
   return 'projector';
 })();
 
-let initialCustomPresets = [];
-try {
-  const saved = localStorage.getItem('conv3d_custom_presets_v2');
-  if (saved) initialCustomPresets = JSON.parse(saved);
-} catch (e) {}
+// Chave de localStorage dos presets salvos de cada módulo.
+const PRESET_STORAGE = {
+  convolution: { key: 'conv3d_custom_presets_v2', field: 'customPresets' },
+  fourier: { key: 'fourier3d_custom_presets_v1', field: 'fourierCustomPresets' },
+  ctft: { key: 'ctft3d_custom_presets_v1', field: 'ctftCustomPresets' }
+};
 
-let initialFourierCustomPresets = [];
-try {
-  const saved = localStorage.getItem('fourier3d_custom_presets_v1');
-  if (saved) initialFourierCustomPresets = JSON.parse(saved);
-} catch (e) {}
+// Lê a lista salva e descarta o que não for um preset bem formado
+// (valor corrompido ou editado à mão não pode quebrar a galeria).
+function loadCustomPresets(storageKey) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((p) => p && typeof p === 'object' && typeof p.id === 'string');
+  } catch (e) {
+    return [];
+  }
+}
 
-let initialCTFTCustomPresets = [];
-try {
-  const saved = localStorage.getItem('ctft3d_custom_presets_v1');
-  if (saved) initialCTFTCustomPresets = JSON.parse(saved);
-} catch (e) {}
+const initialCustomPresets = loadCustomPresets(PRESET_STORAGE.convolution.key);
+const initialFourierCustomPresets = loadCustomPresets(PRESET_STORAGE.fourier.key);
+const initialCTFTCustomPresets = loadCustomPresets(PRESET_STORAGE.ctft.key);
 
 let initialVisibleSections = {
   notebook: true,
@@ -87,9 +92,17 @@ const initialA11yContrast = (function () {
   }
 })();
 
+const storedMotionPref = (function () {
+  try {
+    return localStorage.getItem('conv3d_a11y_motion');
+  } catch (e) {
+    return null;
+  }
+})();
+
 const initialA11yMotion = (function () {
   try {
-    const saved = localStorage.getItem('conv3d_a11y_motion');
+    const saved = storedMotionPref;
     if (saved !== null) return saved === 'true';
     if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return true;
@@ -126,6 +139,7 @@ export const state = {
   fontScale: initialFontScale,
   a11yHighContrast: initialA11yContrast,
   a11yReduceMotion: initialA11yMotion,
+  a11yMotionUserSet: storedMotionPref !== null,
 
   // Sinais de Convolução
   presetKey: 'ex8',
@@ -167,36 +181,34 @@ export function saveStatePreferences() {
     localStorage.setItem('conv3d_layers', JSON.stringify(state.layers));
     localStorage.setItem('conv3d_font_scale', state.fontScale.toFixed(1));
     localStorage.setItem('conv3d_a11y_contrast', String(state.a11yHighContrast));
-    localStorage.setItem('conv3d_a11y_motion', String(state.a11yReduceMotion));
-  } catch (e) {}
+    if (state.a11yMotionUserSet) {
+      localStorage.setItem('conv3d_a11y_motion', String(state.a11yReduceMotion));
+    }
+  } catch (e) {
+    console.warn('Não foi possível salvar as preferências:', e);
+  }
+}
+
+function persistCustomPresets(moduleType) {
+  const { key, field } = PRESET_STORAGE[moduleType] || PRESET_STORAGE.convolution;
+  try {
+    localStorage.setItem(key, JSON.stringify(state[field]));
+    return true;
+  } catch (e) {
+    // Cota cheia ou armazenamento bloqueado: o preset vale só até recarregar a página.
+    console.warn('Não foi possível salvar os presets:', e);
+    return false;
+  }
 }
 
 export function saveCustomPreset(preset, moduleType = 'convolution') {
-  try {
-    if (moduleType === 'fourier') {
-      state.fourierCustomPresets.push(preset);
-      localStorage.setItem('fourier3d_custom_presets_v1', JSON.stringify(state.fourierCustomPresets));
-    } else if (moduleType === 'ctft') {
-      state.ctftCustomPresets.push(preset);
-      localStorage.setItem('ctft3d_custom_presets_v1', JSON.stringify(state.ctftCustomPresets));
-    } else {
-      state.customPresets.push(preset);
-      localStorage.setItem('conv3d_custom_presets_v2', JSON.stringify(state.customPresets));
-    }
-  } catch (e) {}
+  const { field } = PRESET_STORAGE[moduleType] || PRESET_STORAGE.convolution;
+  state[field].push(preset);
+  return persistCustomPresets(moduleType);
 }
 
 export function removeCustomPreset(presetId, moduleType = 'convolution') {
-  try {
-    if (moduleType === 'fourier') {
-      state.fourierCustomPresets = state.fourierCustomPresets.filter(p => p.id !== presetId);
-      localStorage.setItem('fourier3d_custom_presets_v1', JSON.stringify(state.fourierCustomPresets));
-    } else if (moduleType === 'ctft') {
-      state.ctftCustomPresets = state.ctftCustomPresets.filter(p => p.id !== presetId);
-      localStorage.setItem('ctft3d_custom_presets_v1', JSON.stringify(state.ctftCustomPresets));
-    } else {
-      state.customPresets = state.customPresets.filter(p => p.id !== presetId);
-      localStorage.setItem('conv3d_custom_presets_v2', JSON.stringify(state.customPresets));
-    }
-  } catch (e) {}
+  const { field } = PRESET_STORAGE[moduleType] || PRESET_STORAGE.convolution;
+  state[field] = state[field].filter(p => p.id !== presetId);
+  return persistCustomPresets(moduleType);
 }

@@ -20,7 +20,18 @@ function getCTFTCalcKey(key = state.ctftPresetKey) {
   return BUILTIN_CTFT_PRESETS[key] ? key : 'custom_ctft';
 }
 
-function recomputeCTFT() {
+// Escapa texto vindo de presets salvos (localStorage) antes de interpolar em innerHTML.
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (ch) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+  ));
+}
+
+// state.t é o tempo t na convolução e na série de Fourier e a frequência ω na CTFT.
+// Cada módulo guarda o seu valor para não herdar o do módulo anterior.
+const moduleSliderValue = { convolution: 1.5, fourier: 0, ctft: 0 };
+
+export function recomputeCTFT() {
   state.ctftCalculated = calculateCTFTData(
     getCTFTCalcKey(state.ctftPresetKey),
     state.ctftPulseWidth,
@@ -56,6 +67,13 @@ export function selectCTFTPreset(key) {
 }
 
 export function switchModule(moduleName) {
+  if (state.activeModule !== moduleName) {
+    moduleSliderValue[state.activeModule] = state.t;
+    state.t = moduleSliderValue[moduleName] ?? 0;
+    // O editor de sinal pertence ao módulo de origem: fecha antes de trocar
+    // para não gravar a expressão antiga no módulo novo.
+    if (state.focusHUDActive) closeSignalHUD();
+  }
   state.activeModule = moduleName;
   const isFourier = moduleName === 'fourier';
   const isCTFT = moduleName === 'ctft';
@@ -121,10 +139,11 @@ export function switchModule(moduleName) {
   } else if (isFourier) {
     state.fourierCalculated = calculateFourierData(state.fourierExpr, state.fourierT0, state.fourierN);
     if (state.activeMathField) setActiveMathField('fourier');
-    updateAudioSynth();
   } else {
     if (state.activeMathField) setActiveMathField('x');
   }
+  // Fora do módulo de Fourier isto silencia o oscilador (o botão de áudio fica oculto).
+  updateAudioSynth();
 
   // Sincroniza HUD de Modo Foco se estiver aberto
   if (state.focusHUDActive) {
@@ -347,6 +366,8 @@ export function toggleHighContrast(forceVal = null) {
 }
 
 export function toggleReduceMotion(forceVal = null) {
+  // Só uma escolha explícita do usuário é persistida; na inicialização vale a preferência do sistema.
+  if (forceVal === null) state.a11yMotionUserSet = true;
   state.a11yReduceMotion = forceVal !== null ? forceVal : !state.a11yReduceMotion;
   document.body.classList.toggle('a11y-reduce-motion', state.a11yReduceMotion);
 
@@ -660,13 +681,13 @@ export function renderPresetGallery() {
 
       card.innerHTML = `
         <div class="flex items-center justify-between gap-1">
-          <span class="text-[11px] font-bold truncate text-primary">${pTitle}</span>
+          <span class="text-[11px] font-bold truncate text-primary">${esc(pTitle)}</span>
           <div class="flex items-center gap-1">
             <span class="text-[9px] font-mono-code font-semibold" style="color: var(--c-conv)">CTFT</span>
             ${p.isCustom ? `<button type="button" class="del-preset text-[10px] px-1 rounded hover:bg-red-500/20 text-rose-400" aria-label="${dict.delPreset}">✕</button>` : ''}
           </div>
         </div>
-        <div class="text-[10px] text-mut truncate">${pSub}</div>
+        <div class="text-[10px] text-mut truncate">${esc(pSub)}</div>
         <div class="preset-math text-[10px] pt-0.5 truncate"></div>
       `;
       const mathPreview = card.querySelector('.preset-math');
@@ -735,13 +756,13 @@ export function renderPresetGallery() {
 
       card.innerHTML = `
         <div class="flex items-center justify-between gap-1">
-          <span class="text-[11px] font-bold truncate text-primary">${pTitle}</span>
+          <span class="text-[11px] font-bold truncate text-primary">${esc(pTitle)}</span>
           <div class="flex items-center gap-1">
-            <span class="text-[9px] font-mono-code font-semibold" style="color: var(--c-x1)">T₀=${p.T0}</span>
-            ${p.isCustom ? `<button type="button" class="del-preset text-[10px] px-1 rounded hover:bg-red-500/20 text-rose-400">✕</button>` : ''}
+            <span class="text-[9px] font-mono-code font-semibold" style="color: var(--c-x1)">T₀=${esc(p.T0)}</span>
+            ${p.isCustom ? `<button type="button" class="del-preset text-[10px] px-1 rounded hover:bg-red-500/20 text-rose-400" aria-label="${dict.delPreset}">✕</button>` : ''}
           </div>
         </div>
-        <div class="text-[10px] text-mut truncate">${pSub}</div>
+        <div class="text-[10px] text-mut truncate">${esc(pSub)}</div>
         <div class="preset-math text-[10px] pt-0.5 truncate"></div>
       `;
       const mathPreview = card.querySelector('.preset-math');
@@ -845,10 +866,10 @@ export function renderPresetGallery() {
 
     card.innerHTML = `
       <div class="flex items-center justify-between gap-1">
-        <span class="text-[11px] font-bold truncate">${bTitle}</span>
-        ${p.isCustom ? `<button type="button" class="del-preset text-[10px] px-1 rounded hover:bg-red-500/20 text-rose-400">✕</button>` : ''}
+        <span class="text-[11px] font-bold truncate">${esc(bTitle)}</span>
+        ${p.isCustom ? `<button type="button" class="del-preset text-[10px] px-1 rounded hover:bg-red-500/20 text-rose-400" aria-label="${dict.delPreset}">✕</button>` : ''}
       </div>
-      <div class="text-[10px] text-mut truncate">${bSub}</div>
+      <div class="text-[10px] text-mut truncate">${esc(bSub)}</div>
       <div class="preset-math text-[10px] pt-0.5 truncate"></div>
     `;
 
@@ -1638,6 +1659,8 @@ export function pinSignalHUD() {
   const target = state.focusHUDTarget || (state.activeModule === 'ctft' ? 'ctft' : (state.activeModule === 'fourier' ? 'fourier' : 'x'));
   const freeInput = document.getElementById('hud-free-input');
   const chosenExpr = (freeInput && freeInput.value.trim()) ? freeInput.value.trim() : 'rect(t)';
+  // Expressão inválida não é aplicada pelo HUD; salvar aqui gravaria a expressão antiga.
+  if (!validateSignalExpression(chosenExpr).valid) return;
   setHUDExpressionLive(chosenExpr, true);
 
   if (target === 'ctft') {
@@ -1669,6 +1692,7 @@ export function pinSignalHUD() {
       N: state.fourierN,
       isCustom: true
     }, 'fourier');
+    state.fourierPresetKey = id;
   } else {
     const id = 'custom_' + Date.now();
     const count = state.customPresets.length + 1;
@@ -1682,6 +1706,7 @@ export function pinSignalHUD() {
       exprH: state.exprH,
       isCustom: true
     }, 'convolution');
+    state.presetKey = id;
   }
 
   syncInputsWithPreset();
@@ -2563,10 +2588,15 @@ export function initUIEventListeners() {
         applySignalHUD();
         return;
       }
+      // Com o editor de sinal aberto, os atalhos globais ficam desligados.
+      return;
     }
 
     const tag = (e.target?.tagName || '').toUpperCase();
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'MATH-FIELD') return;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'MATH-FIELD' || tag === 'SELECT') return;
+    if (e.ctrlKey || e.metaKey) return;
+    // Espaço/Enter em um botão focado devem ativar o botão, não o atalho global.
+    const onControl = tag === 'BUTTON' || tag === 'A' || e.target?.getAttribute?.('role') === 'button';
 
     // Atalhos de Acessibilidade (A11y)
     if (e.altKey) {
@@ -2598,13 +2628,17 @@ export function initUIEventListeners() {
     }
 
     if (e.key === ' ') {
+      if (onControl) return;
       e.preventDefault();
       state.isPlaying = !state.isPlaying;
       updatePlayButtonUI();
-    } else if (e.key === 'Tab') {
+    } else if (e.key === ']' || e.key === '[') {
+      // Tab fica livre para a navegação por teclado; '[' e ']' percorrem os módulos.
       e.preventDefault();
-      const nextMod = state.activeModule === 'convolution' ? 'fourier' : (state.activeModule === 'fourier' ? 'ctft' : 'convolution');
-      switchModule(nextMod);
+      const order = ['convolution', 'fourier', 'ctft'];
+      const idx = order.indexOf(state.activeModule);
+      const delta = e.key === ']' ? 1 : order.length - 1;
+      switchModule(order[(idx + delta) % order.length]);
     } else if (['1', '2', '3', '4'].includes(e.key)) {
       setStep(Number(e.key), true);
     } else if (e.key.toLowerCase() === 'z') {

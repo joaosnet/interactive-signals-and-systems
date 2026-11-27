@@ -112,7 +112,7 @@ Capacidades operativas:
 | :--- | :--- |
 | `Espacio` | Reproducir o pausar simulación |
 | `1`, `2`, `3`, `4` | Salto directo a los pasos 1 a 4 de Convolución |
-| `Tab` | Alternar módulo: Convolución $\to$ Fourier $\to$ CTFT |
+| `[` / `]` | Alternar módulo: Convolución $\to$ Fourier $\to$ CTFT |
 | `Z` | Alternar modo pantalla completa / Zen |
 | `M` | Activar o desactivar sintetizador Web Audio |
 | `←` / `→` | Ajuste fino del parámetro de tiempo $t$ o frecuencia $\omega$ |

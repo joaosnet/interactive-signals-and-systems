@@ -4,10 +4,10 @@
 
 import { state } from './state.js';
 import { init3DStage, updateScene3D, getEffectiveSignals } from './stage-3d.js';
-import { calculateCTFTData } from './math-engine.js';
 import { updateNotebookUI } from './notebook.js';
 import {
   switchModule,
+  recomputeCTFT,
   setStep,
   setFontScale,
   toggleHighContrast,
@@ -57,13 +57,8 @@ function animationLoop(now = performance.now()) {
         if (state.ctftBridgeT0 > 22.0) {
           state.ctftBridgeT0 = 2.0;
         }
-        state.ctftCalculated = calculateCTFTData(
-          state.ctftPresetKey,
-          state.ctftPulseWidth,
-          state.ctftDecay,
-          state.ctftBridgeT0,
-          state.ctftExpr
-        );
+        // recomputeCTFT resolve presets salvos pelo usuário para 'custom_ctft'
+        recomputeCTFT();
         if (tSlider) tSlider.value = state.ctftBridgeT0;
       } else {
         // Sonda de frequência ativa varrendo w de -12 a +12 rad/s
