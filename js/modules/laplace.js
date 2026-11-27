@@ -14,6 +14,8 @@ import { renderMath } from '../math-engine.js';
 import { LAPLACE_PRESETS, calculateLaplaceData } from '../laplace-engine.js';
 import { registerModule } from './registry.js';
 import { AUX_SLIDER_ROW, syncAuxSlider } from './aux-slider.js';
+import { renderPZEditor } from './pz-editor.js';
+import { buildLaplaceCustom, laplaceRocOptions } from '../pz-engine.js';
 
 // ---- Geometria do palco -----------------------------------------------------
 const S_MAX = 4.0;      // σ ∈ [-4, 4] → x
@@ -34,7 +36,8 @@ const SIGMA = { min: -3.5, max: 3.5 };
 let sweepDir = 1;
 
 export function recomputeLaplace() {
-  state.laplaceCalculated = calculateLaplaceData(state.laplacePresetKey, state.laplaceA, state.laplaceW0);
+  state.laplaceCalculated = calculateLaplaceData(state.laplacePresetKey, state.laplaceA, state.laplaceW0, state.laplaceCustom);
+  state.laplacePresetKey = state.laplaceCalculated.presetKey;
   // O motor limita os parâmetros à faixa do preset; o estado acompanha.
   if (state.laplaceCalculated.hasParamA) state.laplaceA = state.laplaceCalculated.a;
   if (state.laplaceCalculated.hasParamW0) state.laplaceW0 = state.laplaceCalculated.w0;
@@ -46,6 +49,11 @@ function calc() {
 }
 
 export function selectLaplacePreset(key) {
+  if (key === 'custom') {
+    state.laplacePresetKey = key;
+    recomputeLaplace();
+    return;
+  }
   const preset = LAPLACE_PRESETS[key];
   if (!preset) return;
   state.laplacePresetKey = key;
@@ -443,8 +451,42 @@ const notebook = {
   }
 };
 
+
+// ---- Editor de polos e zeros --------------------------------------------------
+const clone = (c) => ({ poles: c.poles.map((p) => ({ ...p })), zeros: c.zeros.map((p) => ({ ...p })), gain: c.gain, rocIndex: c.rocIndex });
+let pendingGalleryRefresh = false;
+
+/** O editor chama isto a cada edição do rascunho; só montagens válidas vão para o palco. */
+function onDraftChange(draft, { final, dryRun }, refresh) {
+  const result = buildLaplaceCustom(draft);
+  const info = { ok: result.ok, error: result.error, regions: result.regions || laplaceRocOptions(draft.poles), rocIndex: result.rocIndex ?? 0 };
+  // Montagem inválida: a lista de ROCs continua mostrando a escolha do rascunho
+  if (!result.ok) info.rocIndex = Math.max(0, Math.min(info.regions.length - 1, draft.rocIndex ?? info.regions.length - 1));
+  if (dryRun || !result.ok) return info;
+  const first = state.laplacePresetKey !== 'custom';
+  state.laplaceCustom = clone(draft);
+  state.laplacePresetKey = 'custom';
+  recomputeLaplace();
+  if (first) pendingGalleryRefresh = true;
+  if (final && pendingGalleryRefresh) {
+    // Primeira edição: a galeria inteira é redesenhada para marcar o editor como "em uso"
+    pendingGalleryRefresh = false;
+    refresh();
+  } else {
+    // Durante o arrasto só o caderno e a cena são atualizados (redesenhar a galeria soltaria o ponteiro)
+    import('../notebook.js').then((m) => m.updateNotebookUI(false));
+    import('../stage-3d.js').then((m) => m.updateScene3D());
+  }
+  return info;
+}
+
 // ---- Galeria ----------------------------------------------------------------
 function renderGallery(gallery, isEn, refresh) {
+  renderPZEditor(gallery, {
+    kind: 's', isEn, active: state.laplacePresetKey === 'custom', draft: state.laplaceDraft,
+    onChange: (draft, flags) => onDraftChange(draft, flags, refresh)
+  });
+
   Object.entries(LAPLACE_PRESETS).forEach(([key, preset]) => {
     const isActive = state.laplacePresetKey === key;
     const data = isActive ? calc() : calculateLaplaceData(key, preset.params.a?.def, preset.params.w0?.def);

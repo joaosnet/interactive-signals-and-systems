@@ -15,6 +15,8 @@ import { renderMath } from '../math-engine.js';
 import { Z_PRESETS, calculateZData } from '../z-engine.js';
 import { registerModule } from './registry.js';
 import { AUX_SLIDER_ROW, syncAuxSlider } from './aux-slider.js';
+import { renderPZEditor } from './pz-editor.js';
+import { buildZCustom, zRocOptions } from '../pz-engine.js';
 
 // ---- Geometria do palco -----------------------------------------------------
 const K = 1.5;          // unidades de cena por unidade do plano z
@@ -39,7 +41,8 @@ const RADIUS = { min: 0.2, max: 2.1 };
 let sweepDir = 1;
 
 export function recomputeZ() {
-  state.zCalculated = calculateZData(state.zPresetKey, state.zA, state.zW0);
+  state.zCalculated = calculateZData(state.zPresetKey, state.zA, state.zW0, state.zCustom);
+  state.zPresetKey = state.zCalculated.presetKey;
   // O motor limita os parâmetros à faixa do preset; o estado acompanha.
   if (state.zCalculated.hasParamA) state.zA = state.zCalculated.a;
   if (state.zCalculated.hasParamW0) state.zW0 = state.zCalculated.w0;
@@ -51,6 +54,11 @@ function calc() {
 }
 
 export function selectZPreset(key) {
+  if (key === 'custom') {
+    state.zPresetKey = key;
+    recomputeZ();
+    return;
+  }
   const preset = Z_PRESETS[key];
   if (!preset) return;
   state.zPresetKey = key;
@@ -481,8 +489,42 @@ const notebook = {
   }
 };
 
+
+// ---- Editor de polos e zeros --------------------------------------------------
+const clone = (c) => ({ poles: c.poles.map((p) => ({ ...p })), zeros: c.zeros.map((p) => ({ ...p })), gain: c.gain, rocIndex: c.rocIndex });
+let pendingGalleryRefresh = false;
+
+/** O editor chama isto a cada edição do rascunho; só montagens válidas vão para o palco. */
+function onDraftChange(draft, { final, dryRun }, refresh) {
+  const result = buildZCustom(draft);
+  const info = { ok: result.ok, error: result.error, regions: result.regions || zRocOptions(draft.poles), rocIndex: result.rocIndex ?? 0 };
+  // Montagem inválida: a lista de ROCs continua mostrando a escolha do rascunho
+  if (!result.ok) info.rocIndex = Math.max(0, Math.min(info.regions.length - 1, draft.rocIndex ?? info.regions.length - 1));
+  if (dryRun || !result.ok) return info;
+  const first = state.zPresetKey !== 'custom';
+  state.zCustom = clone(draft);
+  state.zPresetKey = 'custom';
+  recomputeZ();
+  if (first) pendingGalleryRefresh = true;
+  if (final && pendingGalleryRefresh) {
+    // Primeira edição: a galeria inteira é redesenhada para marcar o editor como "em uso"
+    pendingGalleryRefresh = false;
+    refresh();
+  } else {
+    // Durante o arrasto só o caderno e a cena são atualizados (redesenhar a galeria soltaria o ponteiro)
+    import('../notebook.js').then((m) => m.updateNotebookUI(false));
+    import('../stage-3d.js').then((m) => m.updateScene3D());
+  }
+  return info;
+}
+
 // ---- Galeria ----------------------------------------------------------------
 function renderGallery(gallery, isEn, refresh) {
+  renderPZEditor(gallery, {
+    kind: 'z', isEn, active: state.zPresetKey === 'custom', draft: state.zDraft,
+    onChange: (draft, flags) => onDraftChange(draft, flags, refresh)
+  });
+
   Object.entries(Z_PRESETS).forEach(([key, preset]) => {
     const isActive = state.zPresetKey === key;
     const data = isActive ? calc() : calculateZData(key, preset.params.a?.def, preset.params.w0?.def);

@@ -111,6 +111,7 @@ Module features:
 - **Bridge to Fourier and Stability**: In step 4 the cut is the $j\omega$ axis itself. Sliding the pole across it shows when the Fourier Transform stops existing and the system stops being stable.
 - **Same $X(s)$, Different Signals**: The causal and anticausal pairs share $\frac{1}{s+a}$ and differ only in the ROC.
 - **Notable Pairs**: Step, ramp, causal, anticausal and two-sided exponentials, causal and damped sine and cosine.
+- **Build Your Own Signal**: A mini-plane in the gallery lets you add and drag poles and zeros and pick the ROC; the stage and the notebook follow live.
 
 ---
 
