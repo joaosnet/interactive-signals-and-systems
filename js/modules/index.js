@@ -3,5 +3,6 @@
 import './convolution.js';
 import './fourier.js';
 import './ctft.js';
+import './laplace.js';
 
 export * from './registry.js';

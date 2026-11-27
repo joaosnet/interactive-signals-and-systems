@@ -8,6 +8,7 @@ import { renderMath, latexToHtml, exprToLatex, formatSymbolic, isZeroRegion } fr
 import { BUILTIN_CTFT_PRESETS } from './presets.js';
 import { getEffectiveSignals, updateScene3D } from './stage-3d.js';
 import { updateAudioSynth } from './audio.js';
+import { getModule } from './modules/registry.js';
 
 let handwritingTimer = null;
 const PEN_SVG = `<span class="pen-nib"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg></span>`;
@@ -443,11 +444,18 @@ export function updateNotebookUI(animateHandwriting = false) {
   const isFourier = state.activeModule === 'fourier';
   const isCTFT = state.activeModule === 'ctft';
   const isEn = state.lang === 'en';
+  // Módulos plugáveis trazem o próprio caderno: { metric(isEn), lines(isEn), table(container, isEn) }
+  const custom = getModule(state.activeModule)?.notebook || null;
 
   // 1. Barra de Métricas Instantâneas
   const metricsEl = document.getElementById('live-step-metrics');
   if (metricsEl) {
-    if (isCTFT) {
+    if (custom) {
+      const m = custom.metric(isEn);
+      metricsEl.innerHTML = '<span class="font-semibold text-sec"></span><span></span>';
+      metricsEl.firstChild.textContent = m.label;
+      metricsEl.lastChild.innerHTML = latexToHtml(m.latex);
+    } else if (isCTFT) {
       const calc = state.ctftCalculated;
       if (calc) {
         const x0Val = calc.valX0 !== undefined ? calc.valX0 : calc.fnMag(0);
@@ -502,7 +510,9 @@ export function updateNotebookUI(animateHandwriting = false) {
   // 2. Linhas do Caderno
   const container = document.getElementById('notebook-lines');
   if (container) {
-    const lines = isCTFT
+    const lines = custom
+      ? custom.lines(isEn)
+      : isCTFT
       ? buildNotebookLinesCTFT(state.ctftCalculated)
       : (isFourier
         ? buildNotebookLinesFourier(state.fourierCalculated)
@@ -574,7 +584,9 @@ export function updateNotebookUI(animateHandwriting = false) {
   const regContainer = document.getElementById('regions-table');
   if (regContainer) {
     regContainer.innerHTML = '';
-    if (isCTFT) {
+    if (custom) {
+      custom.table(regContainer, isEn);
+    } else if (isCTFT) {
       // Header UFPA da Tabela de Transformadas Notáveis
       const tableHeader = document.createElement('div');
       tableHeader.className = 'grid grid-cols-3 gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[10px] font-bold text-sec uppercase tracking-wider mb-1';
