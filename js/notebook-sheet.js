@@ -52,7 +52,10 @@ function snapToRule(row) {
   row.style.minHeight = '';
   // offsetHeight está em px de layout; getBoundingClientRect viria multiplicado pelo zoom da interface
   const h = row.offsetHeight;
-  row.style.minHeight = `${Math.max(1, Math.ceil((h - 1) / RULE)) * RULE}px`;
+  // A pauta é mais apertada no celular: o valor vem do CSS (--rule), não de uma constante
+  const paper = row.closest('.sheet-paper');
+  const rule = (paper && parseFloat(getComputedStyle(paper).getPropertyValue('--rule'))) || RULE;
+  row.style.minHeight = `${Math.max(1, Math.ceil((h - 1) / rule)) * rule}px`;
 }
 
 /**
