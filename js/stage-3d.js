@@ -429,21 +429,14 @@ export function updateScene3D(dt = 0.016) {
 
   const mod = getModule(state.activeModule);
   Object.assign(camOrbit.target, (mod && mod.cameraTarget) || DEFAULT_CAMERA_TARGET);
-  // Módulos que trazem a própria cena desenham com a API `scene` (ver fim do arquivo).
-  if (mod && mod.renderScene) {
-    mod.renderScene(scene, dt);
-    return;
-  }
+  // Cada módulo desenha a própria cena: os novos com a API `scene` (fim do arquivo),
+  // os três originais com os renderizadores abaixo.
+  if (mod && mod.renderScene) mod.renderScene(scene, dt);
+}
 
-  if (state.activeModule === 'ctft') {
-    renderCTFTScene3D(dt);
-    return;
-  }
-  if (state.activeModule === 'fourier') {
-    renderFourierScene3D(dt);
-    return;
-  }
-
+// Renderizador da Cena 3D de Convolução Contínua (superfície, fatias e produto)
+export function renderConvolutionScene3D(dt = 0.016) {
+  if (!ctx3d || !stageCanvas) return;
   const sig = getEffectiveSignals();
   const pal = getThemePalette();
 

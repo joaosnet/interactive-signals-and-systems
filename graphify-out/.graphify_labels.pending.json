@@ -1,9 +1,9 @@
 {
   "0": "stage-3d.js",
-  "1": "Sinais e Sistemas de Forma Interativa",
+  "1": "Como contribuir",
   "2": "z.js",
-  "3": "ui.js",
-  "4": "Interactive Signals and Systems",
+  "3": "events.js",
+  "4": "Core Modules",
   "5": "dft.js",
   "6": "manifest.json",
   "7": "math-engine.js",
@@ -14,13 +14,17 @@
   "12": "dconv.js",
   "13": "state.js",
   "14": "feedback.js",
-  "15": "math-engine.js",
+  "15": "notebook.js",
   "16": "Sinais e Sistemas de Forma Interativa",
   "17": "bug.yml",
   "18": "conteudo.yml",
   "19": "body",
   "20": "contact_links",
   "21": "PULL_REQUEST_TEMPLATE.md",
-  "22": "notebook-sheet.js",
-  "23": "a11y.js"
+  "22": "Interactive Signals and Systems",
+  "23": "a11y.js",
+  "24": "Módulos Principales",
+  "25": "Señales y Sistemas de Forma Interactiva",
+  "26": "Worker de feedback (envio sem conta)",
+  "27": "README.md"
 }

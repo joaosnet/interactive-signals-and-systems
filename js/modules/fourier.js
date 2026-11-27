@@ -5,6 +5,9 @@
 import { state } from '../state.js';
 import { calculateFourierData } from '../math-engine.js';
 import { registerModule } from './registry.js';
+import { renderFourierScene3D } from '../stage-3d.js';
+import { fourierNotebookLines, fourierNotebookMetric, fourierNotebookTable } from '../notebook.js';
+import { renderFourierGallery } from '../ui.js';
 
 const RANGE = { min: -4.0, max: 4.0 };
 
@@ -18,6 +21,15 @@ export const fourierModule = registerModule({
   i18n: { title: 'modFourierTitle', sub: 'modFourierSub', stepPrefix: 'stepFourier', regionsTitle: 'regionsFourierTitle' },
   zenLabel: '∑ Cₙ',
   controls: ['fourier-slider-row', 'btn-audio-toggle', 'fourier-form-selector'],
+
+  // Cena, caderno e galeria vivem em stage-3d.js, notebook.js e ui.js
+  renderScene: (scene, dt) => renderFourierScene3D(dt),
+  notebook: {
+    lines: () => fourierNotebookLines(),
+    renderMetric: (el, isEn) => fourierNotebookMetric(el, isEn),
+    table: (container, isEn) => fourierNotebookTable(container, isEn)
+  },
+  renderGallery: (gallery, isEn) => renderFourierGallery(gallery, isEn),
   hudTargets: ['fourier'],
   defaultHudTarget: 'fourier',
   defaultSliderValue: 0,

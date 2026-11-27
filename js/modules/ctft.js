@@ -16,6 +16,9 @@ import {
   CTFT_MODE_SPECS, applyCTFTProperty, clampModeValue, bandEnergyFraction
 } from '../ctft-extras.js';
 import { registerModule } from './registry.js';
+import { renderCTFTScene3D } from '../stage-3d.js';
+import { ctftNotebookLines, ctftNotebookMetric, ctftNotebookTable } from '../notebook.js';
+import { renderCTFTGallery } from '../ui.js';
 
 export function isCTFTDecayPreset(key = state.ctftPresetKey) {
   return key === 'exp' || key === 'bilateral_exp';
@@ -262,6 +265,15 @@ export const ctftModule = registerModule({
   i18n: { title: 'modCTFTTitle', sub: 'modCTFTSub', stepPrefix: 'stepCTFT', regionsTitle: 'regionsCTFTTitle' },
   zenLabel: 'X(ω)',
   controls: ['ctft-mode-selector'],
+
+  // Cena, caderno e galeria vivem em stage-3d.js, notebook.js e ui.js
+  renderScene: (scene, dt) => renderCTFTScene3D(dt),
+  notebook: {
+    lines: () => ctftNotebookLines(),
+    renderMetric: (el, isEn) => ctftNotebookMetric(el, isEn),
+    table: (container, isEn) => ctftNotebookTable(container, isEn)
+  },
+  renderGallery: (gallery, isEn) => renderCTFTGallery(gallery, isEn),
   hudTargets: ['ctft'],
   defaultHudTarget: 'ctft',
   defaultSliderValue: 0,
