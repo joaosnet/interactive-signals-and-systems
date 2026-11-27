@@ -47,15 +47,30 @@ function el(tag, attrs = {}, children = []) {
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** Arredonda a altura da linha para um múltiplo da pauta, para a escrita "sentar" nas linhas. */
+const SNAP_SLACK = 4; // até quantos px uma fórmula pode "invadir" a pauta de baixo sem pular para a próxima
+
+/**
+ * Faz a linha ocupar um número inteiro de pautas, para a escrita "sentar" nelas.
+ * O título e o rótulo já têm a altura da pauta (line-height); quem varia é a
+ * fórmula. Ela ganha uma margem inferior, positiva ou negativa, que completa a
+ * altura até o múltiplo: assim uma fórmula 1 px mais alta que a pauta não
+ * empurra o resto da folha nem gasta uma pauta inteira a mais.
+ */
 function snapToRule(row) {
-  row.style.minHeight = '';
-  // offsetHeight está em px de layout; getBoundingClientRect viria multiplicado pelo zoom da interface
-  const h = row.offsetHeight;
-  // A pauta é mais apertada no celular: o valor vem do CSS (--rule), não de uma constante
+  const formula = row.querySelector('.sheet-formula');
+  if (!formula) return;
+  formula.style.marginBottom = '';
   const paper = row.closest('.sheet-paper');
-  const rule = (paper && parseFloat(getComputedStyle(paper).getPropertyValue('--rule'))) || RULE;
-  row.style.minHeight = `${Math.max(1, Math.ceil((h - 1) / rule)) * rule}px`;
+  if (!paper || paper.offsetHeight === 0 || formula.offsetHeight === 0) return; // folha oculta: reencaixa quando voltar
+  // A altura precisa ser fracionária (offsetHeight arredonda e o erro de meio pixel se acumula
+  // linha a linha). getBoundingClientRect dá a fração, mas vem multiplicado pelo zoom da
+  // interface; a razão entre as duas medidas da folha inteira desfaz esse zoom.
+  const zoom = paper.getBoundingClientRect().height / paper.offsetHeight || 1;
+  const h = formula.getBoundingClientRect().height / zoom;
+  // A pauta é mais apertada no celular: o valor vem do CSS (--rule), não de uma constante
+  const rule = parseFloat(getComputedStyle(paper).getPropertyValue('--rule')) || RULE;
+  const rules = Math.max(1, Math.ceil((h - SNAP_SLACK) / rule));
+  formula.style.marginBottom = `${rules * rule - h}px`;
 }
 
 /**
