@@ -7,7 +7,7 @@
 Interactive laboratory for continuous-time convolution, Fourier series decomposition, and continuous-time Fourier transforms in three-dimensional space $(t, \tau, z)$ and $(t, \omega, z)$.
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-joaosnet.github.io-090b10?style=flat-square&logo=github)](https://joaosnet.github.io/interactive-signals-and-systems/)
-[![Engine](https://img.shields.io/badge/Engine-Canvas_2D_%2B_Three.js-00449e?style=flat-square)](https://threejs.org/)
+[![Engine](https://img.shields.io/badge/Engine-Canvas_2D-00449e?style=flat-square)](https://developer.mozilla.org/docs/Web/API/Canvas_API)
 [![Target](https://img.shields.io/badge/Render-120_FPS_Fixed_Loop-047857?style=flat-square)](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame)
 [![Curriculum](https://img.shields.io/badge/Curriculum-UFPA_Telecom-be123c?style=flat-square)](https://ufpa.br/)
 [![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square)](./LICENSE)
@@ -22,7 +22,7 @@ Interactive laboratory for continuous-time convolution, Fourier series decomposi
 
 ## Overview
 
-Interactive Signals and Systems is an in-browser laboratory designed for engineering education. It renders signal transformations in 3D coordinates at 120 FPS using native HTML5 Canvas 2D with Three.js camera projection.
+Interactive Signals and Systems is an in-browser laboratory designed for engineering education. It renders signal transformations in 3D coordinates at 120 FPS using native HTML5 Canvas 2D with its own perspective camera projection (no 3D library).
 
 The application requires zero build tools, zero external plotting libraries, and runs entirely on the client side.
 
@@ -219,7 +219,7 @@ interactive-signals-and-systems/
 │   ├── i18n.js         # Bilingual translation dictionary and mathematical labels
 │   ├── math-engine.js  # Analytic solver, support detector, Fourier decomposition, CTFT
 │   ├── presets.js      # Textbook and exam signal presets
-│   ├── stage-3d.js     # Canvas 2D engine with Three.js camera transformations
+│   ├── stage-3d.js     # Canvas 2D engine with its own perspective camera
 │   ├── notebook.js     # Step-by-step mathematical notebook renderer
 │   ├── audio.js        # Web Audio API real-time additive synthesizer
 │   └── ui.js           # Navigation controllers, HUD, and virtual math keyboard

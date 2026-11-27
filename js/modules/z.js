@@ -579,6 +579,7 @@ export const zModule = registerModule({
   defaultSliderValue: 0,
   notebookEveryFrames: 6,
   cameraTarget: { x: 0, y: 0.7, z: 3.3 },
+  mobileZoomOut: 1.18,   // recuo extra da câmera em telas estreitas
 
   slider() {
     syncAuxSlider(auxSlider(calc()));

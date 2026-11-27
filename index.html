@@ -79,7 +79,6 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathlive@0.101.2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <!-- Static Utility & Custom Modular Stylesheets -->
   <link rel="stylesheet" href="css/utilities.css">
@@ -375,7 +374,7 @@
                   <span id="hud-lbl-slider-a" class="font-semibold text-sec">Amplitude A</span>
                   <span id="hud-badge-a" class="font-mono-code font-bold tabular-nums px-1.5 py-0.2 rounded bg-[var(--bg-control)] text-primary">A = 1.00</span>
                 </div>
-                <input id="hud-slider-a" type="range" min="-3.0" max="3.0" step="0.1" value="1.0" class="w-full" />
+                <input id="hud-slider-a" type="range" aria-labelledby="hud-lbl-slider-a" min="-3.0" max="3.0" step="0.1" value="1.0" class="w-full" />
               </div>
 
               <div id="hud-row-w" class="flex flex-col gap-0.5">
@@ -383,7 +382,7 @@
                   <span id="hud-lbl-slider-w" class="font-semibold text-sec">Largura W</span>
                   <span id="hud-badge-w" class="font-mono-code font-bold tabular-nums px-1.5 py-0.2 rounded bg-[var(--bg-control)] text-primary">W = 2.00</span>
                 </div>
-                <input id="hud-slider-w" type="range" min="0.5" max="6.0" step="0.25" value="2.0" class="w-full" />
+                <input id="hud-slider-w" type="range" aria-labelledby="hud-lbl-slider-w" min="0.5" max="6.0" step="0.25" value="2.0" class="w-full" />
               </div>
 
               <div class="flex flex-col gap-0.5">
@@ -391,7 +390,7 @@
                   <span id="hud-lbl-slider-t0" class="font-semibold text-sec">Deslocamento t₀</span>
                   <span id="hud-badge-t0" class="font-mono-code font-bold tabular-nums px-1.5 py-0.2 rounded bg-[var(--bg-control)] text-primary">t₀ = 0.00</span>
                 </div>
-                <input id="hud-slider-t0" type="range" min="-3.0" max="3.0" step="0.25" value="0.0" class="w-full" />
+                <input id="hud-slider-t0" type="range" aria-labelledby="hud-lbl-slider-t0" min="-3.0" max="3.0" step="0.25" value="0.0" class="w-full" />
               </div>
 
               <div id="hud-row-alpha" class="flex flex-col gap-0.5">
@@ -399,7 +398,7 @@
                   <span id="hud-lbl-slider-alpha" class="font-semibold text-sec">Decaimento α</span>
                   <span id="hud-badge-alpha" class="font-mono-code font-bold tabular-nums px-1.5 py-0.2 rounded bg-[var(--bg-control)] text-primary">α = 1.00</span>
                 </div>
-                <input id="hud-slider-alpha" type="range" min="0.2" max="3.0" step="0.1" value="1.0" class="w-full" />
+                <input id="hud-slider-alpha" type="range" aria-labelledby="hud-lbl-slider-alpha" min="0.2" max="3.0" step="0.1" value="1.0" class="w-full" />
               </div>
             </div>
           </div>
@@ -572,7 +571,7 @@
               <span id="slider-param-title" class="text-sec font-medium truncate">Deslocamento t</span>
               <span id="t-readout-badge" class="font-mono-code font-semibold whitespace-nowrap flex-shrink-0">t = 1.50</span>
             </div>
-            <input id="t-slider" type="range" min="-2.5" max="6.0" step="0.02" value="1.50" class="w-full" />
+            <input id="t-slider" type="range" aria-labelledby="slider-param-title" aria-describedby="t-readout-badge" min="-2.5" max="6.0" step="0.02" value="1.50" class="w-full" />
           </div>
 
           <!-- Botões Contextuais -->
@@ -592,7 +591,7 @@
                 <span id="lbl-fourier-harmonics" class="text-sec font-medium truncate">Harmônicas N</span>
                 <span id="fourier-n-badge" class="font-mono-code font-semibold whitespace-nowrap flex-shrink-0">N = 7</span>
               </div>
-              <input id="fourier-n-slider" type="range" min="1" max="25" step="1" value="7" class="w-full" />
+              <input id="fourier-n-slider" type="range" aria-labelledby="lbl-fourier-harmonics" min="1" max="25" step="1" value="7" class="w-full" />
             </div>
             <div class="flex flex-col items-end gap-0.5 text-[10px] font-mono-code flex-shrink-0">
               <div class="flex items-center gap-1">
@@ -610,7 +609,7 @@
             <label for="aux-slider" id="aux-slider-title" class="text-sec font-medium truncate"></label>
             <span id="aux-slider-badge" class="font-mono-code font-semibold whitespace-nowrap flex-shrink-0"></span>
           </div>
-          <input id="aux-slider" type="range" class="w-full" />
+          <input id="aux-slider" type="range" aria-describedby="aux-slider-badge" class="w-full" />
         </div>
 
         <!-- Modos de exploração da CTFT: propriedades e transformada inversa (só na aba CTFT) -->

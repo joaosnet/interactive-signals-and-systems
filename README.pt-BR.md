@@ -7,7 +7,7 @@
 Laboratório interativo para convolução contínua, decomposição em séries de Fourier e transformada de Fourier de tempo contínuo (CTFT) no espaço tridimensional $(t, \tau, z)$ e $(t, \omega, z)$.
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-joaosnet.github.io-090b10?style=flat-square&logo=github)](https://joaosnet.github.io/interactive-signals-and-systems/)
-[![Motor Gráfico](https://img.shields.io/badge/Motor-Canvas_2D_%2B_Three.js-00449e?style=flat-square)](https://threejs.org/)
+[![Motor Gráfico](https://img.shields.io/badge/Motor-Canvas_2D-00449e?style=flat-square)](https://developer.mozilla.org/docs/Web/API/Canvas_API)
 [![Desempenho](https://img.shields.io/badge/Render-Loop_Fixo_120_FPS-047857?style=flat-square)](https://developer.mozilla.org/pt-BR/docs/Web/API/window/requestAnimationFrame)
 [![Currículo](https://img.shields.io/badge/Curr%C3%ADculo-UFPA_Telecom-be123c?style=flat-square)](https://ufpa.br/)
 [![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-gray?style=flat-square)](./LICENSE)
@@ -22,7 +22,7 @@ Laboratório interativo para convolução contínua, decomposição em séries d
 
 ## Visão Geral
 
-O *Sinais e Sistemas de Forma Interativa* é um ambiente de simulação computacional executado diretamente no navegador web, projetado para o ensino e aprendizado de engenharia. Ele processa e renderiza transformações de sinais em coordenadas 3D a 120 FPS por meio da API Canvas 2D nativa com projeção de câmera Three.js.
+O *Sinais e Sistemas de Forma Interativa* é um ambiente de simulação computacional executado diretamente no navegador web, projetado para o ensino e aprendizado de engenharia. Ele processa e renderiza transformações de sinais em coordenadas 3D a 120 FPS por meio da API Canvas 2D nativa, com projeção de câmera em perspectiva própria (sem biblioteca 3D).
 
 O projeto não requer etapas de compilação (*zero-build*), dispensa bibliotecas externas de plotagem e opera 100% no cliente.
 
@@ -219,7 +219,7 @@ interactive-signals-and-systems/
 │   ├── i18n.js         # Dicionário de tradução e rótulos matemáticos
 │   ├── math-engine.js  # Motor analítico, detector de suporte, decomposição de Fourier e CTFT
 │   ├── presets.js      # Banco de sinais canônicos de provas e literatura
-│   ├── stage-3d.js     # Renderizador Canvas 2D com transformações Three.js
+│   ├── stage-3d.js     # Renderizador Canvas 2D com câmera em perspectiva própria
 │   ├── notebook.js     # Caderno de resolução didática passo a passo
 │   ├── audio.js        # Síntese aditiva em tempo real via Web Audio API
 │   └── ui.js           # Controles de navegação, HUD e teclado virtual

@@ -11,6 +11,7 @@
 //   i18n          { title, sub, stepPrefix, regionsTitle } — chaves de I18N
 //   zenLabel      rótulo curto do dock do modo zen
 //   controls      ids de elementos do HTML visíveis só neste módulo
+//   mobileZoomOut (opcional) fator de recuo da câmera em telas com menos de 520 px de largura
 //   hudTargets    alvos do editor de sinal que pertencem a este módulo
 //   defaultHudTarget  alvo do editor de sinal ao abrir neste módulo
 //   defaultSliderValue  valor inicial de state.t ao entrar pela primeira vez
