@@ -214,17 +214,33 @@ interactive-signals-and-systems/
 │   ├── utilities.css   # CSS utilitario estático precompilado (zero-build)
 │   └── styles.css      # Sistema de diseño, temas (proyector, oscuro, claro) y vista móvil
 ├── js/
-│   ├── app.js          # Punto de entrada principal y bucle de animación a 120 FPS
-│   ├── state.js        # Gestor de estado reactivo y persistencia local
-│   ├── i18n.js         # Diccionario de traducción y etiquetas matemáticas
-│   ├── math-engine.js  # Motor de cálculo analítico, detector de soporte, Fourier y CTFT
-│   ├── presets.js      # Biblioteca de casos canónicos y ejercicios de examen
-│   ├── stage-3d.js     # Renderizado Canvas 2D con cámara en perspectiva propia
-│   ├── notebook.js     # Generador de cuaderno didáctico paso a paso
-│   ├── audio.js        # Sintetizador aditivo en tiempo real mediante Web Audio API
-│   └── ui.js           # Controladores de interfaz, HUD y teclado matemático
-├── tests/
-│   └── math-engine.test.js # Suite de pruebas automatizadas (Convolución, Fourier, CTFT, Parseval)
+│   ├── app.js              # Punto de entrada y bucle de animación
+│   ├── state.js            # Estado de la aplicación y preferencias guardadas
+│   ├── i18n.js             # Diccionario de traducción
+│   ├── presets.js          # Señales de ejemplo de convolución, serie de Fourier y CTFT
+│   │                       # Matemática de cada módulo, sin interfaz (se prueba con node --test):
+│   ├── math-engine.js      #   Parser de expresiones, convolución, serie de Fourier y CTFT
+│   ├── ctft-extras.js      #   Propiedades y transformada inversa de la CTFT
+│   ├── *-engine.js         #   Laplace, Z, convolución discreta, DTFT, DFT/FFT
+│   ├── pz-engine.js        #   Señales construidas con polos y ceros
+│   ├── seq-parse.js        #   Lectura de secuencias escritas
+│   ├── modules/            # Un archivo por módulo, conectado por el registro
+│   │   ├── registry.js     #   Contrato y orden de los módulos
+│   │   ├── <módulo>.js     #   Deslizador, animación, escena, cuaderno y galería de cada módulo
+│   │   └── *-editor.js, aux-slider.js  # Editores de secuencias y de polos y ceros, y el segundo deslizador
+│   ├── stage-3d.js         # Renderizado Canvas 2D con cámara en perspectiva propia
+│   ├── notebook.js         # Cuaderno de resolución paso a paso
+│   ├── notebook-sheet.js   # Cuaderno en foco (hoja rayada)
+│   ├── ui.js               # Núcleo de la interfaz: cambio de módulo, pasos y deslizador
+│   ├── ui/                 # Preferencias, idioma, galerías, editor de señales, widgets y eventos
+│   ├── feedback.js         # Ventana de comentarios y contribución
+│   ├── a11y.js             # Accesibilidad de las tarjetas de ejemplo
+│   └── audio.js            # Síntesis aditiva en tiempo real con la Web Audio API
+├── worker/                 # Cloudflare Worker de comentarios sin cuenta (opcional)
+├── tests/                  # Pruebas de los motores, de los comentarios y del registro
+├── .github/                # Formularios de issue y plantilla de pull request
+├── CONTRIBUTING.md         # Guía de contribución para quien nunca usó git (en portugués)
+├── graphify-out/           # Grafo de conocimiento del código (graphify)
 ├── assets/
 │   ├── demo.gif        # Registro en alta resolución de la simulación interactiva
 │   ├── favicon.svg     # Favicon vectorial

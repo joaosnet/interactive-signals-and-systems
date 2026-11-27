@@ -214,17 +214,33 @@ interactive-signals-and-systems/
 │   ├── utilities.css   # Precompiled static utility CSS (zero-build)
 │   └── styles.css      # Design system, themes (projector, dark, light), responsive bottom-sheet
 ├── js/
-│   ├── app.js          # Main entry point and 120 FPS animation loop
-│   ├── state.js        # Reactive state container and localStorage persistence
-│   ├── i18n.js         # Bilingual translation dictionary and mathematical labels
-│   ├── math-engine.js  # Analytic solver, support detector, Fourier decomposition, CTFT
-│   ├── presets.js      # Textbook and exam signal presets
-│   ├── stage-3d.js     # Canvas 2D engine with its own perspective camera
-│   ├── notebook.js     # Step-by-step mathematical notebook renderer
-│   ├── audio.js        # Web Audio API real-time additive synthesizer
-│   └── ui.js           # Navigation controllers, HUD, and virtual math keyboard
-├── tests/
-│   └── math-engine.test.js # Automated Node test suite (Convolution, Fourier, CTFT, Parseval)
+│   ├── app.js              # Entry point and animation loop
+│   ├── state.js            # Application state and saved preferences
+│   ├── i18n.js             # Translation dictionary
+│   ├── presets.js          # Example signals for convolution, Fourier series and CTFT
+│   │                       # Math for each module, no UI (testable with node --test):
+│   ├── math-engine.js      #   Expression parser, convolution, Fourier series and CTFT
+│   ├── ctft-extras.js      #   CTFT properties and inverse transform
+│   ├── *-engine.js         #   Laplace, Z, discrete convolution, DTFT, DFT/FFT
+│   ├── pz-engine.js        #   Signals built from poles and zeros
+│   ├── seq-parse.js        #   Parsing of typed sequences
+│   ├── modules/            # One file per module, plugged in through the registry
+│   │   ├── registry.js     #   Module contract and order
+│   │   ├── <módulo>.js     #   Slider, animation, scene, notebook and gallery of each module
+│   │   └── *-editor.js, aux-slider.js  # Sequence and pole-zero editors, and the second slider
+│   ├── stage-3d.js         # Canvas 2D engine with its own perspective camera
+│   ├── notebook.js         # Step-by-step notebook
+│   ├── notebook-sheet.js   # Notebook in focus (ruled sheet)
+│   ├── ui.js               # UI core: module switching, steps and slider
+│   ├── ui/                 # Preferences, language, galleries, signal editor, widgets and events
+│   ├── feedback.js         # Feedback and contribution dialog
+│   ├── a11y.js             # Accessibility of the example cards
+│   └── audio.js            # Real-time additive synthesis via the Web Audio API
+├── worker/                 # Cloudflare Worker for account-free feedback (optional)
+├── tests/                  # Tests for the engines, feedback and registry
+├── .github/                # Issue forms and pull request template
+├── CONTRIBUTING.md         # Contribution guide for people new to git (Portuguese)
+├── graphify-out/           # Knowledge graph of the code (graphify)
 ├── assets/
 │   ├── demo.gif        # High-resolution demonstration capture
 │   ├── favicon.svg     # Vector favicon
