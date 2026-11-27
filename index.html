@@ -220,10 +220,8 @@
 
       <!-- Dock Flutuante no Modo Zen (Aparece quando o painel lateral está oculto) -->
       <div id="zen-floating-dock" class="absolute bottom-10 left-1/2 -translate-x-1/2 ui-surface backdrop-blur-xl border rounded-2xl px-3 py-1.5 shadow-2xl items-center gap-2 z-30">
-        <div class="flex items-center p-0.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[10px]">
-          <button id="zen-btn-conv" type="button" class="px-2 py-0.5 rounded-md font-bold seg-btn active">x ∗ h</button>
-          <button id="zen-btn-fourier" type="button" class="px-2 py-0.5 rounded-md font-bold seg-btn">∑ Cₙ</button>
-          <button id="zen-btn-ctft" type="button" class="px-2 py-0.5 rounded-md font-bold seg-btn">X(ω)</button>
+        <div id="zen-module-switcher" class="flex items-center p-0.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[10px]">
+          <!-- Preenchido por renderModuleSwitcher() -->
         </div>
         <button type="button" class="play-toggle-btn px-2 py-1 rounded-lg text-white font-semibold text-xs flex items-center gap-1 shadow" style="background: var(--c-conv)" aria-label="Reproduzir / Pausar">
           <svg aria-hidden="true" class="icon-play w-3 h-3 hidden" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -534,19 +532,8 @@
         </div>
 
         <!-- SEGMENTED CONTROL: Pílula Deslizante de Alto Destaque -->
-        <nav id="module-switcher" class="p-1 rounded-xl bg-[var(--bg-control)] border border-[var(--border-strong)] grid grid-cols-3 gap-1" role="tablist">
-          <button id="mod-btn-conv" type="button" role="tab" aria-selected="true" class="module-pill-btn active py-1.5 px-1.5 rounded-lg border text-left flex flex-col justify-center">
-            <span class="text-xs font-bold leading-tight" id="mod-conv-title">Convolução</span>
-            <span class="text-[9px] font-mono-code opacity-75 truncate" id="mod-conv-sub">x(t) ∗ h(t)</span>
-          </button>
-          <button id="mod-btn-fourier" type="button" role="tab" aria-selected="false" class="module-pill-btn py-1.5 px-1.5 rounded-lg border text-left flex flex-col justify-center">
-            <span class="text-xs font-bold leading-tight" id="mod-fourier-title">Série Fourier</span>
-            <span class="text-[9px] font-mono-code opacity-75 truncate" id="mod-fourier-sub">∑ Cₙ cos</span>
-          </button>
-          <button id="mod-btn-ctft" type="button" role="tab" aria-selected="false" class="module-pill-btn py-1.5 px-1.5 rounded-lg border text-left flex flex-col justify-center">
-            <span class="text-xs font-bold leading-tight" id="mod-ctft-title">Transformada</span>
-            <span class="text-[9px] font-mono-code opacity-75 truncate" id="mod-ctft-sub">X(ω) = ∫ x e^{-jωt}</span>
-          </button>
+        <nav id="module-switcher" class="module-switcher p-1 rounded-xl bg-[var(--bg-control)] border border-[var(--border-strong)] gap-1" role="tablist" aria-label="Módulos">
+          <!-- Preenchido por renderModuleSwitcher() a partir do registro de módulos -->
         </nav>
       </header>
 

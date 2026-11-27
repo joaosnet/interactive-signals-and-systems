@@ -3,13 +3,10 @@
   "1": "Interactive Signals and Systems",
   "2": "state.js",
   "3": "ui.js",
-  "4": "app.js",
-  "5": "Sinais e Sistemas de Forma Interativa",
+  "4": "ctft.js",
+  "5": "Señales y Sistemas de Forma Interactiva",
   "6": "manifest.json",
   "7": "math-engine.js",
   "8": "server.js",
-  "9": "assemble_master_index.js",
-  "10": "package.json",
-  "11": "create_perfect_index.js",
-  "12": "updateAudioSynth"
+  "10": "package.json"
 }

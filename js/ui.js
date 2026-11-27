@@ -9,16 +9,11 @@ import { BUILTIN_CONV_PRESETS, BUILTIN_FOURIER_PRESETS, BUILTIN_CTFT_PRESETS } f
 import { updateScene3D, setCameraPreset } from './stage-3d.js';
 import { updateNotebookUI } from './notebook.js';
 import { toggleAudio, updateAudioSynth } from './audio.js';
+import { listModules, getModule, activeModule, neighborModule, clampToSlider } from './modules/index.js';
+import { recomputeCTFT } from './modules/ctft.js';
+import { recomputeFourier } from './modules/fourier.js';
 
 let lastHUDTrigger = null;
-
-function isCTFTDecayPreset(key = state.ctftPresetKey) {
-  return key === 'exp' || key === 'bilateral_exp';
-}
-
-function getCTFTCalcKey(key = state.ctftPresetKey) {
-  return BUILTIN_CTFT_PRESETS[key] ? key : 'custom_ctft';
-}
 
 // Escapa texto vindo de presets salvos (localStorage) antes de interpolar em innerHTML.
 function esc(value) {
@@ -29,16 +24,67 @@ function esc(value) {
 
 // state.t é o tempo t na convolução e na série de Fourier e a frequência ω na CTFT.
 // Cada módulo guarda o seu valor para não herdar o do módulo anterior.
-const moduleSliderValue = { convolution: 1.5, fourier: 0, ctft: 0 };
+const moduleSliderValue = {};
 
-export function recomputeCTFT() {
-  state.ctftCalculated = calculateCTFTData(
-    getCTFTCalcKey(state.ctftPresetKey),
-    state.ctftPulseWidth,
-    state.ctftDecay,
-    state.ctftBridgeT0,
-    state.ctftExpr
-  );
+/**
+ * Cria os botões do seletor de módulos e do dock do modo zen a partir do registro.
+ * Um módulo novo aparece na interface só por estar registrado.
+ */
+export function renderModuleSwitcher() {
+  const dict = I18N[state.lang] || I18N.pt;
+  const nav = document.getElementById('module-switcher');
+  const zen = document.getElementById('zen-module-switcher');
+  const mods = listModules();
+
+  if (nav) {
+    nav.replaceChildren(...mods.map((mod) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = `mod-btn-${mod.id}`;
+      btn.dataset.module = mod.id;
+      btn.setAttribute('role', 'tab');
+      btn.className = 'module-pill-btn py-1.5 px-1.5 rounded-lg border text-left flex flex-col justify-center';
+      const title = document.createElement('span');
+      title.className = 'mod-title text-xs font-bold leading-tight';
+      title.textContent = dict[mod.i18n.title] || mod.id;
+      const sub = document.createElement('span');
+      sub.className = 'mod-sub text-[9px] font-mono-code opacity-75 truncate';
+      sub.textContent = dict[mod.i18n.sub] || '';
+      btn.append(title, sub);
+      btn.addEventListener('click', () => switchModule(mod.id));
+      return btn;
+    }));
+  }
+
+  if (zen) {
+    zen.replaceChildren(...mods.map((mod) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = `zen-btn-${mod.id}`;
+      btn.dataset.module = mod.id;
+      btn.className = 'px-2 py-0.5 rounded-md font-bold seg-btn';
+      btn.textContent = mod.zenLabel;
+      btn.setAttribute('aria-label', dict[mod.i18n.title] || mod.id);
+      btn.addEventListener('click', () => switchModule(mod.id));
+      return btn;
+    }));
+  }
+
+  syncModuleSwitcher();
+}
+
+function syncModuleSwitcher() {
+  document.querySelectorAll('#module-switcher [data-module]').forEach((btn) => {
+    const isActive = btn.dataset.module === state.activeModule;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', String(isActive));
+    btn.tabIndex = isActive ? 0 : -1;
+  });
+  document.querySelectorAll('#zen-module-switcher [data-module]').forEach((btn) => {
+    const isActive = btn.dataset.module === state.activeModule;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', String(isActive));
+  });
 }
 
 export function selectCTFTPreset(key) {
@@ -67,9 +113,11 @@ export function selectCTFTPreset(key) {
 }
 
 export function switchModule(moduleName) {
+  const mod = getModule(moduleName) || activeModule();
+  moduleName = mod.id;
   if (state.activeModule !== moduleName) {
     moduleSliderValue[state.activeModule] = state.t;
-    state.t = moduleSliderValue[moduleName] ?? 0;
+    state.t = moduleSliderValue[moduleName] ?? mod.defaultSliderValue ?? 0;
     // O editor de sinal pertence ao módulo de origem: fecha antes de trocar
     // para não gravar a expressão antiga no módulo novo.
     if (state.focusHUDActive) closeSignalHUD();
@@ -79,69 +127,26 @@ export function switchModule(moduleName) {
   const isCTFT = moduleName === 'ctft';
   const isConv = moduleName === 'convolution';
 
-  // Sincroniza hash da URL
-  window.history.replaceState(null, '', isCTFT ? '#ctft' : (isFourier ? '#fourier' : '#convolution'));
+  // Sincroniza hash da URL, seletor principal e dock do modo zen
+  window.history.replaceState(null, '', '#' + mod.hash);
+  syncModuleSwitcher();
 
-  // Atualiza Segmented Control Principal
-  const btnConv = document.getElementById('mod-btn-conv');
-  const btnFourier = document.getElementById('mod-btn-fourier');
-  const btnCTFT = document.getElementById('mod-btn-ctft');
-  if (btnConv && btnFourier) {
-    btnConv.classList.toggle('active', isConv);
-    btnConv.setAttribute('aria-selected', String(isConv));
-    btnFourier.classList.toggle('active', isFourier);
-    btnFourier.setAttribute('aria-selected', String(isFourier));
-    if (btnCTFT) {
-      btnCTFT.classList.toggle('active', isCTFT);
-      btnCTFT.setAttribute('aria-selected', String(isCTFT));
-    }
-  }
-
-  // Sincroniza Dock do Modo Zen
-  const zenBtnConv = document.getElementById('zen-btn-conv');
-  const zenBtnFourier = document.getElementById('zen-btn-fourier');
-  const zenBtnCTFT = document.getElementById('zen-btn-ctft');
-  if (zenBtnConv && zenBtnFourier) {
-    zenBtnConv.classList.toggle('active', isConv);
-    zenBtnFourier.classList.toggle('active', isFourier);
-    if (zenBtnCTFT) zenBtnCTFT.classList.toggle('active', isCTFT);
-  }
-
-  // Controles específicos de cada módulo
-  const convSliders = document.getElementById('conv-slider-row');
-  const fourierSliders = document.getElementById('fourier-slider-row');
-  if (convSliders && fourierSliders) {
-    convSliders.classList.toggle('hidden', !isConv);
-    fourierSliders.classList.toggle('hidden', !isFourier);
-  }
-
-  const btnCommute = document.getElementById('btn-commute');
-  if (btnCommute) btnCommute.classList.toggle('hidden', !isConv);
-
-  const btnAudio = document.getElementById('btn-audio-toggle');
-  if (btnAudio) btnAudio.classList.toggle('hidden', !isFourier);
-
-  const fourierFormSelector = document.getElementById('fourier-form-selector');
-  if (fourierFormSelector) fourierFormSelector.classList.toggle('hidden', !isFourier);
+  // Controles específicos: cada módulo declara os seus; os dos demais ficam ocultos
+  const ownControls = new Set(mod.controls);
+  listModules().flatMap((m) => m.controls).forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('hidden', !ownControls.has(id));
+  });
 
   const dict = I18N[state.lang] || I18N.pt;
   const regTitle = document.getElementById('regions-title');
-  if (regTitle) {
-    regTitle.textContent = isCTFT ? dict.regionsCTFTTitle : (isFourier ? dict.regionsFourierTitle : dict.regionsTitle);
-  }
+  if (regTitle) regTitle.textContent = dict[mod.i18n.regionsTitle];
 
   // Atualiza passos (1 a 4) com os rótulos de cada módulo
   updateStepLabels();
 
-  if (isCTFT) {
-    recomputeCTFT();
-    if (state.activeMathField) setActiveMathField('ctft');
-  } else if (isFourier) {
-    state.fourierCalculated = calculateFourierData(state.fourierExpr, state.fourierT0, state.fourierN);
-    if (state.activeMathField) setActiveMathField('fourier');
-  } else {
-    if (state.activeMathField) setActiveMathField('x');
-  }
+  mod.onEnter();
+  if (state.activeMathField) setActiveMathField(mod.defaultHudTarget);
   // Fora do módulo de Fourier isto silencia o oscilador (o botão de áudio fica oculto).
   updateAudioSynth();
 
@@ -180,6 +185,24 @@ export function switchModule(moduleName) {
   updateScene3D();
 }
 
+/**
+ * Configura o slider principal (título, limites, passo e valor) conforme o que o
+ * módulo ativo diz que ele controla agora. Única fonte dos limites do slider.
+ */
+function applySliderSpec(dict = I18N[state.lang] || I18N.pt) {
+  const spec = activeModule().slider();
+  const slider = document.getElementById('t-slider');
+  const titleEl = document.getElementById('slider-param-title');
+  if (titleEl) titleEl.textContent = dict[spec.titleKey];
+  if (slider) {
+    slider.min = String(spec.min);
+    slider.max = String(spec.max);
+    slider.step = String(spec.step);
+    slider.value = spec.get();
+  }
+  return spec;
+}
+
 export function setStep(stepNum, restartAnim = true) {
   state.step = stepNum;
   const dict = I18N[state.lang] || I18N.pt;
@@ -190,90 +213,8 @@ export function setStep(stepNum, restartAnim = true) {
     btn.classList.toggle('active', Number(btn.getAttribute('data-step')) === stepNum);
   });
 
-  const slider = document.getElementById('t-slider');
-  const titleEl = document.getElementById('slider-param-title');
-
-  if (state.activeModule === 'ctft') {
-    const isCustomCTFT = !BUILTIN_CTFT_PRESETS[state.ctftPresetKey];
-    if (stepNum === 4) {
-      if (titleEl) titleEl.textContent = dict.sliderCTFTBridge;
-      if (slider) {
-        slider.min = '2.0';
-        slider.max = '25.0';
-        slider.step = '0.5';
-        slider.value = state.ctftBridgeT0;
-      }
-    } else if (stepNum === 3 || isCustomCTFT) {
-      if (titleEl) titleEl.textContent = dict.sliderCTFTFreq;
-      if (slider) {
-        slider.min = '-15.0';
-        slider.max = '15.0';
-        slider.step = '0.2';
-        slider.value = state.t;
-      }
-    } else if (isCTFTDecayPreset()) {
-      if (titleEl) titleEl.textContent = dict.sliderCTFTDecay;
-      if (slider) {
-        slider.min = '0.2';
-        slider.max = '4.0';
-        slider.step = '0.1';
-        slider.value = state.ctftDecay;
-      }
-    } else if (state.ctftPresetKey === 'tri') {
-      if (titleEl) titleEl.textContent = dict.sliderCTFTBase;
-      if (slider) {
-        slider.min = '0.5';
-        slider.max = '4.0';
-        slider.step = '0.25';
-        slider.value = state.ctftPulseWidth;
-      }
-    } else {
-      if (titleEl) titleEl.textContent = dict.sliderCTFTWidth;
-      if (slider) {
-        slider.min = '0.5';
-        slider.max = '5.0';
-        slider.step = '0.25';
-        slider.value = state.ctftPulseWidth;
-      }
-    }
-  } else if (state.activeModule === 'fourier') {
-    if (titleEl) titleEl.textContent = dict.sliderEvalPoint;
-    if (slider) {
-      slider.min = '-4.0';
-      slider.max = '4.0';
-      slider.step = '0.02';
-      slider.value = state.t;
-    }
-  } else {
-    if (stepNum === 1) {
-      if (titleEl) titleEl.textContent = dict.sliderSweep;
-      if (slider) {
-        slider.min = '-3.5';
-        slider.max = '5.5';
-        slider.step = '0.02';
-        if (restartAnim) state.tauSweep = -3.0;
-        slider.value = state.tauSweep;
-      }
-    } else if (stepNum === 2) {
-      if (titleEl) titleEl.textContent = dict.sliderFlip;
-      if (slider) {
-        slider.min = '0';
-        slider.max = '3.1416';
-        slider.step = '0.02';
-        if (restartAnim) state.flipAngle = 0;
-        slider.value = state.flipAngle;
-      }
-    } else {
-      if (titleEl) titleEl.textContent = stepNum === 3 ? dict.sliderShift3 : dict.sliderShift4;
-      if (slider) {
-        slider.min = '-2.0';
-        slider.max = '5.8';
-        slider.step = '0.02';
-        state.flipAngle = Math.PI;
-        slider.value = state.t;
-      }
-    }
-  }
+  activeModule().onStepEnter(stepNum, restartAnim);
+  applySliderSpec(dict);
 
   updateSliderBadge();
   updateNotebookUI(true);
@@ -282,21 +223,7 @@ export function setStep(stepNum, restartAnim = true) {
 export function updateSliderBadge() {
   const badge = document.getElementById('t-readout-badge');
   const zenBadge = document.getElementById('zen-t-readout');
-  let txt = '';
-  if (state.activeModule === 'ctft') {
-    const isCustomCTFT = !BUILTIN_CTFT_PRESETS[state.ctftPresetKey];
-    if (state.step === 4) txt = `T₀ = ${state.ctftBridgeT0.toFixed(1)} s`;
-    else if (state.step === 3 || isCustomCTFT) txt = `ω = ${state.t.toFixed(2)} rad/s`;
-    else if (isCTFTDecayPreset()) txt = `a = ${state.ctftDecay.toFixed(2)}`;
-    else if (state.ctftPresetKey === 'tri') txt = `a = ${state.ctftPulseWidth.toFixed(2)} s`;
-    else txt = `τ₀ = ${state.ctftPulseWidth.toFixed(2)} s`;
-  } else if (state.activeModule === 'fourier') {
-    txt = `t = ${state.t.toFixed(2)}`;
-  } else {
-    if (state.step === 1) txt = `τ = ${state.tauSweep.toFixed(2)}`;
-    else if (state.step === 2) txt = `θ = ${Math.round((state.flipAngle / Math.PI) * 180)}°`;
-    else txt = `t = ${state.t.toFixed(2)}`;
-  }
+  const txt = activeModule().slider().badge();
   if (badge) badge.textContent = txt;
   if (zenBadge) zenBadge.textContent = txt;
 }
@@ -312,13 +239,11 @@ export function updatePlayButtonUI() {
 
 export function updateStepLabels() {
   const dict = I18N[state.lang] || I18N.pt;
-  const isFourier = state.activeModule === 'fourier';
-  const isCTFT = state.activeModule === 'ctft';
   for (let s = 1; s <= 4; s++) {
     const tagEl = document.getElementById('step-tag-' + s);
     const lblEl = document.getElementById('step-lbl-' + s);
     if (tagEl) tagEl.textContent = dict['stepTag' + s];
-    if (lblEl) lblEl.textContent = isCTFT ? dict['stepCTFT' + s] : (isFourier ? dict['stepFourier' + s] : dict['stepConv' + s]);
+    if (lblEl) lblEl.textContent = dict[activeModule().i18n.stepPrefix + s];
   }
 }
 
@@ -448,35 +373,12 @@ export function applyLanguage(lang) {
 
   updateThemeCycleButtonUI(false);
 
-  let sliderTitle;
-  if (state.activeModule === 'ctft') {
-    const isCustomCTFT = !BUILTIN_CTFT_PRESETS[state.ctftPresetKey];
-    if (state.step === 4) sliderTitle = dict.sliderCTFTBridge;
-    else if (state.step === 3 || isCustomCTFT) sliderTitle = dict.sliderCTFTFreq;
-    else if (isCTFTDecayPreset()) sliderTitle = dict.sliderCTFTDecay;
-    else if (state.ctftPresetKey === 'tri') sliderTitle = dict.sliderCTFTBase;
-    else sliderTitle = dict.sliderCTFTWidth;
-  } else if (state.activeModule === 'fourier') {
-    sliderTitle = dict.sliderEvalPoint;
-  } else {
-    sliderTitle = state.step === 1
-      ? dict.sliderSweep
-      : state.step === 2
-      ? dict.sliderFlip
-      : state.step === 3
-      ? dict.sliderShift3
-      : dict.sliderShift4;
-  }
+  renderModuleSwitcher();
+  const sliderTitle = dict[activeModule().slider().titleKey];
 
   // Atualiza textos estáticos
   const elMap = {
     'app-heading': dict.appHeading,
-    'mod-conv-title': dict.modConvTitle,
-    'mod-conv-sub': dict.modConvSub,
-    'mod-fourier-title': dict.modFourierTitle,
-    'mod-fourier-sub': dict.modFourierSub,
-    'mod-ctft-title': dict.modCTFTTitle,
-    'mod-ctft-sub': dict.modCTFTSub,
     'lbl-view-3d': dict.view3D,
     'lbl-view-2d-time': dict.view2DTime,
     'lbl-view-2d-spec': dict.view2DSpec,
@@ -519,9 +421,7 @@ export function applyLanguage(lang) {
     'lbl-fourier-form': isEn ? 'Form:' : 'Forma:',
     'notebook-title': dict.notebookTitle,
     'lbl-rewatch': dict.btnRewatch,
-    'regions-title': state.activeModule === 'ctft'
-      ? dict.regionsCTFTTitle
-      : (state.activeModule === 'fourier' ? dict.regionsFourierTitle : dict.regionsTitle),
+    'regions-title': dict[activeModule().i18n.regionsTitle],
     'gallery-title': dict.galleryTitle,
     'gallery-subtitle': isEn ? 'Tap to load or create' : 'Toque para carregar ou criar',
     'lbl-seq-mode': dict.btnSeqMode,
@@ -776,7 +676,7 @@ export function renderPresetGallery() {
         state.fourierExpr = p.expr;
         state.fourierT0 = p.T0;
         state.fourierN = p.N || 7;
-        state.fourierCalculated = calculateFourierData(state.fourierExpr, state.fourierT0, state.fourierN);
+        recomputeFourier();
         syncInputsWithPreset();
         renderPresetGallery();
         updateNotebookUI(true);
@@ -794,7 +694,7 @@ export function renderPresetGallery() {
             state.fourierExpr = BUILTIN_FOURIER_PRESETS.square.expr;
             state.fourierT0 = BUILTIN_FOURIER_PRESETS.square.T0;
             state.fourierN = BUILTIN_FOURIER_PRESETS.square.N;
-            state.fourierCalculated = calculateFourierData(state.fourierExpr, state.fourierT0, state.fourierN);
+            recomputeFourier();
             syncInputsWithPreset();
           }
           renderPresetGallery();
@@ -1139,7 +1039,7 @@ export function setHUDExpressionLive(exprString, syncMathField = true) {
   } else if (target === 'fourier') {
     state.fourierExpr = cleanExpr;
     state.fourierPresetKey = 'custom_fourier';
-    state.fourierCalculated = calculateFourierData(state.fourierExpr, state.fourierT0, state.fourierN);
+    recomputeFourier();
     updateAudioSynth();
   } else if (target === 'h') {
     state.exprH = cleanExpr;
@@ -1515,20 +1415,11 @@ function hideMathKeyboard() {
 }
 
 export function openSignalHUD(targetSignal) {
-  const isFourier = state.activeModule === 'fourier';
-  const isCTFT = state.activeModule === 'ctft';
-  let target = targetSignal;
-  if (!target) {
-    target = isCTFT ? 'ctft' : (isFourier ? 'fourier' : 'x');
-  }
+  const target = targetSignal || activeModule().defaultHudTarget;
 
-  if (target === 'ctft' && state.activeModule !== 'ctft') {
-    switchModule('ctft');
-  } else if (target === 'fourier' && state.activeModule !== 'fourier') {
-    switchModule('fourier');
-  } else if ((target === 'x' || target === 'h') && state.activeModule !== 'convolution') {
-    switchModule('convolution');
-  }
+  // Cada alvo do editor pertence a um módulo; abre o módulo dono se não for o ativo.
+  const owner = listModules().find((m) => m.hudTargets.includes(target));
+  if (owner && owner.id !== state.activeModule) switchModule(owner.id);
 
   if (!state.focusHUDActive && document.activeElement && document.activeElement !== document.body) {
     lastHUDTrigger = document.activeElement;
@@ -2036,19 +1927,17 @@ export function setupMobileSheetGestures() {
 
 export function initUIEventListeners() {
   // 1. Segmented Control Switcher
-  const btnConv = document.getElementById('mod-btn-conv');
-  const btnFourier = document.getElementById('mod-btn-fourier');
-  const btnCTFT = document.getElementById('mod-btn-ctft');
-  if (btnConv) btnConv.addEventListener('click', () => switchModule('convolution'));
-  if (btnFourier) btnFourier.addEventListener('click', () => switchModule('fourier'));
-  if (btnCTFT) btnCTFT.addEventListener('click', () => switchModule('ctft'));
-
-  const zenBtnConv = document.getElementById('zen-btn-conv');
-  const zenBtnFourier = document.getElementById('zen-btn-fourier');
-  const zenBtnCTFT = document.getElementById('zen-btn-ctft');
-  if (zenBtnConv) zenBtnConv.addEventListener('click', () => switchModule('convolution'));
-  if (zenBtnFourier) zenBtnFourier.addEventListener('click', () => switchModule('fourier'));
-  if (zenBtnCTFT) zenBtnCTFT.addEventListener('click', () => switchModule('ctft'));
+  // Setas esquerda/direita percorrem as abas do seletor (padrão ARIA de tablist)
+  const moduleNav = document.getElementById('module-switcher');
+  if (moduleNav) {
+    moduleNav.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      e.stopPropagation();
+      switchModule(neighborModule(e.key === 'ArrowRight' ? 1 : -1).id);
+      document.getElementById(`mod-btn-${state.activeModule}`)?.focus();
+    });
+  }
 
   // 2. Vistas de Câmera 3D/2D
   ['3d', '2d-time', '2d-spec', 'top'].forEach(presetName => {
@@ -2093,28 +1982,7 @@ export function initUIEventListeners() {
   const tSlider = document.getElementById('t-slider');
   if (tSlider) {
     tSlider.addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value);
-      if (state.activeModule === 'ctft') {
-        const isCustomCTFT = !BUILTIN_CTFT_PRESETS[state.ctftPresetKey];
-        if (state.step === 4) {
-          state.ctftBridgeT0 = val;
-          recomputeCTFT();
-        } else if (state.step === 3 || isCustomCTFT) {
-          state.t = val;
-        } else if (isCTFTDecayPreset()) {
-          state.ctftDecay = val;
-          recomputeCTFT();
-        } else {
-          state.ctftPulseWidth = val;
-          recomputeCTFT();
-        }
-      } else if (state.activeModule === 'fourier') {
-        state.t = val;
-      } else {
-        if (state.step === 1) state.tauSweep = val;
-        else if (state.step === 2) state.flipAngle = val;
-        else state.t = val;
-      }
+      activeModule().slider().set(parseFloat(e.target.value));
       updateSliderBadge();
       updateNotebookUI(false);
       updateScene3D();
@@ -2127,7 +1995,7 @@ export function initUIEventListeners() {
       state.fourierN = parseInt(e.target.value, 10);
       const badge = document.getElementById('fourier-n-badge');
       if (badge) badge.textContent = `N = ${state.fourierN}`;
-      state.fourierCalculated = calculateFourierData(state.fourierExpr, state.fourierT0, state.fourierN);
+      recomputeFourier();
       updateNotebookUI(false);
       updateScene3D();
       updateAudioSynth();
@@ -2138,7 +2006,7 @@ export function initUIEventListeners() {
     const num = parseFloat(rawVal);
     if (!Number.isFinite(num) || num < 0.5) return;
     state.fourierT0 = num;
-    state.fourierCalculated = calculateFourierData(state.fourierExpr, state.fourierT0, state.fourierN);
+    recomputeFourier();
     syncInputsWithPreset();
     renderPresetGallery();
     updateNotebookUI(false);
@@ -2635,10 +2503,7 @@ export function initUIEventListeners() {
     } else if (e.key === ']' || e.key === '[') {
       // Tab fica livre para a navegação por teclado; '[' e ']' percorrem os módulos.
       e.preventDefault();
-      const order = ['convolution', 'fourier', 'ctft'];
-      const idx = order.indexOf(state.activeModule);
-      const delta = e.key === ']' ? 1 : order.length - 1;
-      switchModule(order[(idx + delta) % order.length]);
+      switchModule(neighborModule(e.key === ']' ? 1 : -1).id);
     } else if (['1', '2', '3', '4'].includes(e.key)) {
       setStep(Number(e.key), true);
     } else if (e.key.toLowerCase() === 'z') {
@@ -2648,38 +2513,10 @@ export function initUIEventListeners() {
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       e.preventDefault();
       const dir = e.key === 'ArrowRight' ? 1 : -1;
+      const spec = activeModule().slider();
+      spec.set(clampToSlider(spec, spec.get() + dir * spec.keyStep));
       const slider = document.getElementById('t-slider');
-      if (state.activeModule === 'ctft') {
-        const isCustomCTFT = !BUILTIN_CTFT_PRESETS[state.ctftPresetKey];
-        if (state.step === 4) {
-          state.ctftBridgeT0 = Math.max(2.0, Math.min(25.0, state.ctftBridgeT0 + dir * 0.5));
-          recomputeCTFT();
-          if (slider) slider.value = state.ctftBridgeT0;
-        } else if (state.step === 3 || isCustomCTFT) {
-          state.t = Math.max(-15.0, Math.min(15.0, state.t + dir * 0.2));
-          if (slider) slider.value = state.t;
-        } else if (isCTFTDecayPreset()) {
-          state.ctftDecay = Math.max(0.2, Math.min(4.0, state.ctftDecay + dir * 0.1));
-          recomputeCTFT();
-          if (slider) slider.value = state.ctftDecay;
-        } else {
-          const maxW = state.ctftPresetKey === 'tri' ? 4.0 : 5.0;
-          state.ctftPulseWidth = Math.max(0.5, Math.min(maxW, state.ctftPulseWidth + dir * 0.25));
-          recomputeCTFT();
-          if (slider) slider.value = state.ctftPulseWidth;
-        }
-      } else if (state.activeModule === 'convolution' && state.step === 1) {
-        state.tauSweep = Math.max(-3.5, Math.min(5.5, state.tauSweep + dir * 0.05));
-        if (slider) slider.value = state.tauSweep;
-      } else if (state.activeModule === 'convolution' && state.step === 2) {
-        state.flipAngle = Math.max(0, Math.min(Math.PI, state.flipAngle + dir * 0.05));
-        if (slider) slider.value = state.flipAngle;
-      } else {
-        const minT = state.activeModule === 'fourier' ? -4.0 : -2.0;
-        const maxT = state.activeModule === 'fourier' ? 4.0 : 5.8;
-        state.t = Math.max(minT, Math.min(maxT, state.t + dir * 0.05));
-        if (slider) slider.value = state.t;
-      }
+      if (slider) slider.value = spec.get();
       updateSliderBadge();
       updateNotebookUI(false);
       updateScene3D();
