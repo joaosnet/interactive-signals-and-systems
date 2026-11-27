@@ -194,6 +194,12 @@ export const state = {
   dtftOmega: 1.0,      // frequência de prova Ω (rad/amostra)
   dtftCalculated: null,
 
+  // DFT / FFT
+  dftPresetKey: 'cosbin',
+  dftBits: 4,          // N = 2^bits amostras
+  dftK: 2,             // bin em destaque no passo 3
+  dftCalculated: null,
+
   // Customização de Interface (ver apenas o que quer)
   visibleSections: initialVisibleSections,
   layers: initialLayers

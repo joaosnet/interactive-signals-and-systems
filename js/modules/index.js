@@ -5,6 +5,7 @@ import './dconv.js';
 import './fourier.js';
 import './ctft.js';
 import './dtft.js';
+import './dft.js';
 import './laplace.js';
 import './z.js';
 

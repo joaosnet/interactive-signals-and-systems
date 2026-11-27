@@ -159,6 +159,22 @@ Module features:
 
 ---
 
+### 8. DFT and FFT (`#dft`)
+
+The transform a computer actually computes, finite in both domains:
+
+$$X[k] = \sum_{n=0}^{N-1} x[n]\, e^{-j2\pi kn/N}, \qquad x[n] = \frac{1}{N}\sum_{k=0}^{N-1} X[k]\, e^{j2\pi kn/N}$$
+
+Module features:
+- **Two Aligned Lanes**: $N$ stems of $x[n]$ at the back and $N$ stems of $|X[k]|$ in front, with $N$ from 4 to 64.
+- **The DFT Samples the DTFT**: The continuous envelope is drawn behind the stems, showing that $X[k] = X(e^{j\Omega})$ at $\Omega = 2\pi k/N$ and that the resolution is $2\pi/N$.
+- **Spectral Leakage**: A cosine with 2 cycles in the window gives two clean lines; with 2.5 cycles, the energy spreads over every bin.
+- **Reading a Bin**: The slider picks $k$ and draws the cosine of that frequency over $x[n]$. The notebook shows value, phase, frequency and why the upper half corresponds to negative frequencies.
+- **FFT with a Butterfly Diagram**: In step 4 the butterfly network connects $x[n]$ (in bit-reversed order) to $X[k]$, and the notebook compares $N^2$ products with $\frac{N}{2}\log_2 N$ butterflies, counted while running.
+- **Eight Signals**: On-bin and off-bin cosine, two tones, rectangular pulse, impulse, alternating, exponential and ramp.
+
+---
+
 ## Interface and Display Systems
 
 - **Camera Projections**: Instant selection among `3D Free Orbit`, `2D Time (Front)`, `2D Spectrum (Lateral)`, and `Top Plan`.
@@ -176,7 +192,7 @@ Module features:
 | :--- | :--- |
 | `Space` | Play or pause simulation loop |
 | `1`, `2`, `3`, `4` | Direct jump to Convolution steps 1 through 4 |
-| `[` / `]` | Cycle modules: Convolution $\to$ Discrete Convolution $\to$ Fourier $\to$ CTFT $\to$ DTFT $\to$ Laplace $\to$ Z |
+| `[` / `]` | Cycle modules: Convolution $\to$ Discrete Convolution $\to$ Fourier $\to$ CTFT $\to$ DTFT $\to$ DFT $\to$ Laplace $\to$ Z |
 | `Z` | Toggle Zen full-screen mode |
 | `M` | Toggle Web Audio synthesizer |
 | `←` / `→` | Incremental step of time parameter $t$ or frequency $\omega$ |
