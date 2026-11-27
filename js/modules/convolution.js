@@ -4,7 +4,9 @@
 // ============================================================================
 
 import { state } from '../state.js';
-import { getEffectiveSignals } from '../stage-3d.js';
+import { getEffectiveSignals, renderConvolutionScene3D } from '../stage-3d.js';
+import { convolutionNotebookLines, convolutionNotebookMetric, convolutionNotebookTable } from '../notebook.js';
+import { renderConvolutionGallery } from '../ui.js';
 import { registerModule } from './registry.js';
 
 let step2PauseFrames = 0;
@@ -32,6 +34,15 @@ export const convolutionModule = registerModule({
   defaultHudTarget: 'x',
   defaultSliderValue: 1.5,
   notebookEveryFrames: 4,
+
+  // Cena, caderno e galeria vivem em stage-3d.js, notebook.js e ui.js
+  renderScene: (scene, dt) => renderConvolutionScene3D(dt),
+  notebook: {
+    lines: () => convolutionNotebookLines(),
+    renderMetric: (el, isEn) => convolutionNotebookMetric(el, isEn),
+    table: (container, isEn) => convolutionNotebookTable(container, isEn)
+  },
+  renderGallery: (gallery, isEn) => renderConvolutionGallery(gallery, isEn),
 
   slider() {
     if (state.step === 1) {

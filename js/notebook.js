@@ -449,11 +449,7 @@ function buildNotebookLinesCTFTBase(calc) {
 
 /** Linhas do caderno do módulo e passo atuais: [{ label, latex }]. */
 function computeNotebookLines(isEn) {
-  const custom = getModule(state.activeModule)?.notebook || null;
-  if (custom) return custom.lines(isEn);
-  if (state.activeModule === 'ctft') return buildNotebookLinesCTFT(state.ctftCalculated);
-  if (state.activeModule === 'fourier') return buildNotebookLinesFourier(state.fourierCalculated);
-  return buildNotebookLinesConvolution(getEffectiveSignals());
+  return getModule(state.activeModule).notebook.lines(isEn);
 }
 
 /** Conteúdo atual do caderno, para outras apresentações (ex.: o caderno em foco). */
@@ -463,69 +459,22 @@ export function getNotebookSnapshot() {
 
 export function updateNotebookUI(animateHandwriting = false) {
   const dict = I18N[state.lang] || I18N.pt;
-  const isFourier = state.activeModule === 'fourier';
-  const isCTFT = state.activeModule === 'ctft';
   const isEn = state.lang === 'en';
-  // Módulos plugáveis trazem o próprio caderno: { metric(isEn), lines(isEn), table(container, isEn) }
-  const custom = getModule(state.activeModule)?.notebook || null;
+  // Todo módulo traz o próprio caderno: { lines(isEn), table(container, isEn) } e
+  // metric(isEn) → { label, latex } ou renderMetric(elemento, isEn).
+  const custom = getModule(state.activeModule).notebook;
 
   // 1. Barra de Métricas Instantâneas
   const metricsEl = document.getElementById('live-step-metrics');
   if (metricsEl) {
-    if (custom) {
+    if (custom.renderMetric) {
+      // Módulos com métrica de formato próprio escrevem direto no elemento
+      custom.renderMetric(metricsEl, isEn);
+    } else {
       const m = custom.metric(isEn);
       metricsEl.innerHTML = '<span class="font-semibold text-sec"></span><span></span>';
       metricsEl.firstChild.textContent = m.label;
       metricsEl.lastChild.innerHTML = latexToHtml(m.latex);
-    } else if (isCTFT) {
-      const calc = state.ctftCalculated?.base || state.ctftCalculated;
-      if (calc) {
-        const x0Val = calc.valX0 !== undefined ? calc.valX0 : calc.fnMag(0);
-        if (state.step === 1) {
-          metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.metricEnergy}</span><span>${latexToHtml(`E_x = ${calc.energyTime.toFixed(3)}\\text{ J}`)}</span>`;
-        } else if (state.step === 2) {
-          metricsEl.innerHTML = `<span class="font-semibold text-sec">DC X(0)</span><span>${latexToHtml(`X(0) = ${x0Val.toFixed(3)}`)}</span>`;
-        } else if (state.step === 3) {
-          const ph0 = x0Val >= 0 ? '0' : '\\pi';
-          metricsEl.innerHTML = `<span class="font-semibold text-sec">|X(0)|</span><span>${latexToHtml(`|X(0)| = ${calc.fnMag(0).toFixed(2)}, \\; \\angle X(0) = ${ph0}`)}</span>`;
-        } else {
-          metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.metricBridge}</span><span>${latexToHtml(`T_0 = ${calc.T0.toFixed(1)}\\text{s} \\implies \\Delta\\omega = ${calc.w0.toFixed(2)}`)}</span>`;
-        }
-      }
-    } else if (isFourier) {
-      const calc = state.fourierCalculated;
-      if (calc) {
-        if (state.step === 1) {
-          metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.fundFreq}</span><span>${latexToHtml(`\\omega_0 = ${calc.w0.toFixed(2)}\\text{ rad/s}, \\; f_0 = ${calc.f0.toFixed(2)}\\text{ Hz}`)}</span>`;
-        } else if (state.step === 2) {
-          const symBadge =
-            calc.symmetryType === 'quarter_even'
-              ? isEn ? '\\text{Quarter-Wave Even } (b_n=0)' : '\\text{Quarto de Onda Par } (b_n=0)'
-              : calc.symmetryType === 'quarter_odd'
-              ? isEn ? '\\text{Quarter-Wave Odd } (a_n=0)' : '\\text{Quarto de Onda Ímpar } (a_n=0)'
-              : calc.symmetryType === 'even'
-              ? isEn ? '\\text{Even } (b_n=0)' : '\\text{Par } (b_n=0)'
-              : calc.symmetryType === 'odd'
-              ? isEn ? '\\text{Odd } (a_0=a_n=0)' : '\\text{Ímpar } (a_0=a_n=0)'
-              : calc.symmetryType.includes('half')
-              ? isEn ? '\\text{Half-Wave}' : '\\text{Meia-Onda}'
-              : isEn ? '\\text{General}' : '\\text{Geral}';
-          metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.symmClass}</span><span>${latexToHtml(symBadge)}</span>`;
-        } else if (state.step === 3) {
-          metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.activeHarm}</span><span>${latexToHtml(`N = ${calc.harmonics.length}, \\; \\eta = ${calc.efficiency.toFixed(1)}\\%`)}</span>`;
-        } else {
-          metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.approxAtT}</span><span>${latexToHtml(`S_N(${state.t.toFixed(2)}) = ${calc.reconstruct(state.t).toFixed(4)}`)}</span>`;
-        }
-      }
-    } else {
-      const sig = getEffectiveSignals();
-      if (state.step === 1) {
-        metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.sampleTau}</span><span>${latexToHtml(`\\tau = ${state.tauSweep.toFixed(2)}`)}</span>`;
-      } else if (state.step === 2) {
-        metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.reflection}</span><span>${latexToHtml(`\\theta = ${Math.round((state.flipAngle / Math.PI) * 180)}^\\circ`)}</span>`;
-      } else {
-        metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.currentParam}</span><span>${latexToHtml(`t = ${state.t.toFixed(2)} \\implies y(t) = ${sig.conv(state.t).toFixed(4)}`)}</span>`;
-      }
     }
   }
 
@@ -602,173 +551,255 @@ export function updateNotebookUI(animateHandwriting = false) {
   const regContainer = document.getElementById('regions-table');
   if (regContainer) {
     regContainer.innerHTML = '';
-    if (custom) {
-      custom.table(regContainer, isEn);
-    } else if (isCTFT) {
-      // Header UFPA da Tabela de Transformadas Notáveis
-      const tableHeader = document.createElement('div');
-      tableHeader.className = 'grid grid-cols-3 gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[10px] font-bold text-sec uppercase tracking-wider mb-1';
-      tableHeader.innerHTML = `
-        <span>${dict.ctftColSignal}</span>
-        <span>${dict.ctftColTransform}</span>
-        <span class="text-right">${dict.ctftColPair}</span>
-      `;
-      regContainer.appendChild(tableHeader);
+    custom.table(regContainer, isEn);
+  }
+}
 
-      Object.entries(BUILTIN_CTFT_PRESETS).forEach(([key, p]) => {
-        const isCurrent = state.ctftPresetKey === key;
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `region-row w-full text-left px-2 py-1.5 rounded-lg grid grid-cols-3 items-center gap-2 ui-control ${isCurrent ? 'active font-semibold' : ''}`;
-        btn.innerHTML = `
-          <span class="text-[10px] font-mono-code">${isEn ? p.titleEn : p.title}</span>
-          <span class="ctft-formula text-[10px] truncate"></span>
-          <span class="text-[9px] text-mut text-right truncate">${key === 'bridge' ? 'Eugene Khutoryansky' : dict.ctftNotablePair}</span>
-        `;
-        renderMath(btn.querySelector('.ctft-formula'), p.latexX, false);
-        btn.addEventListener('click', () => {
-          window.dispatchEvent(new CustomEvent('select-ctft-preset', { detail: { key } }));
-        });
-        regContainer.appendChild(btn);
-      });
-      renderCTFTPropertyTable(regContainer, isEn);
-    } else if (isFourier) {
-      const calc = state.fourierCalculated;
-      if (calc) {
-        // Barra de Eficiência de Parseval
-        const pBar = document.createElement('div');
-        pBar.className = 'mb-2 p-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-panel)] flex flex-col gap-1';
-        pBar.innerHTML = `
-          <div class="flex items-center justify-between text-[10px]">
-            <span class="font-medium text-sec">${dict.parsevalEfficiency}: <b>${calc.efficiency.toFixed(1)}%</b></span>
-            <span class="font-mono-code text-mut">P_N = ${calc.harmonicPower.toFixed(2)}W / ${calc.totalPower.toFixed(2)}W</span>
-          </div>
-          <div class="w-full bg-[var(--slider-track)] h-1.5 rounded-full overflow-hidden">
-            <div class="bg-[var(--c-conv)] h-full transition-all" style="width: ${calc.efficiency}%"></div>
-          </div>
-        `;
-        regContainer.appendChild(pBar);
+// ============================================================================
+// Cadernos dos módulos de convolução, série de Fourier e CTFT
+// (ligados aos módulos em js/modules/*.js pelo gancho `notebook`)
+// ============================================================================
 
-        // Tabela de Harmônicas
-        calc.harmonics.slice(0, 10).forEach((h) => {
-          const isHighlighted = state.highlightedHarmonic === h.n;
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = `region-row w-full text-left px-2 py-1 rounded flex items-center justify-between gap-2 ui-control ${isHighlighted ? 'active font-bold' : ''}`;
-          const thetaPi = (h.theta / Math.PI).toFixed(2);
-          const valStr = state.fourierForm === 'exp'
-            ? `|D_{${h.n}}| = ${h.dnMagnitude.toFixed(3)}, \\; \\angle D = ${thetaPi}\\pi`
-            : state.fourierForm === 'trig'
-            ? `a_{${h.n}} = ${h.an.toFixed(3)}, \\; b_{${h.n}} = ${h.bn.toFixed(3)}`
-            : `C_{${h.n}} = ${h.cn.toFixed(3)}, \\; \\theta_{${h.n}} = ${thetaPi}\\pi`;
+export function convolutionNotebookLines() {
+  return buildNotebookLinesConvolution(getEffectiveSignals());
+}
 
-          btn.innerHTML = `
-            <span class="reg-range text-[10px] font-mono-code">n = ${h.n}</span>
-            <span class="reg-expr text-[10px]"></span>
-          `;
-          renderMath(btn.querySelector('.reg-expr'), valStr, false);
+export function fourierNotebookLines() {
+  return buildNotebookLinesFourier(state.fourierCalculated);
+}
 
-          btn.addEventListener('click', () => {
-            state.highlightedHarmonic = state.highlightedHarmonic === h.n ? null : h.n;
-            updateAudioSynth(); // toca só a harmônica isolada (ou volta ao sinal completo)
-            updateNotebookUI(false);
-            updateScene3D();
-          });
-          regContainer.appendChild(btn);
-        });
-      }
+export function ctftNotebookLines() {
+  return buildNotebookLinesCTFT(state.ctftCalculated);
+}
+
+export function convolutionNotebookMetric(metricsEl, isEn) {
+  const dict = I18N[state.lang] || I18N.pt;
+  const sig = getEffectiveSignals();
+  if (state.step === 1) {
+    metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.sampleTau}</span><span>${latexToHtml(`\\tau = ${state.tauSweep.toFixed(2)}`)}</span>`;
+  } else if (state.step === 2) {
+    metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.reflection}</span><span>${latexToHtml(`\\theta = ${Math.round((state.flipAngle / Math.PI) * 180)}^\\circ`)}</span>`;
+  } else {
+    metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.currentParam}</span><span>${latexToHtml(`t = ${state.t.toFixed(2)} \\implies y(t) = ${sig.conv(state.t).toFixed(4)}`)}</span>`;
+  }
+}
+
+export function fourierNotebookMetric(metricsEl, isEn) {
+  const dict = I18N[state.lang] || I18N.pt;
+  const calc = state.fourierCalculated;
+  if (calc) {
+    if (state.step === 1) {
+      metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.fundFreq}</span><span>${latexToHtml(`\\omega_0 = ${calc.w0.toFixed(2)}\\text{ rad/s}, \\; f_0 = ${calc.f0.toFixed(2)}\\text{ Hz}`)}</span>`;
+    } else if (state.step === 2) {
+      const symBadge =
+        calc.symmetryType === 'quarter_even'
+          ? isEn ? '\\text{Quarter-Wave Even } (b_n=0)' : '\\text{Quarto de Onda Par } (b_n=0)'
+          : calc.symmetryType === 'quarter_odd'
+          ? isEn ? '\\text{Quarter-Wave Odd } (a_n=0)' : '\\text{Quarto de Onda Ímpar } (a_n=0)'
+          : calc.symmetryType === 'even'
+          ? isEn ? '\\text{Even } (b_n=0)' : '\\text{Par } (b_n=0)'
+          : calc.symmetryType === 'odd'
+          ? isEn ? '\\text{Odd } (a_0=a_n=0)' : '\\text{Ímpar } (a_0=a_n=0)'
+          : calc.symmetryType.includes('half')
+          ? isEn ? '\\text{Half-Wave}' : '\\text{Meia-Onda}'
+          : isEn ? '\\text{General}' : '\\text{Geral}';
+      metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.symmClass}</span><span>${latexToHtml(symBadge)}</span>`;
+    } else if (state.step === 3) {
+      metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.activeHarm}</span><span>${latexToHtml(`N = ${calc.harmonics.length}, \\; \\eta = ${calc.efficiency.toFixed(1)}\\%`)}</span>`;
     } else {
-      // Header UFPA da Tabela de Convolução com 3 colunas claras
-      const tableHeader = document.createElement('div');
-      tableHeader.className = 'table-header-ufpa grid grid-cols-3 gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[10px] font-bold text-sec uppercase tracking-wider mb-1';
-      tableHeader.innerHTML = `
-        <span>${isEn ? 'Regime / Overlap' : 'Regime / Sobreposição'}</span>
-        <span>${isEn ? 'Interval of t' : 'Intervalo de t'}</span>
-        <span class="text-right">${isEn ? 'Result y(t)' : 'Expressão y(t)'}</span>
-      `;
-      regContainer.appendChild(tableHeader);
-
-      const sig = getEffectiveSignals();
-      const regionsList = sig.regions || [];
-      const [fA, fB] = sig.supportFixed;
-      const [mA, mB] = sig.supportMoving;
-      const bothFinite = Number.isFinite(fA) && Number.isFinite(fB) && Number.isFinite(mA) && Number.isFinite(mB);
-      const activeIndices = regionsList
-        .map((r, i) => (!isZeroRegion(r) ? i : -1))
-        .filter((i) => i !== -1);
-
-      regionsList.forEach((reg, idx) => {
-        const isCurrent = state.step >= 3 && reg.test(state.t);
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `region-row w-full text-left px-2 py-1.5 rounded-lg grid grid-cols-3 items-center gap-2 ui-control ${isCurrent ? 'active font-semibold' : ''}`;
-
-        let regimeLabel = isEn ? 'Full Overlap' : 'Sobreposição Total';
-        if (isZeroRegion(reg)) {
-          regimeLabel = idx === 0
-            ? (isEn ? 'No Overlap (t < tin)' : 'Sem Sobreposição (t < tin)')
-            : (isEn ? 'No Overlap (t > tout)' : 'Sem Sobreposição (t > tout)');
-        } else {
-          const activePos = activeIndices.indexOf(idx);
-          if (bothFinite) {
-            if (activeIndices.length <= 1) {
-              regimeLabel = isEn ? 'Active Overlap' : 'Sobreposição Ativa';
-            } else if (activePos === 0) {
-              regimeLabel = isEn ? 'Partial Entry' : 'Entrada Parcial';
-            } else if (activePos === activeIndices.length - 1) {
-              regimeLabel = isEn ? 'Partial Exit' : 'Saída Parcial';
-            } else {
-              regimeLabel = isEn ? 'Full Overlap' : 'Sobreposição Total';
-            }
-          } else if (activeIndices.length <= 1) {
-            regimeLabel = isEn ? 'Continuous Overlap' : 'Sobreposição Contínua';
-          } else if (activePos === 0 && Number.isFinite(fA) && Number.isFinite(mA)) {
-            regimeLabel = isEn ? 'Partial Entry' : 'Entrada Parcial';
-          } else {
-            regimeLabel = isEn ? 'Full Overlap' : 'Sobreposição Total';
-          }
-        }
-
-        btn.innerHTML = `
-          <span class="text-[10px] font-medium text-mut truncate">${regimeLabel}</span>
-          <span class="reg-range text-[11px] font-mono-code font-bold"></span>
-          <span class="reg-expr text-[11px] text-right font-medium truncate"></span>
-        `;
-        renderMath(btn.querySelector('.reg-range'), reg.range, false);
-        renderMath(btn.querySelector('.reg-expr'), isEn && reg.latexEn ? reg.latexEn : reg.latex, false);
-        btn.addEventListener('click', () => {
-          state.isPlaying = false;
-          state.t = reg.sampleT;
-          if (state.step < 3) state.step = 4;
-          document.querySelectorAll('.step-card, .zen-step-btn').forEach((b) => {
-            b.classList.toggle('active', Number(b.getAttribute('data-step')) === state.step);
-          });
-          const slider = document.getElementById('t-slider');
-          if (slider) {
-            slider.min = '-2.5';
-            slider.max = '6.0';
-            slider.step = '0.02';
-            slider.value = state.t;
-          }
-          const titleEl = document.getElementById('slider-param-title');
-          if (titleEl) titleEl.textContent = state.step === 3 ? dict.sliderShift3 : dict.sliderShift4;
-          const badge = document.getElementById('t-readout-badge');
-          if (badge) badge.textContent = `t = ${state.t.toFixed(2)}`;
-          const zenBadge = document.getElementById('zen-t-readout');
-          if (zenBadge) zenBadge.textContent = `t = ${state.t.toFixed(2)}`;
-          document.querySelectorAll('.play-toggle-btn').forEach((pb) => {
-            const pIcon = pb.querySelector('.icon-play');
-            const paIcon = pb.querySelector('.icon-pause');
-            if (pIcon) pIcon.classList.remove('hidden');
-            if (paIcon) paIcon.classList.add('hidden');
-          });
-          const lblPlay = document.getElementById('lbl-play');
-          if (lblPlay) lblPlay.textContent = dict.btnPlayPlay;
-          updateNotebookUI(false);
-          updateScene3D();
-        });
-        regContainer.appendChild(btn);
-      });
+      metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.approxAtT}</span><span>${latexToHtml(`S_N(${state.t.toFixed(2)}) = ${calc.reconstruct(state.t).toFixed(4)}`)}</span>`;
     }
   }
+}
+
+export function ctftNotebookMetric(metricsEl, isEn) {
+  const dict = I18N[state.lang] || I18N.pt;
+  const calc = state.ctftCalculated?.base || state.ctftCalculated;
+  if (calc) {
+    const x0Val = calc.valX0 !== undefined ? calc.valX0 : calc.fnMag(0);
+    if (state.step === 1) {
+      metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.metricEnergy}</span><span>${latexToHtml(`E_x = ${calc.energyTime.toFixed(3)}\\text{ J}`)}</span>`;
+    } else if (state.step === 2) {
+      metricsEl.innerHTML = `<span class="font-semibold text-sec">DC X(0)</span><span>${latexToHtml(`X(0) = ${x0Val.toFixed(3)}`)}</span>`;
+    } else if (state.step === 3) {
+      const ph0 = x0Val >= 0 ? '0' : '\\pi';
+      metricsEl.innerHTML = `<span class="font-semibold text-sec">|X(0)|</span><span>${latexToHtml(`|X(0)| = ${calc.fnMag(0).toFixed(2)}, \\; \\angle X(0) = ${ph0}`)}</span>`;
+    } else {
+      metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.metricBridge}</span><span>${latexToHtml(`T_0 = ${calc.T0.toFixed(1)}\\text{s} \\implies \\Delta\\omega = ${calc.w0.toFixed(2)}`)}</span>`;
+    }
+  }
+}
+
+export function convolutionNotebookTable(regContainer, isEn) {
+  const dict = I18N[state.lang] || I18N.pt;
+  // Header UFPA da Tabela de Convolução com 3 colunas claras
+  const tableHeader = document.createElement('div');
+  tableHeader.className = 'table-header-ufpa grid grid-cols-3 gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[10px] font-bold text-sec uppercase tracking-wider mb-1';
+  tableHeader.innerHTML = `
+    <span>${isEn ? 'Regime / Overlap' : 'Regime / Sobreposição'}</span>
+    <span>${isEn ? 'Interval of t' : 'Intervalo de t'}</span>
+    <span class="text-right">${isEn ? 'Result y(t)' : 'Expressão y(t)'}</span>
+  `;
+  regContainer.appendChild(tableHeader);
+
+  const sig = getEffectiveSignals();
+  const regionsList = sig.regions || [];
+  const [fA, fB] = sig.supportFixed;
+  const [mA, mB] = sig.supportMoving;
+  const bothFinite = Number.isFinite(fA) && Number.isFinite(fB) && Number.isFinite(mA) && Number.isFinite(mB);
+  const activeIndices = regionsList
+    .map((r, i) => (!isZeroRegion(r) ? i : -1))
+    .filter((i) => i !== -1);
+
+  regionsList.forEach((reg, idx) => {
+    const isCurrent = state.step >= 3 && reg.test(state.t);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `region-row w-full text-left px-2 py-1.5 rounded-lg grid grid-cols-3 items-center gap-2 ui-control ${isCurrent ? 'active font-semibold' : ''}`;
+
+    let regimeLabel = isEn ? 'Full Overlap' : 'Sobreposição Total';
+    if (isZeroRegion(reg)) {
+      regimeLabel = idx === 0
+        ? (isEn ? 'No Overlap (t < tin)' : 'Sem Sobreposição (t < tin)')
+        : (isEn ? 'No Overlap (t > tout)' : 'Sem Sobreposição (t > tout)');
+    } else {
+      const activePos = activeIndices.indexOf(idx);
+      if (bothFinite) {
+        if (activeIndices.length <= 1) {
+          regimeLabel = isEn ? 'Active Overlap' : 'Sobreposição Ativa';
+        } else if (activePos === 0) {
+          regimeLabel = isEn ? 'Partial Entry' : 'Entrada Parcial';
+        } else if (activePos === activeIndices.length - 1) {
+          regimeLabel = isEn ? 'Partial Exit' : 'Saída Parcial';
+        } else {
+          regimeLabel = isEn ? 'Full Overlap' : 'Sobreposição Total';
+        }
+      } else if (activeIndices.length <= 1) {
+        regimeLabel = isEn ? 'Continuous Overlap' : 'Sobreposição Contínua';
+      } else if (activePos === 0 && Number.isFinite(fA) && Number.isFinite(mA)) {
+        regimeLabel = isEn ? 'Partial Entry' : 'Entrada Parcial';
+      } else {
+        regimeLabel = isEn ? 'Full Overlap' : 'Sobreposição Total';
+      }
+    }
+
+    btn.innerHTML = `
+      <span class="text-[10px] font-medium text-mut truncate">${regimeLabel}</span>
+      <span class="reg-range text-[11px] font-mono-code font-bold"></span>
+      <span class="reg-expr text-[11px] text-right font-medium truncate"></span>
+    `;
+    renderMath(btn.querySelector('.reg-range'), reg.range, false);
+    renderMath(btn.querySelector('.reg-expr'), isEn && reg.latexEn ? reg.latexEn : reg.latex, false);
+    btn.addEventListener('click', () => {
+      state.isPlaying = false;
+      state.t = reg.sampleT;
+      if (state.step < 3) state.step = 4;
+      document.querySelectorAll('.step-card, .zen-step-btn').forEach((b) => {
+        b.classList.toggle('active', Number(b.getAttribute('data-step')) === state.step);
+      });
+      const slider = document.getElementById('t-slider');
+      if (slider) {
+        slider.min = '-2.5';
+        slider.max = '6.0';
+        slider.step = '0.02';
+        slider.value = state.t;
+      }
+      const titleEl = document.getElementById('slider-param-title');
+      if (titleEl) titleEl.textContent = state.step === 3 ? dict.sliderShift3 : dict.sliderShift4;
+      const badge = document.getElementById('t-readout-badge');
+      if (badge) badge.textContent = `t = ${state.t.toFixed(2)}`;
+      const zenBadge = document.getElementById('zen-t-readout');
+      if (zenBadge) zenBadge.textContent = `t = ${state.t.toFixed(2)}`;
+      document.querySelectorAll('.play-toggle-btn').forEach((pb) => {
+        const pIcon = pb.querySelector('.icon-play');
+        const paIcon = pb.querySelector('.icon-pause');
+        if (pIcon) pIcon.classList.remove('hidden');
+        if (paIcon) paIcon.classList.add('hidden');
+      });
+      const lblPlay = document.getElementById('lbl-play');
+      if (lblPlay) lblPlay.textContent = dict.btnPlayPlay;
+      updateNotebookUI(false);
+      updateScene3D();
+    });
+    regContainer.appendChild(btn);
+  });
+}
+
+export function fourierNotebookTable(regContainer, isEn) {
+  const dict = I18N[state.lang] || I18N.pt;
+  const calc = state.fourierCalculated;
+  if (calc) {
+    // Barra de Eficiência de Parseval
+    const pBar = document.createElement('div');
+    pBar.className = 'mb-2 p-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-panel)] flex flex-col gap-1';
+    pBar.innerHTML = `
+      <div class="flex items-center justify-between text-[10px]">
+        <span class="font-medium text-sec">${dict.parsevalEfficiency}: <b>${calc.efficiency.toFixed(1)}%</b></span>
+        <span class="font-mono-code text-mut">P_N = ${calc.harmonicPower.toFixed(2)}W / ${calc.totalPower.toFixed(2)}W</span>
+      </div>
+      <div class="w-full bg-[var(--slider-track)] h-1.5 rounded-full overflow-hidden">
+        <div class="bg-[var(--c-conv)] h-full transition-all" style="width: ${calc.efficiency}%"></div>
+      </div>
+    `;
+    regContainer.appendChild(pBar);
+
+    // Tabela de Harmônicas
+    calc.harmonics.slice(0, 10).forEach((h) => {
+      const isHighlighted = state.highlightedHarmonic === h.n;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `region-row w-full text-left px-2 py-1 rounded flex items-center justify-between gap-2 ui-control ${isHighlighted ? 'active font-bold' : ''}`;
+      const thetaPi = (h.theta / Math.PI).toFixed(2);
+      const valStr = state.fourierForm === 'exp'
+        ? `|D_{${h.n}}| = ${h.dnMagnitude.toFixed(3)}, \\; \\angle D = ${thetaPi}\\pi`
+        : state.fourierForm === 'trig'
+        ? `a_{${h.n}} = ${h.an.toFixed(3)}, \\; b_{${h.n}} = ${h.bn.toFixed(3)}`
+        : `C_{${h.n}} = ${h.cn.toFixed(3)}, \\; \\theta_{${h.n}} = ${thetaPi}\\pi`;
+
+      btn.innerHTML = `
+        <span class="reg-range text-[10px] font-mono-code">n = ${h.n}</span>
+        <span class="reg-expr text-[10px]"></span>
+      `;
+      renderMath(btn.querySelector('.reg-expr'), valStr, false);
+
+      btn.addEventListener('click', () => {
+        state.highlightedHarmonic = state.highlightedHarmonic === h.n ? null : h.n;
+        updateAudioSynth(); // toca só a harmônica isolada (ou volta ao sinal completo)
+        updateNotebookUI(false);
+        updateScene3D();
+      });
+      regContainer.appendChild(btn);
+    });
+  }
+}
+
+export function ctftNotebookTable(regContainer, isEn) {
+  const dict = I18N[state.lang] || I18N.pt;
+  // Header UFPA da Tabela de Transformadas Notáveis
+  const tableHeader = document.createElement('div');
+  tableHeader.className = 'grid grid-cols-3 gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[10px] font-bold text-sec uppercase tracking-wider mb-1';
+  tableHeader.innerHTML = `
+    <span>${dict.ctftColSignal}</span>
+    <span>${dict.ctftColTransform}</span>
+    <span class="text-right">${dict.ctftColPair}</span>
+  `;
+  regContainer.appendChild(tableHeader);
+
+  Object.entries(BUILTIN_CTFT_PRESETS).forEach(([key, p]) => {
+    const isCurrent = state.ctftPresetKey === key;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `region-row w-full text-left px-2 py-1.5 rounded-lg grid grid-cols-3 items-center gap-2 ui-control ${isCurrent ? 'active font-semibold' : ''}`;
+    btn.innerHTML = `
+      <span class="text-[10px] font-mono-code">${isEn ? p.titleEn : p.title}</span>
+      <span class="ctft-formula text-[10px] truncate"></span>
+      <span class="text-[9px] text-mut text-right truncate">${key === 'bridge' ? 'Eugene Khutoryansky' : dict.ctftNotablePair}</span>
+    `;
+    renderMath(btn.querySelector('.ctft-formula'), p.latexX, false);
+    btn.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('select-ctft-preset', { detail: { key } }));
+    });
+    regContainer.appendChild(btn);
+  });
+  renderCTFTPropertyTable(regContainer, isEn);
 }

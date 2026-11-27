@@ -39,9 +39,22 @@ export function getModule(id) {
   return modules.get(id) || null;
 }
 
-/** Módulos na ordem de registro (é a ordem do seletor e dos atalhos '[' e ']'). */
+// Ordem do seletor e dos atalhos '[' e ']'. É declarada em modules/index.js: a
+// ordem de registro não serve, porque depende de qual arquivo o navegador avalia
+// primeiro quando os módulos se importam entre si.
+let moduleOrder = [];
+
+export function setModuleOrder(ids) {
+  moduleOrder = [...ids];
+}
+
+/** Módulos na ordem declarada; os que não constam nela vêm depois, na ordem de registro. */
 export function listModules() {
-  return [...modules.values()];
+  const rank = (m) => {
+    const i = moduleOrder.indexOf(m.id);
+    return i < 0 ? moduleOrder.length : i;
+  };
+  return [...modules.values()].map((m, i) => ({ m, i })).sort((a, b) => rank(a.m) - rank(b.m) || a.i - b.i).map((it) => it.m);
 }
 
 export function activeModule() {
