@@ -90,7 +90,10 @@ Recursos do módulo:
 - **Ponte de Khutoryansky ($T_0 \to \infty$)**: Controle interativo de expansão do período mostrando as raias discretas $T_0 D_n$ convergindo para o envelope contínuo $X(\omega)$.
 - **Conservação de Energia de Rayleigh-Parseval**: Verificação numérica em tempo real da equivalência:
   $$\int_{-\infty}^{+\infty} |x(t)|^2 \, dt = \frac{1}{2\pi} \int_{-\infty}^{+\infty} |X(\omega)|^2 \, d\omega$$
-- **Pares Canônicos Analíticos**: Pulso retangular, decaimento exponencial causal, pulso triangular e exponencial bilateral.
+- **Pares Canônicos Analíticos**: Pulso retangular, decaimento exponencial causal, pulso triangular, exponencial bilateral, gaussiana (autodual) e sinc (dual do retângulo).
+- **Propriedades ao Vivo (seletor "Explorar")**: Deslocamento $x(t-t_0)$, escala $x(at)$ e modulação $x(t)\cos(\omega_0 t)$. O sinal e o espectro originais ficam como "fantasmas" tracejados atrás do resultado, e o caderno mostra a regra, o caso atual e o que muda em energia e área.
+- **Transformada Inversa Limitada em Banda**: $x_W(t) = \frac{1}{2\pi}\int_{-W}^{W} X(\omega)e^{j\omega t}d\omega$ é desenhada sobre $x(t)$ enquanto o slider abre a banda $W$, mostrando a fração de energia capturada e o fenômeno de Gibbs.
+- **Tabela de Propriedades**: Deslocamento, escala, modulação, inversa, linearidade, dualidade, convolução, derivada e deslocamento em frequência; as quatro primeiras linhas ligam o modo correspondente no palco.
 - **Dedução Analítica em Quatro Passos**: Passo 1 (Sinal e Definição), Passo 2 (Par de Transformada), Passo 3 (Espectro Contínuo) e Passo 4 (Balanço de Parseval).
 
 ---

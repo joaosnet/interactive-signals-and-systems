@@ -604,6 +604,18 @@
           </div>
         </div>
 
+        <!-- Modos de exploração da CTFT: propriedades e transformada inversa (só na aba CTFT) -->
+        <div id="ctft-mode-selector" class="hidden flex items-center justify-between gap-1 pt-1 border-t border-[var(--border-subtle)]">
+          <span id="lbl-ctft-mode" class="text-[10px] font-semibold text-mut">Explorar:</span>
+          <div class="flex items-center gap-1 text-[10px] flex-wrap justify-end" role="group" aria-labelledby="lbl-ctft-mode">
+            <button type="button" class="ctft-mode-btn seg-btn active px-2 py-0.5 rounded-md border font-mono-code" data-mode="none" aria-pressed="true">X(ω)</button>
+            <button type="button" class="ctft-mode-btn seg-btn px-2 py-0.5 rounded-md border font-mono-code" data-mode="shift" aria-pressed="false">x(t−t₀)</button>
+            <button type="button" class="ctft-mode-btn seg-btn px-2 py-0.5 rounded-md border font-mono-code" data-mode="scale" aria-pressed="false">x(at)</button>
+            <button type="button" class="ctft-mode-btn seg-btn px-2 py-0.5 rounded-md border font-mono-code" data-mode="mod" aria-pressed="false">x·cos ω₀t</button>
+            <button type="button" class="ctft-mode-btn seg-btn px-2 py-0.5 rounded-md border font-mono-code" data-mode="inverse" aria-pressed="false">𝓕⁻¹</button>
+          </div>
+        </div>
+
         <!-- Seletor das 3 Formas de Fourier (só na aba Fourier) -->
         <div id="fourier-form-selector" class="hidden flex items-center justify-between gap-1 pt-1 border-t border-[var(--border-subtle)]">
           <span id="lbl-fourier-form" class="text-[10px] font-semibold text-mut">Forma:</span>

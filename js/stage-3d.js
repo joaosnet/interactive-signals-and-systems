@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { state } from './state.js';
+import { reconstructionCurve } from './ctft-extras.js';
 import { renderMath, compileSignalExpr, detectSupportAndRegions, makeConvolver } from './math-engine.js';
 import { BUILTIN_CONV_PRESETS } from './presets.js';
 import { getModule } from './modules/registry.js';
@@ -1241,13 +1242,32 @@ export function renderCTFTScene3D(dt = 0.016) {
     draw3DPolygon(timeArea, pal.x1Fill, null, 0);
   }
 
+  // Propriedade ativa: o x(t) original fica como "fantasma" atrás de y(t)
+  if (calc.base) {
+    const ghostPts = [];
+    for (let i = 0; i <= steps; i++) {
+      const tVal = T_MIN + (i / steps) * (T_MAX - T_MIN);
+      ghostPts.push({ x: tVal, y: calc.base.fnTime(tVal), z: 0 });
+    }
+    ctx3d.globalAlpha = 0.5;
+    draw3DPolyline(ghostPts, pal.x1, 1.4 * strokeScale, [5, 4]);
+    ctx3d.globalAlpha = 1.0;
+  }
+
+  // Transformada inversa: reconstrução x_W(t) usando só a banda |ω| ≤ W
+  const inverseW = calc.mode === 'inverse' ? calc.value : null;
+  if (inverseW !== null) {
+    const recPts = reconstructionCurve(calc, inverseW, T_MIN, T_MAX, steps).map((p) => ({ x: p.t, y: p.y, z: 0 }));
+    draw3DPolyline(recPts, pal.prod, 2.6 * strokeScale);
+  }
+
   // Modo foco: só x(t) fica em destaque; o restante da cena esmaece (como na série de Fourier)
   if (isFocusActive) ctx3d.globalAlpha = 0.28;
 
   // 2.1 Sonda de Frequência Ativa (Passos 1 a 3): Produto x(t)*cos(w*t) no plano intermediário z = 2.2
   const W_SPAN = 16.0;
   const wProbe = Math.max(-W_SPAN, Math.min(W_SPAN, state.t || 0));
-  if (state.step <= 3) {
+  if (state.step <= 3 && inverseW === null) {
     const modPts = [];
     for (let i = 0; i <= steps; i++) {
       const tVal = T_MIN + (i / steps) * (T_MAX - T_MIN);
@@ -1271,6 +1291,30 @@ export function renderCTFTScene3D(dt = 0.016) {
   const magArea = buildCurveAreaPolygon(magPts);
   if (magArea.length > 2) {
     draw3DPolygon(magArea, pal.convFill, null, 0);
+  }
+
+  // Propriedade ativa: |X(ω)| original como "fantasma" atrás de |Y(ω)|
+  if (calc.base) {
+    const ghostMag = [];
+    for (let i = 0; i <= steps; i++) {
+      const wVal = -W_SPAN + (i / steps) * (2 * W_SPAN);
+      ghostMag.push({ x: (wVal / W_SPAN) * T_MAX, y: calc.base.fnMag(wVal), z: Z_MAX });
+    }
+    ctx3d.globalAlpha = (isFocusActive ? 0.28 : 1.0) * 0.5;
+    draw3DPolyline(ghostMag, pal.conv, 1.4 * strokeScale, [5, 4]);
+    ctx3d.globalAlpha = isFocusActive ? 0.28 : 1.0;
+  }
+
+  // Transformada inversa: a banda |ω| ≤ W usada na reconstrução fica destacada
+  if (inverseW !== null) {
+    const wEdge = Math.min(inverseW, W_SPAN);
+    const bandPts = magPts.filter((p) => Math.abs(p.x) <= (wEdge / W_SPAN) * T_MAX + 1e-9);
+    const bandArea = buildCurveAreaPolygon(bandPts);
+    if (bandArea.length > 2) draw3DPolygon(bandArea, pal.prodFill, null, 0);
+    [-wEdge, wEdge].forEach((wVal) => {
+      const xCoord = (wVal / W_SPAN) * T_MAX;
+      draw3DLine({ x: xCoord, y: 0, z: Z_MAX }, { x: xCoord, y: AMP_MAX * 0.8, z: Z_MAX }, pal.prod, 1.6 * strokeScale, [4, 3]);
+    });
   }
 
   // 3.1 Espectro Contínuo de Fase ∠X(w) (escala [-pi, pi] -> [-0.88, 0.88] em z = Z_MAX - 0.75)
@@ -1340,7 +1384,11 @@ function updateFloatingLabelsCTFT(calc, Z_MAX, showPhaseCurve = false) {
   const livePill = document.getElementById('stage-live-pill');
   if (livePill) {
     const x0Display = (calc.valX0 !== undefined ? calc.valX0 : calc.fnMag(0)).toFixed(2);
-    const latex = `X(0) = ${x0Display} \\quad (E_x = ${calc.energyTime.toFixed(2)}\\text{ J}, \\; T_0 = ${calc.T0.toFixed(1)}\\text{s})`;
+    const latex = calc.base
+      ? `Y(0) = ${x0Display} \\quad (E_y = ${calc.energyTime.toFixed(2)}\\text{ J})`
+      : (calc.mode === 'inverse'
+        ? `x_W(t) = \\tfrac{1}{2\\pi}\\int_{-${calc.value.toFixed(1)}}^{${calc.value.toFixed(1)}} X(\\omega)e^{j\\omega t}d\\omega`
+        : `X(0) = ${x0Display} \\quad (E_x = ${calc.energyTime.toFixed(2)}\\text{ J}, \\; T_0 = ${calc.T0.toFixed(1)}\\text{s})`);
     if (livePill.dataset.lastLatex !== latex) {
       livePill.dataset.lastLatex = latex;
       renderMath(livePill, latex, false);
@@ -1355,9 +1403,10 @@ function updateFloatingLabelsCTFT(calc, Z_MAX, showPhaseCurve = false) {
   setLabelMath('lbl-tau', 't');
   setLabelMath('lbl-t', '\\omega');
   setLabelMath('lbl-z', '\\text{Amp}');
-  setLabelMath('lbl-x1', 'x(t)');
-  setLabelMath('lbl-x2', '|X(\\omega)|');
+  setLabelMath('lbl-x1', calc.base ? `y(t) = ${calc.labelTime}` : 'x(t)');
+  setLabelMath('lbl-x2', calc.base ? '|Y(\\omega)|' : '|X(\\omega)|');
   setLabelMath('lbl-conv', 'T_0 D_n');
+  if (calc.mode === 'inverse') setLabelMath('lbl-b2', 'x_W(t)', false);
   if (showPhaseCurve) {
     setLabelMath('lbl-b1', '\\angle X(\\omega)');
   }
@@ -1370,7 +1419,7 @@ function updateFloatingLabelsCTFT(calc, Z_MAX, showPhaseCurve = false) {
     { id: 'lbl-x2', x: 0.0, y: calc.fnMag(0) + 0.25, z: Z_MAX, visible: true },
     { id: 'lbl-conv', x: 2.5, y: 0.8, z: Z_MAX, visible: Boolean(state.layers.spectrumWall) },
     { id: 'lbl-b1', x: -3.2, y: 0.72, z: Z_MAX - 0.75, visible: showPhaseCurve },
-    { id: 'lbl-b2', x: 0, y: 0, z: 0, visible: false }
+    { id: 'lbl-b2', x: 2.6, y: 1.0, z: 0, visible: calc.mode === 'inverse' }
   ]);
 }
 

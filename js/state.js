@@ -167,6 +167,8 @@ export const state = {
   ctftBridgeT0: 4.0,
   ctftCustomPresets: initialCTFTCustomPresets,
   ctftCalculated: null,
+  ctftMode: 'none',    // modo de exploração: none | shift | scale | mod | inverse
+  ctftModeValues: {},  // parâmetro de cada modo (t₀, a, ω₀, banda W)
 
   // Transformada de Laplace
   laplacePresetKey: 'exp',

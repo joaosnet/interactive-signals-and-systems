@@ -6,6 +6,7 @@ import { state } from './state.js';
 import { I18N } from './i18n.js';
 import { renderMath, latexToHtml, exprToLatex, formatSymbolic, isZeroRegion } from './math-engine.js';
 import { BUILTIN_CTFT_PRESETS } from './presets.js';
+import { ctftModeNotebookLines, renderCTFTPropertyTable } from './modules/ctft.js';
 import { getEffectiveSignals, updateScene3D } from './stage-3d.js';
 import { updateAudioSynth } from './audio.js';
 import { getModule } from './modules/registry.js';
@@ -334,7 +335,14 @@ function buildNotebookLinesConvolution(sig) {
   ];
 }
 
+// Com um modo de exploração ativo, as linhas do modo vêm primeiro e as do passo
+// continuam descrevendo o x(t) original (calc.base).
 function buildNotebookLinesCTFT(calc) {
+  if (!calc) return [];
+  return [...ctftModeNotebookLines(state.lang === 'en'), ...buildNotebookLinesCTFTBase(calc.base || calc)];
+}
+
+function buildNotebookLinesCTFTBase(calc) {
   if (!calc) return [];
   const isEn = state.lang === 'en';
   const x0Val = calc.valX0 !== undefined ? calc.valX0 : calc.fnMag(0);
@@ -456,7 +464,7 @@ export function updateNotebookUI(animateHandwriting = false) {
       metricsEl.firstChild.textContent = m.label;
       metricsEl.lastChild.innerHTML = latexToHtml(m.latex);
     } else if (isCTFT) {
-      const calc = state.ctftCalculated;
+      const calc = state.ctftCalculated?.base || state.ctftCalculated;
       if (calc) {
         const x0Val = calc.valX0 !== undefined ? calc.valX0 : calc.fnMag(0);
         if (state.step === 1) {
@@ -613,6 +621,7 @@ export function updateNotebookUI(animateHandwriting = false) {
         });
         regContainer.appendChild(btn);
       });
+      renderCTFTPropertyTable(regContainer, isEn);
     } else if (isFourier) {
       const calc = state.fourierCalculated;
       if (calc) {

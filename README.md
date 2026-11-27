@@ -90,7 +90,10 @@ Key operational capabilities:
 - **The Khutoryansky Bridge ($T_0 \to \infty$)**: Interactive period expansion demonstrating discrete harmonic lines $T_0 D_n$ condensing into the continuous spectral envelope $X(\omega)$.
 - **Rayleigh-Parseval Conservation**: Real-time numerical verification of energy equivalence:
   $$\int_{-\infty}^{+\infty} |x(t)|^2 \, dt = \frac{1}{2\pi} \int_{-\infty}^{+\infty} |X(\omega)|^2 \, d\omega$$
-- **Standard Transform Pairs**: Canonical test cases including rectangular pulses, causal exponential decays, triangular pulses, and bilateral exponentials.
+- **Standard Transform Pairs**: Canonical test cases including rectangular pulses, causal exponential decays, triangular pulses, bilateral exponentials, the Gaussian (self-dual) and the sinc (dual of the rectangle).
+- **Live Properties ("Explore" selector)**: Time shift $x(t-t_0)$, scaling $x(at)$ and modulation $x(t)\cos(\omega_0 t)$. The original signal and spectrum stay as dashed "ghosts" behind the result, and the notebook shows the rule, the current case and what changes in energy and area.
+- **Band-Limited Inverse Transform**: $x_W(t) = \frac{1}{2\pi}\int_{-W}^{W} X(\omega)e^{j\omega t}d\omega$ is drawn over $x(t)$ while the slider opens the band $W$, showing the captured energy fraction and the Gibbs phenomenon.
+- **Property Table**: Shift, scaling, modulation, inverse, linearity, duality, convolution, differentiation and frequency shift; the first four rows switch on the matching mode on stage.
 - **Four-Step Analytical Derivation**: Step-by-step breakdown covering signal definitions, transform pairs, spectrum properties, and Parseval balances.
 
 ---
