@@ -841,6 +841,7 @@ export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decay
   let fnPhase = (w) => 0;
   let latexPeriodic = null; // só no preset 'bridge': extensão periódica do pulso-base
   let isTruncated = false;  // sinal customizado que não decai dentro da janela de integração
+  let wMaxHint = null;      // faixa de integração de Parseval quando o espectro tem banda limitada
 
   if (presetKey === 'custom_ctft' && customExpr) {
     const valRes = validateSignalExpression(customExpr);
@@ -932,6 +933,33 @@ export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decay
     valX0 = 2.0 / a;
     fnMag = (w) => (2 * a) / (a * a + w * w);
     fnPhase = () => 0;
+  } else if (presetKey === 'gauss') {
+    // Gaussiana autodual: e^{-π(t/τ)²} ↔ τ·e^{-(ωτ)²/4π}
+    fnTime = (t) => Math.exp(-Math.PI * (t / tau) * (t / tau));
+    timeSupport = [-Math.min(8.0, 2.5 * tau), Math.min(8.0, 2.5 * tau)];
+    latexTime = tau === 1.0 ? 'e^{-\\pi t^2}' : `e^{-\\pi (t/${tau.toFixed(1)})^2}`;
+    latexCTFT = tau === 1.0
+      ? 'e^{-\\omega^2/4\\pi}'
+      : `${tau.toFixed(1)}\\,e^{-(${tau.toFixed(1)}\\omega)^2/4\\pi}`;
+    energyTime = tau / Math.SQRT2;
+    valX0 = tau;
+    fnMag = (w) => tau * Math.exp(-(w * tau) * (w * tau) / (4 * Math.PI));
+    fnPhase = () => 0;
+  } else if (presetKey === 'sinc') {
+    // Dual do pulso retangular: sinc(Wt) ↔ (π/W)·rect(ω/2W), com sinc(x) = sin(x)/x
+    const W = tau;
+    fnTime = (t) => (Math.abs(W * t) < 1e-7 ? 1.0 : Math.sin(W * t) / (W * t));
+    timeSupport = [-5.0, 5.0];
+    latexTime = `\\operatorname{sinc}(${W.toFixed(1)}t)`;
+    latexCTFT = `\\frac{\\pi}{${W.toFixed(1)}}\\operatorname{rect}\\left(\\frac{\\omega}{${(2 * W).toFixed(1)}}\\right)`;
+    energyTime = Math.PI / W;
+    valX0 = Math.PI / W;
+    fnMag = (w) => {
+      const d = Math.abs(w) - W;
+      return Math.abs(d) < 1e-9 ? Math.PI / (2 * W) : (d < 0 ? Math.PI / W : 0);
+    };
+    fnPhase = () => 0;
+    wMaxHint = 4 * W; // espectro de banda limitada: malha fina em torno da borda
   } else if (presetKey === 'bridge') {
     fnTime = (t) => {
       const wrapped = ((((t + T0 * 0.5) % T0) + T0) % T0) - T0 * 0.5;
@@ -999,7 +1027,7 @@ export function calculateCTFTData(presetKey = 'rect', pulseWidthVal = 2.0, decay
 
   // 4. Integração Numérica de Verificação de Parseval (malha ampla adaptativa)
   const scaleHint = Math.max(0.25, Math.min(tau, 1.0 / a));
-  const wMax = Math.max(90.0, 60.0 / scaleHint);
+  const wMax = wMaxHint || Math.max(90.0, 60.0 / scaleHint);
   const numWSamples = 2000;
   const dw = (2 * wMax) / numWSamples;
   let energyFreqSum = 0;

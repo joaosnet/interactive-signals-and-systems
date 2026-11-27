@@ -297,6 +297,34 @@ export const BUILTIN_CTFT_PRESETS = {
     mag: (w, a = 1.0) => (2 * a) / (a * a + w * w),
     phase: () => 0
   },
+  gauss: {
+    id: 'gauss',
+    title: 'Gaussiana (Autodual)',
+    titleEn: 'Gaussian (Self-Dual)',
+    subtitle: 'x(t) = e^(-π(t/τ)²) ↔ X(ω) = τ e^(-(ωτ)²/4π)',
+    subtitleEn: 'x(t) = e^(-π(t/τ)²) ↔ X(ω) = τ e^(-(ωτ)²/4π)',
+    expr: 'e^(-pi*t^2)',
+    latexX: 'e^{-\\pi t^2}',
+    latexCTFT: 'e^{-\\omega^2/4\\pi}',
+    tau0: 1.0,
+    fnX: (t) => Math.exp(-Math.PI * t * t),
+    mag: (w, tau = 1.0) => tau * Math.exp(-(w * tau) * (w * tau) / (4 * Math.PI)),
+    phase: () => 0
+  },
+  sinc: {
+    id: 'sinc',
+    title: 'Sinc (Dual do Retângulo)',
+    titleEn: 'Sinc (Dual of the Rectangle)',
+    subtitle: 'x(t) = sinc(Wt) ↔ X(ω) = (π/W) rect(ω/2W)',
+    subtitleEn: 'x(t) = sinc(Wt) ↔ X(ω) = (π/W) rect(ω/2W)',
+    expr: 'sinc(2*t)',
+    latexX: '\\operatorname{sinc}(2t)',
+    latexCTFT: '\\tfrac{\\pi}{2}\\operatorname{rect}(\\omega/4)',
+    tau0: 2.0,
+    fnX: (t) => (Math.abs(t) < 1e-9 ? 1.0 : Math.sin(2 * t) / (2 * t)),
+    mag: (w, W = 2.0) => (Math.abs(w) < W ? Math.PI / W : 0),
+    phase: () => 0
+  },
   bridge: {
     id: 'bridge',
     title: 'Ponte de Khutoryansky (T₀ → ∞)',
