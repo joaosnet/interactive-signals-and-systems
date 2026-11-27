@@ -111,6 +111,23 @@ Module features:
 
 ---
 
+### 5. Z-Transform (`#z`)
+
+The discrete-time counterpart of Laplace, on the complex $z$-plane:
+
+$$X(z) = \sum_{n=-\infty}^{+\infty} x[n]\, z^{-n}, \qquad z = r\,e^{j\Omega}$$
+
+Module features:
+- **$z$-Plane on the Stage Floor**: $\operatorname{Re}\{z\}$ runs horizontally and $\operatorname{Im}\{z\}$ in depth, with poles ($\times$), zeros ($\circ$), the unit circle and the region of convergence (ROC) shaded as a ring.
+- **Stems of $x[n]$**: The back wall shows the sequence sample by sample and, at the cut, the sequence $x[n]\,r^{-n}$ that is actually summed.
+- **$|X(z)|$ Surface on a Polar Mesh**: Magnitude becomes height; poles show up as "tent poles".
+- **Circular Cut at $|z| = r$**: The curve $|X(r e^{j\Omega})|$ is the DTFT of $x[n]\,r^{-n}$, wrapped around the circle (which is why it is periodic in $\Omega$). Outside the ROC the cut turns red and dashed because the sum diverges.
+- **Bridge to the DTFT and Stability**: In step 4 the cut is the unit circle itself. Sliding the pole across it shows when the DTFT stops existing and the system stops being stable.
+- **Same $X(z)$, Different Sequences**: The causal and anticausal pairs share $\frac{z}{z-a}$ and differ only in the ROC.
+- **Notable Pairs**: Impulse, step, ramp, causal, anticausal and two-sided exponentials, causal and damped sine and cosine.
+
+---
+
 ## Interface and Display Systems
 
 - **Camera Projections**: Instant selection among `3D Free Orbit`, `2D Time (Front)`, `2D Spectrum (Lateral)`, and `Top Plan`.
@@ -128,7 +145,7 @@ Module features:
 | :--- | :--- |
 | `Space` | Play or pause simulation loop |
 | `1`, `2`, `3`, `4` | Direct jump to Convolution steps 1 through 4 |
-| `[` / `]` | Cycle modules: Convolution $\to$ Fourier $\to$ CTFT $\to$ Laplace |
+| `[` / `]` | Cycle modules: Convolution $\to$ Fourier $\to$ CTFT $\to$ Laplace $\to$ Z |
 | `Z` | Toggle Zen full-screen mode |
 | `M` | Toggle Web Audio synthesizer |
 | `←` / `→` | Incremental step of time parameter $t$ or frequency $\omega$ |

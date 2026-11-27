@@ -25,6 +25,16 @@ export const I18N = {
     sliderLaplaceSigma: 'Corte Re{s} = σ',
     sliderLaplaceA: 'Decaimento a (polo em s = −a)',
     sliderLaplaceW0: 'Frequência ω₀ (polos em ±jω₀)',
+    modZTitle: 'Transformada Z',
+    modZSub: 'X(z) = Σ x[n] z^{-n}',
+    stepZ1: 'Sequência & Definição',
+    stepZ2: 'Polos & ROC',
+    stepZ3: 'Corte em |z| = r',
+    stepZ4: 'Estabilidade',
+    regionsZTitle: 'Pares Notáveis da Transformada Z & ROC:',
+    sliderZR: 'Corte |z| = r',
+    sliderZA: 'Parâmetro a (polos em |z| = |a|)',
+    sliderZW0: 'Frequência Ω₀ (polos em e^{±jΩ₀})',
 
     // Vistas de Câmera 3D/2D
     view3D: '3D Livre',
@@ -228,6 +238,16 @@ export const I18N = {
     sliderLaplaceSigma: 'Cut Re{s} = σ',
     sliderLaplaceA: 'Decay a (pole at s = −a)',
     sliderLaplaceW0: 'Frequency ω₀ (poles at ±jω₀)',
+    modZTitle: 'Z-Transform',
+    modZSub: 'X(z) = Σ x[n] z^{-n}',
+    stepZ1: 'Sequence & Definition',
+    stepZ2: 'Poles & ROC',
+    stepZ3: 'Cut at |z| = r',
+    stepZ4: 'Stability',
+    regionsZTitle: 'Notable Z-Transform Pairs & ROC:',
+    sliderZR: 'Cut |z| = r',
+    sliderZA: 'Parameter a (poles at |z| = |a|)',
+    sliderZW0: 'Frequency Ω₀ (poles at e^{±jΩ₀})',
 
     // Camera Views
     view3D: '3D Free',

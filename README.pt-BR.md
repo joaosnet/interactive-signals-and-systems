@@ -111,6 +111,23 @@ Recursos do módulo:
 
 ---
 
+### 5. Transformada Z (`#z`)
+
+A contraparte discreta de Laplace, no plano complexo $z$:
+
+$$X(z) = \sum_{n=-\infty}^{+\infty} x[n]\, z^{-n}, \qquad z = r\,e^{j\Omega}$$
+
+Recursos do módulo:
+- **Plano $z$ no Piso do Palco**: $\operatorname{Re}\{z\}$ na horizontal e $\operatorname{Im}\{z\}$ na profundidade, com polos ($\times$), zeros ($\circ$), o círculo unitário e a região de convergência (ROC) sombreada como um anel.
+- **Hastes de $x[n]$**: A parede do fundo mostra a sequência amostra a amostra e, no corte, a sequência $x[n]\,r^{-n}$ que de fato é somada.
+- **Superfície $|X(z)|$ em Malha Polar**: A magnitude vira altura; os polos aparecem como "mastros de tenda".
+- **Corte Circular em $|z| = r$**: A curva $|X(r e^{j\Omega})|$ é a DTFT de $x[n]\,r^{-n}$, enrolada em volta do círculo (por isso é periódica em $\Omega$). Fora da ROC o corte fica vermelho e tracejado, pois a soma diverge.
+- **Ponte com a DTFT e Estabilidade**: No passo 4 o corte é o próprio círculo unitário. Deslizar o polo através dele mostra quando a DTFT deixa de existir e o sistema deixa de ser estável.
+- **Mesma $X(z)$, Sequências Diferentes**: Os pares causal e anticausal compartilham $\frac{z}{z-a}$ e diferem apenas na ROC.
+- **Pares Notáveis**: Impulso, degrau, rampa, exponenciais causal, anticausal e bilateral, seno e cosseno causais e amortecidos.
+
+---
+
 ## Fundamentos Didáticos e de Interface
 
 - **Projeções de Câmera**: Alternância imediata entre `3D Livre`, `2D Tempo (Frontal)`, `2D Espectro (Lateral)` e `Vista Superior`.
@@ -128,7 +145,7 @@ Recursos do módulo:
 | :--- | :--- |
 | `Espaço` | Reproduzir ou pausar o loop de simulação |
 | `1`, `2`, `3`, `4` | Salto direto para as etapas 1 a 4 da Convolução |
-| `[` / `]` | Alternar módulo: Convolução $\to$ Fourier $\to$ CTFT $\to$ Laplace |
+| `[` / `]` | Alternar módulo: Convolução $\to$ Fourier $\to$ CTFT $\to$ Laplace $\to$ Z |
 | `Z` | Alternar tela cheia / Modo Zen |
 | `M` | Ligar ou desligar sintetizador de áudio Web Audio |
 | `←` / `→` | Ajuste incremental do parâmetro de tempo $t$ ou frequência $\omega$ |
