@@ -1,0 +1,20 @@
+name: Algo não funciona
+description: Um botão, slider, animação ou tela que não se comporta como deveria.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: descricao
+    attributes:
+      label: O que aconteceu?
+      description: Conte o que você fez, o que esperava e o que apareceu.
+      placeholder: "No passo 3 movi o slider até o fim e a curva sumiu. Esperava ver o resultado completo."
+    validations:
+      required: true
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Onde aconteceu
+      description: O site preenche isto sozinho quando você usa o botão Feedback. Se abriu por aqui, diga o módulo, o passo e se estava no celular ou no computador.
+    validations:
+      required: false

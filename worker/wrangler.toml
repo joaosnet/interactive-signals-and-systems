@@ -1,0 +1,26 @@
+# Worker de feedback: recebe relatos do site e cria issues no GitHub.
+# Passo a passo do deploy em worker/README.md.
+
+name = "sinais-feedback"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+[vars]
+# Repositório onde as issues são criadas.
+GITHUB_REPO = "joaosnet/interactive-signals-and-systems"
+# Só páginas servidas destas origens podem enviar relatos (separe por vírgula).
+ALLOWED_ORIGINS = "https://joaosnet.github.io"
+
+# O token do GitHub NÃO fica neste arquivo. Ele é um segredo:
+#   npx wrangler secret put GITHUB_TOKEN
+
+# Opcional: limite de envios por IP. O Worker usa o binding RATE_LIMITER se ele
+# existir. Confira a sintaxe atual na documentação da Cloudflare (Workers →
+# Runtime APIs → Rate Limiting) antes de ativar; na data deste arquivo era:
+#
+# [[ratelimits]]
+# name = "RATE_LIMITER"
+# namespace_id = "1001"
+#   [ratelimits.simple]
+#   limit = 5
+#   period = 60

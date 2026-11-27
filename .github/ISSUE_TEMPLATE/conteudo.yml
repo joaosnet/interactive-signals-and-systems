@@ -1,0 +1,20 @@
+name: Erro na matemática ou no texto
+description: Uma fórmula, um valor, um gráfico ou uma explicação que está errada ou confusa.
+title: "[Conteúdo] "
+labels: ["conteudo"]
+body:
+  - type: textarea
+    id: descricao
+    attributes:
+      label: O que está errado?
+      description: Diga o que aparece e o que deveria aparecer. Se puder, cite a fonte (livro, página, aula).
+      placeholder: "No par da exponencial anticausal a ROC aparece como Re{s} > -a, mas deveria ser Re{s} < -a (Lathi, cap. 4)."
+    validations:
+      required: true
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Onde aparece
+      description: O site preenche isto sozinho quando você usa o botão Feedback. Se abriu por aqui, diga o módulo e o passo.
+    validations:
+      required: false

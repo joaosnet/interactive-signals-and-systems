@@ -1,6 +1,6 @@
 {
   "0": "stage-3d.js",
-  "1": "Interactive Signals and Systems",
+  "1": "Sinais e Sistemas de Forma Interativa",
   "2": "z.js",
   "3": "ui.js",
   "4": "ctft.js",
@@ -12,5 +12,13 @@
   "10": "package.json",
   "11": "dtft.js",
   "12": "dconv.js",
-  "13": "Módulos Principales"
+  "13": "Módulos Principales",
+  "14": "feedback.js",
+  "15": "math-engine.js",
+  "16": "Interactive Signals and Systems",
+  "17": "bug.yml",
+  "18": "conteudo.yml",
+  "19": "body",
+  "20": "contact_links",
+  "21": "PULL_REQUEST_TEMPLATE.md"
 }

@@ -257,6 +257,15 @@ Access the modules directly:
 
 ---
 
+## Feedback and Contributing
+
+- **From the site**: the **Feedback** button, in the corner of the stage, opens a form that turns the report into an issue, already tagged with the module and step the person is on.
+- **From the browser, no git**: the same window leads to GitHub's web editor, which creates the fork and the pull request on its own.
+- **Beginner's guide** (in Portuguese): [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Sending without a GitHub account**: depends on the Worker in [`worker/`](worker/README.md), which has to be deployed to Cloudflare.
+
+---
+
 ## Academic References
 
 - B. P. Lathi, *Linear Systems and Signals*, 2nd ed., Oxford University Press, 2004.

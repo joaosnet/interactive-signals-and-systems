@@ -257,6 +257,15 @@ Enlaces directos a módulos:
 
 ---
 
+## Comentarios y Contribución
+
+- **Desde el sitio**: el botón **Feedback**, en la esquina del escenario, abre un formulario que convierte el reporte en una issue, ya con el módulo y el paso en que está la persona.
+- **Desde el navegador, sin git**: la misma ventana lleva al editor web de GitHub, que crea el fork y el pull request por sí solo.
+- **Guía para principiantes** (en portugués): [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Envío sin cuenta de GitHub**: depende del Worker en [`worker/`](worker/README.md), que debe publicarse en Cloudflare.
+
+---
+
 ## Referencias Académicas
 
 - B. P. Lathi, *Señales y Sistemas Lineales*, 2ª ed., Oxford University Press.
