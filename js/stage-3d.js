@@ -5,6 +5,7 @@
 import { state } from './state.js';
 import { renderMath, compileSignalExpr, detectSupportAndRegions, makeConvolver } from './math-engine.js';
 import { BUILTIN_CONV_PRESETS } from './presets.js';
+import { getModule } from './modules/registry.js';
 
 let canvasContainer = null;
 let stageCanvas = null;
@@ -25,6 +26,9 @@ export const camOrbit = {
   autoOrient: true,
   target: { x: 1.2, y: 0.42, z: 1.6 }
 };
+
+// Ponto para onde a câmera olha; um módulo pode declarar o seu em `cameraTarget`.
+const DEFAULT_CAMERA_TARGET = { x: 1.2, y: 0.42, z: 1.6 };
 
 const harmonicMorphWeights = {};
 
@@ -439,6 +443,15 @@ function buildCurveAreaPolygon(curvePts) {
 export function updateScene3D(dt = 0.016) {
   if (!ctx3d || !stageCanvas) return;
   interactiveCurves2D = [];
+
+  const mod = getModule(state.activeModule);
+  Object.assign(camOrbit.target, (mod && mod.cameraTarget) || DEFAULT_CAMERA_TARGET);
+  // Módulos que trazem a própria cena desenham com a API `scene` (ver fim do arquivo).
+  if (mod && mod.renderScene) {
+    mod.renderScene(scene, dt);
+    return;
+  }
+
   if (state.activeModule === 'ctft') {
     renderCTFTScene3D(dt);
     return;
@@ -954,10 +967,10 @@ export function renderFourierScene3D(dt = 0.016) {
   updateFloatingLabelsFourier(calc, tNow, Z_MAX);
 }
 
-function setLabelMath(id, latex) {
+function setLabelMath(id, latex, allowEdit = true) {
   const el = document.getElementById(id);
   if (!el) return;
-  const isEditable = id === 'lbl-x1' || (id === 'lbl-x2' && state.activeModule === 'convolution');
+  const isEditable = allowEdit && (id === 'lbl-x1' || (id === 'lbl-x2' && state.activeModule === 'convolution'));
   const cacheKey = `${latex}|${isEditable}|${state.lang}`;
   if (el.dataset.lastLatex === cacheKey) return;
   el.dataset.lastLatex = cacheKey;
@@ -1399,9 +1412,12 @@ function initPointerOrbitControls() {
   // Clique direto nos rótulos 3D flutuantes de sinal (x(τ), h(t-τ), f(t), x(t) CTFT)
   const lblX1 = document.getElementById('lbl-x1');
   const lblX2 = document.getElementById('lbl-x2');
+  // Módulos sem editor de sinal (hudTargets vazio) não abrem o HUD pelos rótulos.
+  const hasSignalEditor = () => (getModule(state.activeModule)?.hudTargets || []).length > 0;
   if (lblX1) {
     lblX1.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (!hasSignalEditor()) return;
       const target = state.activeModule === 'ctft'
         ? 'ctft'
         : (state.activeModule === 'fourier' ? 'fourier' : (state.isCommuted ? 'h' : 'x'));
@@ -1411,6 +1427,7 @@ function initPointerOrbitControls() {
   if (lblX2) {
     lblX2.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (!hasSignalEditor()) return;
       if (state.activeModule === 'ctft') {
         window.dispatchEvent(new CustomEvent('open-signal-hud', { detail: { target: 'ctft' } }));
       } else if (state.activeModule === 'fourier') {
@@ -1514,3 +1531,129 @@ function initPointerOrbitControls() {
     pinchDist = 0;
   });
 }
+
+// ============================================================================
+// API DE CENA PARA MÓDULOS PLUGÁVEIS
+// ----------------------------------------------------------------------------
+// Um módulo que define `renderScene(scene, dt)` desenha o próprio palco com
+// estes helpers, sem tocar no canvas diretamente. Coordenadas de mundo:
+// x = horizontal, y = altura (amplitude), z = profundidade.
+//
+//   const frame = scene.begin(dt);      // redimensiona, move a câmera, limpa
+//   if (!frame) return;                 // { w, h, pal, strokeScale }
+//   scene.line(p1, p2, cor, largura, tracejado);
+//   scene.polyline(pontos, cor, largura, tracejado);
+//   scene.polygon(pontos, preenchimento, contorno, largura);
+//   scene.dot(p, raio, preenchimento, contorno);
+//   scene.stem(base, topo, cor, largura, raio);   // haste de sinal discreto
+//   scene.cross(p, tamanho, cor, largura);        // polo no plano complexo
+//   scene.ring(p, raio, cor, largura);            // zero no plano complexo
+//   scene.end();
+//   scene.labels([{ slot, latex, x, y, z, visible }]);  // rótulos flutuantes
+//   scene.livePill(latex);                              // leitura no rodapé do palco
+// ============================================================================
+const LABEL_SLOTS = ['lbl-tau', 'lbl-t', 'lbl-z', 'lbl-x1', 'lbl-x2', 'lbl-conv', 'lbl-b1', 'lbl-b2'];
+
+export const scene = {
+  begin(dt = 0.016) {
+    if (!ctx3d || !stageCanvas) return null;
+    const pal = getThemePalette();
+    const w = canvasContainer.clientWidth || 384;
+    const h = canvasContainer.clientHeight || 260;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if (stageCanvas.width !== Math.floor(w * dpr) || stageCanvas.height !== Math.floor(h * dpr)) {
+      stageCanvas.width = Math.floor(w * dpr);
+      stageCanvas.height = Math.floor(h * dpr);
+    }
+    updateCameraFromOrbit(dt);
+    ctx3d.save();
+    ctx3d.scale(dpr, dpr);
+    ctx3d.fillStyle = pal.bgCss;
+    ctx3d.fillRect(0, 0, w, h);
+    const strokeScale = state.layers.thickStroke || state.theme === 'projector' ? 1.55 : 1.0;
+    return { w, h, pal, strokeScale };
+  },
+
+  end() {
+    ctx3d.globalAlpha = 1.0;
+    ctx3d.restore();
+  },
+
+  set alpha(value) {
+    ctx3d.globalAlpha = value;
+  },
+
+  line: (p1, p2, color, width = 1.5, dash = []) => draw3DLine(p1, p2, color, width, dash),
+  polyline: (pts, color, width = 2.2, dash = []) => draw3DPolyline(pts, color, width, dash),
+  polygon: (pts, fill, stroke = null, width = 1) => draw3DPolygon(pts, fill, stroke, width),
+  areaUnder: (curvePts) => buildCurveAreaPolygon(curvePts),
+  project: (p) => projectPoint3D(p.x, p.y, p.z),
+
+  dot(p, radius, fill, stroke = null) {
+    const pt = projectPoint3D(p.x, p.y, p.z);
+    if (!pt) return;
+    ctx3d.beginPath();
+    ctx3d.arc(pt.x, pt.y, radius, 0, Math.PI * 2);
+    ctx3d.fillStyle = fill;
+    ctx3d.fill();
+    if (stroke) {
+      ctx3d.strokeStyle = stroke;
+      ctx3d.lineWidth = 1.4;
+      ctx3d.stroke();
+    }
+  },
+
+  stem(base, top, color, width = 2, radius = 3.5) {
+    draw3DLine(base, top, color, width);
+    scene.dot(top, radius, color);
+  },
+
+  // Marcadores desenhados em pixels de tela, para manterem o tamanho em qualquer zoom.
+  cross(p, size, color, width = 2.4) {
+    const pt = projectPoint3D(p.x, p.y, p.z);
+    if (!pt) return;
+    ctx3d.beginPath();
+    ctx3d.moveTo(pt.x - size, pt.y - size);
+    ctx3d.lineTo(pt.x + size, pt.y + size);
+    ctx3d.moveTo(pt.x + size, pt.y - size);
+    ctx3d.lineTo(pt.x - size, pt.y + size);
+    ctx3d.strokeStyle = color;
+    ctx3d.lineWidth = width;
+    ctx3d.lineCap = 'round';
+    ctx3d.setLineDash([]);
+    ctx3d.stroke();
+  },
+
+  ring(p, radius, color, width = 2.2) {
+    const pt = projectPoint3D(p.x, p.y, p.z);
+    if (!pt) return;
+    ctx3d.beginPath();
+    ctx3d.arc(pt.x, pt.y, radius, 0, Math.PI * 2);
+    ctx3d.strokeStyle = color;
+    ctx3d.lineWidth = width;
+    ctx3d.setLineDash([]);
+    ctx3d.stroke();
+  },
+
+  labels(items) {
+    if (!state.layers.labels) {
+      hideAllFloatingLabels();
+      return;
+    }
+    const bySlot = new Map(items.map((item) => [item.slot, item]));
+    layoutFloatingLabels(LABEL_SLOTS.map((id) => {
+      const item = bySlot.get(id);
+      if (!item || item.visible === false) return { id, x: 0, y: 0, z: 0, visible: false };
+      setLabelMath(id, item.latex, false);
+      return { id, x: item.x, y: item.y, z: item.z, visible: true, priority: item.priority };
+    }));
+  },
+
+  livePill(latex) {
+    const livePill = document.getElementById('stage-live-pill');
+    if (livePill && livePill.dataset.lastLatex !== latex) {
+      livePill.dataset.lastLatex = latex;
+      renderMath(livePill, latex, false);
+    }
+  }
+};

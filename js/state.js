@@ -168,6 +168,13 @@ export const state = {
   ctftCustomPresets: initialCTFTCustomPresets,
   ctftCalculated: null,
 
+  // Transformada de Laplace
+  laplacePresetKey: 'exp',
+  laplaceA: 1.0,       // decaimento: o polo real fica em s = -a
+  laplaceW0: 2.0,      // frequência de oscilação dos pares senoidais
+  laplaceSigma: 0.5,   // posição do corte vertical Re{s} = σ
+  laplaceCalculated: null,
+
   // Customização de Interface (ver apenas o que quer)
   visibleSections: initialVisibleSections,
   layers: initialLayers

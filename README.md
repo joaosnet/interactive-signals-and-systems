@@ -95,6 +95,22 @@ Key operational capabilities:
 
 ---
 
+### 4. Laplace Transform (`#laplace`)
+
+Extends the Fourier Transform to the complex $s$-plane:
+
+$$X(s) = \int_{-\infty}^{+\infty} x(t)\, e^{-st} \, dt, \qquad s = \sigma + j\omega$$
+
+Module features:
+- **$s$-Plane on the Stage Floor**: $\sigma$ runs horizontally and $j\omega$ in depth, with poles ($\times$) and zeros ($\circ$) marked and the region of convergence (ROC) shaded.
+- **$|X(s)|$ Surface**: Magnitude becomes height; poles show up as "tent poles".
+- **Vertical Cut at $\sigma$**: The curve $|X(\sigma + j\omega)|$ is the Fourier Transform of $x(t)e^{-\sigma t}$. Outside the ROC the cut turns red and dashed because the integral diverges.
+- **Bridge to Fourier and Stability**: In step 4 the cut is the $j\omega$ axis itself. Sliding the pole across it shows when the Fourier Transform stops existing and the system stops being stable.
+- **Same $X(s)$, Different Signals**: The causal and anticausal pairs share $\frac{1}{s+a}$ and differ only in the ROC.
+- **Notable Pairs**: Step, ramp, causal, anticausal and two-sided exponentials, causal and damped sine and cosine.
+
+---
+
 ## Interface and Display Systems
 
 - **Camera Projections**: Instant selection among `3D Free Orbit`, `2D Time (Front)`, `2D Spectrum (Lateral)`, and `Top Plan`.
@@ -112,7 +128,7 @@ Key operational capabilities:
 | :--- | :--- |
 | `Space` | Play or pause simulation loop |
 | `1`, `2`, `3`, `4` | Direct jump to Convolution steps 1 through 4 |
-| `[` / `]` | Cycle modules: Convolution $\to$ Fourier $\to$ CTFT |
+| `[` / `]` | Cycle modules: Convolution $\to$ Fourier $\to$ CTFT $\to$ Laplace |
 | `Z` | Toggle Zen full-screen mode |
 | `M` | Toggle Web Audio synthesizer |
 | `←` / `→` | Incremental step of time parameter $t$ or frequency $\omega$ |

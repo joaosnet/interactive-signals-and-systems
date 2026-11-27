@@ -15,6 +15,16 @@ export const I18N = {
     modFourierSub: 'f(t) ≈ a₀ + ∑ Cₙ cos(nω₀t + θₙ)',
     modCTFTTitle: 'Transformada CTFT',
     modCTFTSub: 'X(ω) = ∫ x(t) e^{-jωt} dt',
+    modLaplaceTitle: 'Transformada de Laplace',
+    modLaplaceSub: 'X(s) = ∫ x(t) e^{-st} dt',
+    stepLaplace1: 'Sinal & Definição',
+    stepLaplace2: 'Polos & ROC',
+    stepLaplace3: 'Corte em σ',
+    stepLaplace4: 'Estabilidade',
+    regionsLaplaceTitle: 'Pares Notáveis de Laplace & ROC:',
+    sliderLaplaceSigma: 'Corte Re{s} = σ',
+    sliderLaplaceA: 'Decaimento a (polo em s = −a)',
+    sliderLaplaceW0: 'Frequência ω₀ (polos em ±jω₀)',
 
     // Vistas de Câmera 3D/2D
     view3D: '3D Livre',
@@ -208,6 +218,16 @@ export const I18N = {
     modFourierSub: 'f(t) ≈ a₀ + ∑ Cₙ cos(nω₀t + θₙ)',
     modCTFTTitle: '3D Fourier Transform',
     modCTFTSub: 'X(ω) = ∫ x(t) e^{-jωt} dt',
+    modLaplaceTitle: 'Laplace Transform',
+    modLaplaceSub: 'X(s) = ∫ x(t) e^{-st} dt',
+    stepLaplace1: 'Signal & Definition',
+    stepLaplace2: 'Poles & ROC',
+    stepLaplace3: 'Cut at σ',
+    stepLaplace4: 'Stability',
+    regionsLaplaceTitle: 'Notable Laplace Pairs & ROC:',
+    sliderLaplaceSigma: 'Cut Re{s} = σ',
+    sliderLaplaceA: 'Decay a (pole at s = −a)',
+    sliderLaplaceW0: 'Frequency ω₀ (poles at ±jω₀)',
 
     // Camera Views
     view3D: '3D Free',

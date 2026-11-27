@@ -8,5 +8,7 @@
   "6": "manifest.json",
   "7": "math-engine.js",
   "8": "server.js",
-  "10": "package.json"
+  "9": "laplace.js",
+  "10": "package.json",
+  "11": "updateAudioSynth"
 }

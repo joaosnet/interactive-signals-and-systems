@@ -535,6 +535,14 @@ export function toggleSectionVisibility(secKey, forceVal = null) {
   }
 }
 
+/** Chamado por um módulo plugável depois de trocar de preset ou parâmetro. */
+export function refreshAfterPresetChange() {
+  setStep(state.step, false);
+  renderPresetGallery();
+  updateNotebookUI(true);
+  updateScene3D();
+}
+
 export function renderPresetGallery() {
   const gallery = document.getElementById('preset-gallery');
   if (!gallery) return;
@@ -543,6 +551,13 @@ export function renderPresetGallery() {
   const isEn = state.lang === 'en';
   const isCTFT = state.activeModule === 'ctft';
   const isFourier = state.activeModule === 'fourier';
+
+  // Módulos plugáveis montam a própria galeria de exemplos
+  const mod = activeModule();
+  if (mod.renderGallery) {
+    mod.renderGallery(gallery, isEn, refreshAfterPresetChange);
+    return;
+  }
 
   if (isCTFT) {
     // Card de Criação / Edição Direta de x(t) para CTFT
@@ -1416,6 +1431,7 @@ function hideMathKeyboard() {
 
 export function openSignalHUD(targetSignal) {
   const target = targetSignal || activeModule().defaultHudTarget;
+  if (!target) return; // módulo sem editor de sinal
 
   // Cada alvo do editor pertence a um módulo; abre o módulo dono se não for o ativo.
   const owner = listModules().find((m) => m.hudTargets.includes(target));
@@ -2173,6 +2189,9 @@ export function initUIEventListeners() {
   });
 
   // 12. Evento Disparado ao Clicar nas Curvas 3D, Rótulos Flutuantes ou Tabela CTFT
+  // Módulos plugáveis avisam quando o preset muda por fora da galeria (ex.: tabela de pares)
+  window.addEventListener('module-preset-changed', () => refreshAfterPresetChange());
+
   window.addEventListener('open-signal-hud', (e) => {
     const target = e.detail?.target;
     openSignalHUD(target);

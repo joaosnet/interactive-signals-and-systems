@@ -95,6 +95,22 @@ Capacidades operativas:
 
 ---
 
+### 4. Transformada de Laplace (`#laplace`)
+
+Extiende la Transformada de Fourier al plano complejo $s$:
+
+$$X(s) = \int_{-\infty}^{+\infty} x(t)\, e^{-st} \, dt, \qquad s = \sigma + j\omega$$
+
+Recursos del módulo:
+- **Plano $s$ en el Piso del Escenario**: $\sigma$ en horizontal y $j\omega$ en profundidad, con polos ($\times$) y ceros ($\circ$) marcados y la región de convergencia (ROC) sombreada.
+- **Superficie $|X(s)|$**: La magnitud se convierte en altura; los polos aparecen como "mástiles de carpa".
+- **Corte Vertical en $\sigma$**: La curva $|X(\sigma + j\omega)|$ es la Transformada de Fourier de $x(t)e^{-\sigma t}$. Fuera de la ROC el corte se vuelve rojo y discontinuo porque la integral diverge.
+- **Puente con Fourier y Estabilidad**: En el paso 4 el corte es el propio eje $j\omega$. Deslizar el polo a través de él muestra cuándo la Transformada de Fourier deja de existir y el sistema deja de ser estable.
+- **Misma $X(s)$, Señales Distintas**: Los pares causal y anticausal comparten $\frac{1}{s+a}$ y solo difieren en la ROC.
+- **Pares Notables**: Escalón, rampa, exponenciales causal, anticausal y bilateral, seno y coseno causales y amortiguados.
+
+---
+
 ## Fundamentos Didácticos y de Interfaz
 
 - **Proyecciones de Cámara**: Cambio inmediato entre `3D Libre`, `2D Tiempo (Frontal)`, `2D Espectro (Lateral)` y `Vista Superior`.
@@ -112,7 +128,7 @@ Capacidades operativas:
 | :--- | :--- |
 | `Espacio` | Reproducir o pausar simulación |
 | `1`, `2`, `3`, `4` | Salto directo a los pasos 1 a 4 de Convolución |
-| `[` / `]` | Alternar módulo: Convolución $\to$ Fourier $\to$ CTFT |
+| `[` / `]` | Alternar módulo: Convolución $\to$ Fourier $\to$ CTFT $\to$ Laplace |
 | `Z` | Alternar modo pantalla completa / Zen |
 | `M` | Activar o desactivar sintetizador Web Audio |
 | `←` / `→` | Ajuste fino del parámetro de tiempo $t$ o frecuencia $\omega$ |

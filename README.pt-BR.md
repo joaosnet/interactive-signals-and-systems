@@ -95,6 +95,22 @@ Recursos do módulo:
 
 ---
 
+### 4. Transformada de Laplace (`#laplace`)
+
+Estende a Transformada de Fourier ao plano complexo $s$:
+
+$$X(s) = \int_{-\infty}^{+\infty} x(t)\, e^{-st} \, dt, \qquad s = \sigma + j\omega$$
+
+Recursos do módulo:
+- **Plano $s$ no Piso do Palco**: $\sigma$ na horizontal e $j\omega$ na profundidade, com polos ($\times$) e zeros ($\circ$) marcados e a região de convergência (ROC) sombreada.
+- **Superfície $|X(s)|$**: A magnitude vira altura; os polos aparecem como "mastros de tenda".
+- **Corte Vertical em $\sigma$**: A curva $|X(\sigma + j\omega)|$ é a Transformada de Fourier de $x(t)e^{-\sigma t}$. Fora da ROC o corte fica vermelho e tracejado, pois a integral diverge.
+- **Ponte com Fourier e Estabilidade**: No passo 4 o corte é o próprio eixo $j\omega$. Deslizar o polo através dele mostra quando a Transformada de Fourier deixa de existir e o sistema deixa de ser estável.
+- **Mesma $X(s)$, Sinais Diferentes**: Os pares causal e anticausal compartilham $\frac{1}{s+a}$ e diferem apenas na ROC.
+- **Pares Notáveis**: Degrau, rampa, exponenciais causal, anticausal e bilateral, seno e cosseno causais e amortecidos.
+
+---
+
 ## Fundamentos Didáticos e de Interface
 
 - **Projeções de Câmera**: Alternância imediata entre `3D Livre`, `2D Tempo (Frontal)`, `2D Espectro (Lateral)` e `Vista Superior`.
@@ -112,7 +128,7 @@ Recursos do módulo:
 | :--- | :--- |
 | `Espaço` | Reproduzir ou pausar o loop de simulação |
 | `1`, `2`, `3`, `4` | Salto direto para as etapas 1 a 4 da Convolução |
-| `[` / `]` | Alternar módulo: Convolução $\to$ Fourier $\to$ CTFT |
+| `[` / `]` | Alternar módulo: Convolução $\to$ Fourier $\to$ CTFT $\to$ Laplace |
 | `Z` | Alternar tela cheia / Modo Zen |
 | `M` | Ligar ou desligar sintetizador de áudio Web Audio |
 | `←` / `→` | Ajuste incremental do parâmetro de tempo $t$ ou frequência $\omega$ |
