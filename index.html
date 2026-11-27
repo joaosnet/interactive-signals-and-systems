@@ -604,6 +604,15 @@
           </div>
         </div>
 
+        <!-- Segundo slider, para módulos com dois parâmetros (ω₀ dos amortecidos, janela da DFT) -->
+        <div id="aux-slider-row" class="hidden flex flex-col gap-0.5 w-full pt-1 border-t border-[var(--border-subtle)]">
+          <div class="flex items-center justify-between gap-1 text-[10px]">
+            <label for="aux-slider" id="aux-slider-title" class="text-sec font-medium truncate"></label>
+            <span id="aux-slider-badge" class="font-mono-code font-semibold whitespace-nowrap flex-shrink-0"></span>
+          </div>
+          <input id="aux-slider" type="range" class="w-full" />
+        </div>
+
         <!-- Modos de exploração da CTFT: propriedades e transformada inversa (só na aba CTFT) -->
         <div id="ctft-mode-selector" class="hidden flex items-center justify-between gap-1 pt-1 border-t border-[var(--border-subtle)]">
           <span id="lbl-ctft-mode" class="text-[10px] font-semibold text-mut">Explorar:</span>

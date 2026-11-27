@@ -171,7 +171,7 @@ $$X[k] = \sum_{n=0}^{N-1} x[n]\, e^{-j2\pi kn/N}, \qquad x[n] = \frac{1}{N}\sum_
 Recursos do módulo:
 - **Dois Trilhos Alinhados**: $N$ hastes de $x[n]$ ao fundo e $N$ hastes de $|X[k]|$ na frente, com $N$ de 4 a 64.
 - **A DFT Amostra a DTFT**: A envoltória contínua aparece atrás das hastes, mostrando que $X[k] = X(e^{j\Omega})$ em $\Omega = 2\pi k/N$ e que a resolução é $2\pi/N$.
-- **Vazamento Espectral**: Um cosseno com 2 ciclos na janela dá duas linhas limpas; com 2,5 ciclos, a energia se espalha por todos os bins.
+- **Vazamento Espectral**: Um cosseno com 2 ciclos na janela dá duas linhas limpas; com 2,5 ciclos, a energia se espalha por todos os bins. As janelas de Hann e Hamming, no segundo slider, seguram esse espalhamento.
 - **Leitura de um Bin**: O slider escolhe $k$ e desenha sobre $x[n]$ o cosseno daquela frequência. O caderno mostra valor, fase, frequência e por que a metade superior corresponde às frequências negativas.
 - **FFT com Diagrama de Borboletas**: No passo 4 a rede de borboletas liga $x[n]$ (em ordem de bits invertidos) a $X[k]$, e o caderno compara $N^2$ produtos com $\frac{N}{2}\log_2 N$ borboletas, contadas na execução.
 - **Oito Sinais**: Cosseno no bin e fora dele, dois tons, pulso retangular, impulso, alternado, exponencial e rampa.

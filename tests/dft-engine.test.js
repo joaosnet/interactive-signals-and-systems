@@ -92,3 +92,28 @@ test('DFT: parametros limitados e textos', () => {
   assert.equal(calculateDFTData('cosbin', 4).resolutionLatex, String.raw`\tfrac{2\pi}{16} = 0.393`);
   assert.equal(calculateDFTData('impulse', 4).latexTime, String.raw`\delta[n]`);
 });
+
+test('DFT janelas: Hann e Hamming seguram o vazamento ao custo de um lobulo mais largo', async () => {
+  const { DFT_WINDOWS, DFT_WINDOW_KEYS } = await import('../js/dft-engine.js');
+  assert.deepEqual(DFT_WINDOW_KEYS, ['rect', 'hann', 'hamming']);
+  const rect = calculateDFTData('leak', 5, 'rect');
+  const hann = calculateDFTData('leak', 5, 'hann');
+  const hamming = calculateDFTData('leak', 5, 'hamming');
+  // Longe do tom (k = N/2) a janela derruba o espectro em ordens de grandeza
+  assert.ok(hann.mag[16] < rect.mag[16] / 100, `rect=${rect.mag[16]} hann=${hann.mag[16]}`);
+  assert.ok(hamming.mag[16] < rect.mag[16] / 10);
+  assert.ok(hann.spread < rect.spread / 20 && hamming.spread < rect.spread / 20);
+  // ...mas o tom que cabia inteiro na janela passa a ocupar tres bins
+  const onBin = calculateDFTData('cosbin', 5, 'hann');
+  assert.ok(close(onBin.mag[2], 8) && close(onBin.mag[1], 4) && close(onBin.mag[3], 4) && close(onBin.mag[5], 0));
+  assert.ok(close(calculateDFTData('cosbin', 5, 'rect').spread, 0));
+  // A janela e aplicada antes da transformada, e Parseval continua valendo
+  for (const key of DFT_WINDOW_KEYS) {
+    const d = calculateDFTData('exp', 4, key);
+    d.x.forEach((v, n) => assert.ok(close(v, d.rawX[n] * DFT_WINDOWS[key].fn(n, d.N))));
+    assert.ok(close(d.energyTime, d.energyFreq, 1e-8), key);
+    assert.ok(d.fftError < 1e-10, key);
+  }
+  assert.equal(calculateDFTData('cosbin', 4, 'inexistente').windowKey, 'rect');
+  assert.ok(close(hann.window[0], 0) && close(hann.window[16], 1) && close(hamming.window[0], 0.08));
+});

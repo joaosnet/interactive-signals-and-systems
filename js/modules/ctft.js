@@ -173,6 +173,9 @@ export function ctftModeNotebookLines(isEn) {
       ? 'a < 1: \\text{ wider in time} \\implies \\text{narrower and taller in frequency}'
       : 'a < 1: \\text{ mais largo no tempo} \\implies \\text{mais estreito e mais alto na frequência}',
     same: 'a = 1: \\; y(t) = x(t)',
+    reflect: isEn
+      ? 'a < 0: \\text{ time reversal} \\implies Y(\\omega) \\text{ mirrored: } |Y| \\text{ scaled, phase negated}'
+      : 'a < 0: \\text{ reflexão no tempo} \\implies Y(\\omega) \\text{ espelhado: } |Y| \\text{ escalado, fase invertida}',
     mod: isEn
       ? '\\text{two copies of } X \\text{ at } \\pm\\omega_0 \\text{ with half the height (AM)}'
       : '\\text{duas cópias de } X \\text{ em } \\pm\\omega_0 \\text{ com metade da altura (AM)}'
@@ -332,6 +335,8 @@ export const ctftModule = registerModule({
       let next = ctftModeValue(mode) + sweepDir * 0.004 * spd * (spec.max - spec.min);
       if (next >= spec.max) { next = spec.max; sweepDir = -1; }
       if (next <= spec.min) { next = spec.min; sweepDir = 1; }
+      // Escala: a faixa |a| < minAbs não existe; a varredura salta para o outro lado
+      if (spec.minAbs && Math.abs(next) < spec.minAbs) next = sweepDir < 0 ? -spec.minAbs : spec.minAbs;
       state.ctftModeValues[mode] = next;
       recomputeCTFT();
       return;

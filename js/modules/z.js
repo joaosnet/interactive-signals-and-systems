@@ -14,6 +14,7 @@ import { state } from '../state.js';
 import { renderMath } from '../math-engine.js';
 import { Z_PRESETS, calculateZData } from '../z-engine.js';
 import { registerModule } from './registry.js';
+import { AUX_SLIDER_ROW, syncAuxSlider } from './aux-slider.js';
 
 // ---- Geometria do palco -----------------------------------------------------
 const K = 1.5;          // unidades de cena por unidade do plano z
@@ -132,6 +133,18 @@ function paramSlider(c) {
     };
   }
   return null;
+}
+
+/** Pares com dois parâmetros (amortecidos): Ω₀ ganha o slider auxiliar. */
+function auxSlider(c) {
+  if (!(c.hasParamA && c.hasParamW0)) return null;
+  const spec = c.paramSpec.w0;
+  return {
+    key: `z-w0-${c.presetKey}`, titleKey: 'sliderZW0', min: spec.min, max: spec.max, step: 0.05,
+    get: () => state.zW0,
+    set: (v) => { state.zW0 = v; recomputeZ(); },
+    badge: () => `Ω₀ = ${state.zW0.toFixed(2)} rad`
+  };
 }
 
 // ---- Cena -------------------------------------------------------------------
@@ -518,7 +531,7 @@ export const zModule = registerModule({
   hash: 'z',
   i18n: { title: 'modZTitle', sub: 'modZSub', stepPrefix: 'stepZ', regionsTitle: 'regionsZTitle' },
   zenLabel: 'X(z)',
-  controls: [],
+  controls: [AUX_SLIDER_ROW],
   hudTargets: [],          // as sequências vêm dos pares notáveis; não há editor livre
   defaultHudTarget: null,
   defaultSliderValue: 0,
@@ -526,6 +539,7 @@ export const zModule = registerModule({
   cameraTarget: { x: 0, y: 0.7, z: 3.3 },
 
   slider() {
+    syncAuxSlider(auxSlider(calc()));
     if (state.step === 3) return radiusSlider();
     return paramSlider(calc()) || radiusSlider();
   },

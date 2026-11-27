@@ -171,7 +171,7 @@ $$X[k] = \sum_{n=0}^{N-1} x[n]\, e^{-j2\pi kn/N}, \qquad x[n] = \frac{1}{N}\sum_
 Module features:
 - **Two Aligned Lanes**: $N$ stems of $x[n]$ at the back and $N$ stems of $|X[k]|$ in front, with $N$ from 4 to 64.
 - **The DFT Samples the DTFT**: The continuous envelope is drawn behind the stems, showing that $X[k] = X(e^{j\Omega})$ at $\Omega = 2\pi k/N$ and that the resolution is $2\pi/N$.
-- **Spectral Leakage**: A cosine with 2 cycles in the window gives two clean lines; with 2.5 cycles, the energy spreads over every bin.
+- **Spectral Leakage**: A cosine with 2 cycles in the window gives two clean lines; with 2.5 cycles, the energy spreads over every bin. The Hann and Hamming windows, on the second slider, hold that spreading back.
 - **Reading a Bin**: The slider picks $k$ and draws the cosine of that frequency over $x[n]$. The notebook shows value, phase, frequency and why the upper half corresponds to negative frequencies.
 - **FFT with a Butterfly Diagram**: In step 4 the butterfly network connects $x[n]$ (in bit-reversed order) to $X[k]$, and the notebook compares $N^2$ products with $\frac{N}{2}\log_2 N$ butterflies, counted while running.
 - **Eight Signals**: On-bin and off-bin cosine, two tones, rectangular pulse, impulse, alternating, exponential and ramp.

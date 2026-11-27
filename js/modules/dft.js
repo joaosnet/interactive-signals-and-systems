@@ -12,9 +12,10 @@
 import { state } from '../state.js';
 import { renderMath } from '../math-engine.js';
 import {
-  DFT_PRESETS, DFT_MIN_BITS, DFT_MAX_BITS, calculateDFTData, bitReverse
+  DFT_PRESETS, DFT_MIN_BITS, DFT_MAX_BITS, DFT_WINDOWS, DFT_WINDOW_KEYS, calculateDFTData, bitReverse
 } from '../dft-engine.js';
 import { registerModule } from './registry.js';
+import { AUX_SLIDER_ROW, syncAuxSlider } from './aux-slider.js';
 
 // ---- Geometria do palco -----------------------------------------------------
 const X_HALF = 4.5;
@@ -30,7 +31,8 @@ let sweepDir = 1;
 let tickAcc = 0;
 
 export function recomputeDFT() {
-  state.dftCalculated = calculateDFTData(state.dftPresetKey, state.dftBits);
+  state.dftCalculated = calculateDFTData(state.dftPresetKey, state.dftBits, state.dftWindow);
+  state.dftWindow = state.dftCalculated.windowKey;
   const d = state.dftCalculated;
   state.dftPresetKey = d.presetKey;
   state.dftBits = d.bits;
@@ -80,6 +82,17 @@ function binSlider(d) {
   };
 }
 
+/** Janela aplicada a x[n]: três posições no slider auxiliar. */
+function windowSlider() {
+  const isEn = state.lang === 'en';
+  return {
+    key: 'dft-window', titleKey: 'sliderDftWindow', min: 0, max: DFT_WINDOW_KEYS.length - 1, step: 1,
+    get: () => Math.max(0, DFT_WINDOW_KEYS.indexOf(state.dftWindow)),
+    set: (v) => { state.dftWindow = DFT_WINDOW_KEYS[Math.round(v)] || 'rect'; recomputeDFT(); },
+    badge: () => (isEn ? DFT_WINDOWS[state.dftWindow].titleEn : DFT_WINDOWS[state.dftWindow].title)
+  };
+}
+
 // ---- Cena -------------------------------------------------------------------
 function renderScene(scene, dt) {
   const frame = scene.begin(dt);
@@ -91,7 +104,7 @@ function renderScene(scene, dt) {
   const k = state.dftK;
   const zS = step === 4 ? Z_S_FFT : Z_S;
   const xOf = (i) => -X_HALF + ((i + 0.5) / N) * 2 * X_HALF;
-  const tScale = AMP_T / Math.max(1, d.maxAbsX);
+  const tScale = AMP_T / Math.max(1, d.maxAbsRaw);
   const sScale = AMP_S / Math.max(d.peakMag, 1e-9);
   const thin = N > 32 ? 0.7 : 1;                  // hastes mais finas quando há muitas
   const radius = (N > 32 ? 2.2 : N > 16 ? 2.8 : 3.6) * strokeScale;
@@ -115,6 +128,17 @@ function renderScene(scene, dt) {
     }
     scene.alpha = 0.55;
     scene.polyline(pts, pal.x2, 1.6 * strokeScale, [5, 4]);
+    scene.alpha = 1.0;
+  }
+  if (d.windowKey !== 'rect') {
+    // Com janela: o x[n] original fica apagado atrás e a forma da janela aparece tracejada
+    scene.alpha = 0.3;
+    for (let n = 0; n < N; n++) {
+      const base = { x: xOf(n), y: 0, z: Z_T };
+      if (Math.abs(d.rawX[n]) > 1e-9) scene.line(base, { ...base, y: d.rawX[n] * tScale }, pal.x1, 1.6 * thin * strokeScale);
+    }
+    scene.alpha = 0.7;
+    scene.polyline(d.window.map((wv, n) => ({ x: xOf(n), y: wv * tScale * Math.max(1, d.maxAbsRaw), z: Z_T })), pal.prod, 1.6 * strokeScale, [5, 4]);
     scene.alpha = 1.0;
   }
   for (let n = 0; n < N; n++) {
@@ -184,7 +208,7 @@ function renderScene(scene, dt) {
   // 5. Rótulos e leitura
   const left = -X_HALF - 0.6;
   scene.labels([
-    { slot: 'lbl-x1', latex: `x[n] = ${d.latexTime}`, x: -X_HALF * 0.55, y: AMP_T + 0.55, z: Z_T },
+    { slot: 'lbl-x1', latex: d.windowKey === 'rect' ? `x[n] = ${d.latexTime}` : `x[n]\\,w[n],\\; x[n] = ${d.latexTime}`, x: -X_HALF * 0.55, y: AMP_T + 0.55, z: Z_T },
     { slot: 'lbl-tau', latex: 'n', x: X_HALF + 0.55, y: -0.1, z: Z_T },
     { slot: 'lbl-conv', latex: '|X[k]|', x: left, y: 0.9, z: zS },
     { slot: 'lbl-t', latex: 'k', x: X_HALF + 0.55, y: -0.1, z: zS },
@@ -252,6 +276,17 @@ const notebook = {
           ? '\\text{the DFT sees } x[n] \\text{ repeated with period } N'
           : '\\text{a DFT enxerga } x[n] \\text{ repetido com período } N';
       }
+      const winInfo = DFT_WINDOWS[d.windowKey];
+      const windowLines = [
+        {
+          label: isEn ? `2.5 Window: ${winInfo.titleEn} (try the second slider):` : `2.5 Janela: ${winInfo.title} (experimente o segundo slider):`,
+          latex: winInfo.latex
+        },
+        {
+          label: isEn ? '2.6 Energy Outside the Main Lobe:' : '2.6 Energia Fora do Lóbulo Principal:',
+          latex: `${(100 * d.spread).toFixed(2)}\\% \\quad (${isEn ? '\\text{main lobe: } \\pm' : '\\text{lóbulo principal: } \\pm'}${winInfo.mainHalf}\\ \\text{bin${winInfo.mainHalf > 1 ? 's' : ''}})`
+        }
+      ];
       return [
         {
           label: isEn ? '2.1 The DFT Samples the DTFT:' : '2.1 A DFT Amostra a DTFT:',
@@ -265,7 +300,8 @@ const notebook = {
         {
           label: isEn ? '2.4 Parseval:' : '2.4 Parseval:',
           latex: `\\sum_n |x[n]|^2 = \\frac{1}{N}\\sum_k |X[k]|^2 = ${num(d.energyTime, 3)}`
-        }
+        },
+        ...windowLines
       ];
     }
 
@@ -411,7 +447,7 @@ export const dftModule = registerModule({
   hash: 'dft',
   i18n: { title: 'modDftTitle', sub: 'modDftSub', stepPrefix: 'stepDft', regionsTitle: 'regionsDftTitle' },
   zenLabel: 'X[k]',
-  controls: [],
+  controls: [AUX_SLIDER_ROW],
   hudTargets: [],          // os sinais vêm dos exemplos; não há editor livre
   defaultHudTarget: null,
   defaultSliderValue: 0,
@@ -419,6 +455,7 @@ export const dftModule = registerModule({
   cameraTarget: { x: 0, y: 0.6, z: 3.3 },
 
   slider() {
+    syncAuxSlider(windowSlider());
     return state.step === 3 ? binSlider(calc()) : sizeSlider();
   },
 

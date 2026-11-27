@@ -14,7 +14,7 @@
 /** Modos de exploração da CTFT e a faixa do slider de cada um. */
 export const CTFT_MODE_SPECS = {
   shift: { min: -3, max: 3, def: 1.0, step: 0.1, symbol: 't₀', unit: 's' },
-  scale: { min: 0.25, max: 3, def: 2.0, step: 0.05, symbol: 'a', unit: '' },
+  scale: { min: -3, max: 3, def: 2.0, step: 0.05, symbol: 'a', unit: '', minAbs: 0.25 },
   mod: { min: 0, max: 12, def: 6.0, step: 0.2, symbol: 'ω₀', unit: 'rad/s' },
   inverse: { min: 0.5, max: 30, def: 6.0, step: 0.5, symbol: 'W', unit: 'rad/s' }
 };
@@ -24,7 +24,10 @@ export function clampModeValue(mode, value) {
   const spec = CTFT_MODE_SPECS[mode];
   if (!spec) return 0;
   const v = Number.isFinite(Number(value)) && value !== null && value !== undefined ? Number(value) : spec.def;
-  return Math.max(spec.min, Math.min(spec.max, v));
+  const clamped = Math.max(spec.min, Math.min(spec.max, v));
+  // Escala: a = 0 não existe (x(0·t) é constante); perto de zero o valor "pula" para ±minAbs
+  if (spec.minAbs && Math.abs(clamped) < spec.minAbs) return clamped < 0 ? -spec.minAbs : spec.minAbs;
+  return clamped;
 }
 
 const fmt = (v, d = 2) => {
@@ -94,10 +97,11 @@ export function applyCTFTProperty(calc, mode, rawValue) {
       energyTime: calc.energyTime / Math.abs(a),
       valX0: calc.valX0 / Math.abs(a),
       labelTime: `x(${fmt(a)}t)`,
-      labelSpec: `\\tfrac{1}{${fmt(a)}}\\left|X\\!\\left(\\tfrac{\\omega}{${fmt(a)}}\\right)\\right|`,
+      labelSpec: `\\tfrac{1}{${fmt(Math.abs(a))}}\\left|X\\!\\left(\\tfrac{\\omega}{${fmt(a)}}\\right)\\right|`,
       ruleLatex: 'x(at) \\;\\longleftrightarrow\\; \\frac{1}{|a|}\\,X\\!\\left(\\frac{\\omega}{a}\\right)',
-      caseLatex: `y(t) = x(${fmt(a)}t) \\;\\longleftrightarrow\\; Y(\\omega) = \\frac{1}{${fmt(a)}}\\,X\\!\\left(\\frac{\\omega}{${fmt(a)}}\\right)`,
-      effect: a > 1 ? 'compress' : (a < 1 ? 'expand' : 'same')
+      caseLatex: `y(t) = x(${fmt(a)}t) \\;\\longleftrightarrow\\; Y(\\omega) = \\frac{1}{${fmt(Math.abs(a))}}\\,X\\!\\left(\\frac{\\omega}{${fmt(a)}}\\right)`,
+      // a < 0 reflete o sinal no tempo (e conjuga o espectro, para x(t) real)
+      effect: a < 0 ? 'reflect' : (a > 1 ? 'compress' : (a < 1 ? 'expand' : 'same'))
     };
   }
 
