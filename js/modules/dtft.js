@@ -14,6 +14,7 @@ import { state } from '../state.js';
 import { renderMath } from '../math-engine.js';
 import { DTFT_PRESETS, calculateDTFTData } from '../dtft-engine.js';
 import { registerModule } from './registry.js';
+import { renderSequenceEditor } from './seq-editor.js';
 
 // ---- Geometria do palco -----------------------------------------------------
 const X_HALF = 4.5;
@@ -32,16 +33,16 @@ let sweepDir = 1;
 let tickAcc = 0;
 
 function paramOf(key) {
-  const spec = DTFT_PRESETS[key].param;
+  const spec = DTFT_PRESETS[key]?.param;
   if (!spec) return null;
   const v = state.dtftParams[key];
   return Number.isFinite(v) ? v : spec.def;
 }
 
 export function recomputeDTFT() {
-  const key = DTFT_PRESETS[state.dtftPresetKey] ? state.dtftPresetKey : 'rect';
+  const key = DTFT_PRESETS[state.dtftPresetKey] || state.dtftPresetKey === 'custom' ? state.dtftPresetKey : 'rect';
   state.dtftPresetKey = key;
-  state.dtftCalculated = calculateDTFTData(key, paramOf(key));
+  state.dtftCalculated = calculateDTFTData(key, paramOf(key), state.dtftCustom);
   if (state.dtftCalculated.paramSpec) state.dtftParams[key] = state.dtftCalculated.param;
   return state.dtftCalculated;
 }
@@ -51,7 +52,7 @@ function calc() {
 }
 
 export function selectDTFTPreset(key) {
-  if (!DTFT_PRESETS[key]) return;
+  if (!DTFT_PRESETS[key] && key !== 'custom') return;
   state.dtftPresetKey = key;
   recomputeDTFT();
 }
@@ -95,7 +96,7 @@ function cached(key, build) {
 }
 
 function exactCurve(d, W) {
-  return cached(`x|${d.presetKey}|${d.param}|${W}`, () => {
+  return cached(`x|${d.presetKey}|${d.signature}|${d.param}|${W}`, () => {
     const M = W > 4 ? 540 : 240;
     const pts = [];
     for (let i = 0; i <= M; i++) {
@@ -107,7 +108,7 @@ function exactCurve(d, W) {
 }
 
 function partialCurve(d, N, W) {
-  return cached(`p|${d.presetKey}|${d.param}|${N}|${W}`, () => {
+  return cached(`p|${d.presetKey}|${d.signature}|${d.param}|${N}|${W}`, () => {
     const M = 240;
     const pts = [];
     for (let i = 0; i <= M; i++) {
@@ -461,6 +462,22 @@ const notebook = {
 
 // ---- Galeria ----------------------------------------------------------------
 function renderGallery(gallery, isEn, refresh) {
+  renderSequenceEditor(gallery, {
+    isEn,
+    title: isEn ? 'Type your own x[n]' : 'Digite o seu x[n]',
+    active: state.dtftPresetKey === 'custom',
+    fields: [
+      { id: 'x', label: 'x[n]:', values: state.dtftCustom.values, start: state.dtftCustom.start, hasStart: true, maxLen: 21, startMin: -10, startMax: 10 }
+    ],
+    onApply: (result) => {
+      // A parede do tempo mostra n de -10 a 10: a sequência é encaixada nessa janela
+      const start = Math.min(result.x.start, 10 - (result.x.values.length - 1));
+      state.dtftCustom = { start: Math.max(-10, start), values: result.x.values };
+      selectDTFTPreset('custom');
+      refresh();
+    }
+  });
+
   Object.entries(DTFT_PRESETS).forEach(([key, preset]) => {
     const isActive = state.dtftPresetKey === key;
     const data = isActive ? calc() : calculateDTFTData(key, paramOf(key));

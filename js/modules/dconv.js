@@ -14,6 +14,7 @@ import { state } from '../state.js';
 import { renderMath } from '../math-engine.js';
 import { DCONV_PRESETS, calculateDConvData, seqAt } from '../dconv-engine.js';
 import { registerModule } from './registry.js';
+import { renderSequenceEditor } from './seq-editor.js';
 
 // ---- Geometria do palco -----------------------------------------------------
 const X_HALF = 4.5;     // o eixo k ocupa x ∈ [-4.5, 4.5]
@@ -27,8 +28,9 @@ const Y_MAX_HEIGHT = 2.1;
 let tickAcc = 0;
 
 export function recomputeDConv() {
-  state.dconvCalculated = calculateDConvData(state.dconvPresetKey);
+  state.dconvCalculated = calculateDConvData(state.dconvPresetKey, state.dconvCustom);
   const d = state.dconvCalculated;
+  state.dconvPresetKey = d.presetKey;
   state.dconvN = Math.max(d.nMin, Math.min(d.nMax, Math.round(state.dconvN)));
   state.dconvK = Math.max(d.kMin, Math.min(d.kMax, Math.round(state.dconvK)));
   return d;
@@ -39,9 +41,9 @@ function calc() {
 }
 
 export function selectDConvPreset(key) {
-  if (!DCONV_PRESETS[key]) return;
+  if (!DCONV_PRESETS[key] && key !== 'custom') return;
   state.dconvPresetKey = key;
-  state.dconvCalculated = calculateDConvData(key);
+  state.dconvCalculated = calculateDConvData(key, state.dconvCustom);
   state.dconvN = state.dconvCalculated.yStart + 1;
   state.dconvK = state.dconvCalculated.x.start;
 }
@@ -323,6 +325,21 @@ const notebook = {
 
 // ---- Galeria ----------------------------------------------------------------
 function renderGallery(gallery, isEn, refresh) {
+  renderSequenceEditor(gallery, {
+    isEn,
+    title: isEn ? 'Type your own x[n] and h[n]' : 'Digite o seu x[n] e o seu h[n]',
+    active: state.dconvPresetKey === 'custom',
+    fields: [
+      { id: 'x', label: 'x[n]:', values: state.dconvCustom.x.values, start: state.dconvCustom.x.start, hasStart: true, maxLen: 12, startMin: -6, startMax: 6 },
+      { id: 'h', label: 'h[n]:', values: state.dconvCustom.h.values, start: state.dconvCustom.h.start, hasStart: true, maxLen: 12, startMin: -6, startMax: 6 }
+    ],
+    onApply: (result) => {
+      state.dconvCustom = { x: result.x, h: result.h };
+      selectDConvPreset('custom');
+      refresh();
+    }
+  });
+
   Object.entries(DCONV_PRESETS).forEach(([key, preset]) => {
     const isActive = state.dconvPresetKey === key;
     const data = isActive ? calc() : calculateDConvData(key);

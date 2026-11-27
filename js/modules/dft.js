@@ -16,6 +16,7 @@ import {
 } from '../dft-engine.js';
 import { registerModule } from './registry.js';
 import { AUX_SLIDER_ROW, syncAuxSlider } from './aux-slider.js';
+import { renderSequenceEditor } from './seq-editor.js';
 
 // ---- Geometria do palco -----------------------------------------------------
 const X_HALF = 4.5;
@@ -31,7 +32,7 @@ let sweepDir = 1;
 let tickAcc = 0;
 
 export function recomputeDFT() {
-  state.dftCalculated = calculateDFTData(state.dftPresetKey, state.dftBits, state.dftWindow);
+  state.dftCalculated = calculateDFTData(state.dftPresetKey, state.dftBits, state.dftWindow, state.dftCustom);
   state.dftWindow = state.dftCalculated.windowKey;
   const d = state.dftCalculated;
   state.dftPresetKey = d.presetKey;
@@ -45,7 +46,7 @@ function calc() {
 }
 
 export function selectDFTPreset(key) {
-  if (!DFT_PRESETS[key]) return;
+  if (!DFT_PRESETS[key] && key !== 'custom') return;
   state.dftPresetKey = key;
   recomputeDFT();
 }
@@ -66,7 +67,8 @@ function complexLatex(re, im) {
 // ---- Slider -----------------------------------------------------------------
 function sizeSlider() {
   return {
-    titleKey: 'sliderDftN', min: DFT_MIN_BITS, max: DFT_MAX_BITS, step: 1, keyStep: 1,
+    // Em sinais do aluno, N não fica menor que o número de amostras digitadas
+    titleKey: 'sliderDftN', min: calc().minBits, max: DFT_MAX_BITS, step: 1, keyStep: 1,
     get: () => state.dftBits,
     set: (v) => { state.dftBits = Math.round(v); recomputeDFT(); },
     badge: () => `N = ${2 ** state.dftBits}`
@@ -251,7 +253,10 @@ const notebook = {
           label: isEn ? '1.2 Synthesis (inverse DFT):' : '1.2 Síntese (DFT inversa):',
           latex: 'x[n] = \\frac{1}{N}\\sum_{k=0}^{N-1} X[k]\\,e^{j2\\pi kn/N}'
         },
-        { label: isEn ? '1.3 Sequence:' : '1.3 Sequência:', latex: `x[n] = ${d.latexTime}, \\quad N = ${N}` },
+        {
+          label: isEn ? '1.3 Sequence:' : '1.3 Sequência:',
+          latex: `x[n] = ${d.latexTime}, \\quad N = ${N}${d.zeroPadded > 0 ? `\\;(${d.zeroPadded}\\ \\text{${isEn ? 'zeros appended' : 'zeros acrescentados'}})` : ''}`
+        },
         {
           label: isEn ? '1.4 Finite on Both Sides (what a computer can store):' : '1.4 Finita nos Dois Lados (o que um computador consegue guardar):',
           latex: isEn
@@ -404,6 +409,18 @@ const notebook = {
 
 // ---- Galeria ----------------------------------------------------------------
 function renderGallery(gallery, isEn, refresh) {
+  renderSequenceEditor(gallery, {
+    isEn,
+    title: isEn ? 'Type your own samples (from n = 0)' : 'Digite as suas amostras (a partir de n = 0)',
+    active: state.dftPresetKey === 'custom',
+    fields: [{ id: 'x', label: 'x[n]:', values: state.dftCustom, hasStart: false, maxLen: 64 }],
+    onApply: (result) => {
+      state.dftCustom = result.x.values;
+      selectDFTPreset('custom');
+      refresh();
+    }
+  });
+
   Object.entries(DFT_PRESETS).forEach(([key, preset]) => {
     const isActive = state.dftPresetKey === key;
 

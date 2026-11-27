@@ -1253,3 +1253,34 @@ body.a11y-reduce-motion .animate-pulse { animation: none; }
 @media (prefers-reduced-motion: reduce) {
   .sheet-line.is-writing .sheet-formula.is-inking, .sheet-formula.is-inking .sheet-pen { transition: none; }
 }
+
+/* ---- Editor de sequências na galeria (js/modules/seq-editor.js) ---- */
+.seq-editor { display: flex; flex-direction: column; gap: 0.4rem; cursor: default; }
+.seq-editor.is-active { border-color: var(--c-conv); }
+.seq-editor-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.seq-editor-title { font-size: 0.6875rem; font-weight: 700; color: var(--c-x1); }
+.seq-editor-badge {
+  font-size: 0.5625rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 999px;
+  color: var(--c-conv); border: 1px solid var(--c-conv); text-transform: uppercase; letter-spacing: 0.04em;
+}
+.seq-editor-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; }
+.seq-editor-label { font-family: 'JetBrains Mono', monospace; font-size: 0.6875rem; font-weight: 600; min-width: 2.4rem; }
+.seq-editor-startlabel { font-size: 0.625rem; color: var(--text-secondary); }
+.seq-editor-input, .seq-editor-start {
+  min-height: 1.9rem; padding: 0.2rem 0.45rem; border-radius: 0.45rem;
+  border: 1px solid var(--border-strong); background: var(--bg-card); color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace; font-size: 0.6875rem;
+}
+.seq-editor-input { flex: 1 1 8rem; min-width: 0; }
+.seq-editor-start { width: 3.4rem; text-align: center; }
+.seq-editor-input:focus-visible, .seq-editor-start:focus-visible { outline: 2px solid var(--c-x1); outline-offset: 1px; }
+.seq-editor-hint { font-size: 0.625rem; color: var(--text-secondary); line-height: 1.35; }
+.seq-editor-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+.seq-editor-apply {
+  min-height: 1.9rem; padding: 0.2rem 0.7rem; border-radius: 0.5rem; font-size: 0.6875rem; font-weight: 700;
+  background: #047857; border: 1px solid #047857; color: #ffffff; cursor: pointer;
+}
+.seq-editor-apply:hover { background: #065f46; }
+.seq-editor-apply:focus-visible { outline: 2px solid var(--c-x1); outline-offset: 2px; }
+.seq-editor-status { font-size: 0.6875rem; font-weight: 600; }
+.seq-editor-status.is-error { color: var(--c-x2); }
