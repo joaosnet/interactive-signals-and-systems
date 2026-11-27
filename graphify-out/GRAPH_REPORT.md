@@ -1,7 +1,7 @@
 # Graph Report - Sinais e Sistemas forma interativa  (2026-11-27)
 
 ## Corpus Check
-- 69 files · ~98,216 words
+- 69 files · ~98,246 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 6 file(s) not represented in the graph (top: (none) 2, .css 2, .xml 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `420253be`
+- Built from commit: `8b77faee`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -70,8 +70,8 @@
 ## Import Cycles
 - 2-file cycle: `js/modules/ctft.js -> js/notebook.js -> js/modules/ctft.js`
 - 2-file cycle: `js/modules/ctft.js -> js/ui.js -> js/modules/ctft.js`
-- 3-file cycle: `js/modules/ctft.js -> js/ui.js -> js/notebook.js -> js/modules/ctft.js`
 - 3-file cycle: `js/modules/ctft.js -> js/ui.js -> js/modules/index.js -> js/modules/ctft.js`
+- 3-file cycle: `js/modules/ctft.js -> js/ui.js -> js/notebook.js -> js/modules/ctft.js`
 - 3-file cycle: `js/modules/convolution.js -> js/ui.js -> js/modules/index.js -> js/modules/convolution.js`
 - 3-file cycle: `js/modules/fourier.js -> js/ui.js -> js/modules/index.js -> js/modules/fourier.js`
 - 3-file cycle: `js/ui.js -> js/ui/widgets.js -> js/ui/hud.js -> js/ui.js`
@@ -79,8 +79,8 @@
 - 4-file cycle: `js/modules/fourier.js -> js/ui.js -> js/ui/widgets.js -> js/ui/hud.js -> js/modules/fourier.js`
 - 5-file cycle: `js/modules/convolution.js -> js/notebook.js -> js/modules/ctft.js -> js/ui.js -> js/modules/index.js -> js/modules/convolution.js`
 - 5-file cycle: `js/modules/ctft.js -> js/ui.js -> js/modules/index.js -> js/modules/fourier.js -> js/notebook.js -> js/modules/ctft.js`
-- 5-file cycle: `js/modules/ctft.js -> js/ui.js -> js/ui/widgets.js -> js/ui/hud.js -> js/notebook.js -> js/modules/ctft.js`
 - 5-file cycle: `js/modules/ctft.js -> js/ui.js -> js/ui/widgets.js -> js/ui/hud.js -> js/modules/index.js -> js/modules/ctft.js`
+- 5-file cycle: `js/modules/ctft.js -> js/ui.js -> js/ui/widgets.js -> js/ui/hud.js -> js/notebook.js -> js/modules/ctft.js`
 - 5-file cycle: `js/modules/convolution.js -> js/ui.js -> js/ui/widgets.js -> js/ui/hud.js -> js/modules/index.js -> js/modules/convolution.js`
 - 5-file cycle: `js/modules/fourier.js -> js/ui.js -> js/ui/widgets.js -> js/ui/hud.js -> js/modules/index.js -> js/modules/fourier.js`
 
