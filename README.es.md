@@ -143,6 +143,22 @@ Recursos del módulo:
 
 ---
 
+### 7. Transformada de Fourier de Tiempo Discreto (`#dtft`)
+
+El espectro continuo y periódico de una secuencia:
+
+$$X(e^{j\Omega}) = \sum_{n=-\infty}^{+\infty} x[n]\, e^{-j\Omega n}, \qquad x[n] = \frac{1}{2\pi}\int_{2\pi} X(e^{j\Omega})\, e^{j\Omega n}\, d\Omega$$
+
+Recursos del módulo:
+- **Tres Carriles**: Muestras de $x[n]$ al fondo, $|X(e^{j\Omega})|$ en el medio y la fase $\angle X(e^{j\Omega})$ al frente.
+- **Suma Parcial $X_N(\Omega)$**: El deslizador elige cuántas muestras entran en la suma. Se ve la convergencia, el fenómeno de Gibbs en el pasa-bajos ideal y los picos del coseno creciendo hasta volverse impulsos.
+- **Periodicidad $2\pi$**: El espectro se dibuja de $-3\pi$ a $3\pi$ con el período fundamental destacado.
+- **Sonda en $\Omega$ y Lectura como Filtro**: Un marcador recorre la frecuencia y el cuaderno muestra la ganancia, la fase y la respuesta a $\cos(\Omega n)$, clasificando el par como pasa-bajos, pasa-altos o pasa-todo.
+- **Parseval y Puente con la Transformada Z**: La energía coincide en ambos dominios, y $X(e^{j\Omega})$ es $X(z)$ sobre el círculo unitario.
+- **Pares Notables**: Pulso rectangular, exponenciales causal y bilateral, pasa-bajos ideal, coseno, media móvil, primera diferencia e impulso.
+
+---
+
 ## Fundamentos Didácticos y de Interfaz
 
 - **Proyecciones de Cámara**: Cambio inmediato entre `3D Libre`, `2D Tiempo (Frontal)`, `2D Espectro (Lateral)` y `Vista Superior`.
@@ -160,7 +176,7 @@ Recursos del módulo:
 | :--- | :--- |
 | `Espacio` | Reproducir o pausar simulación |
 | `1`, `2`, `3`, `4` | Salto directo a los pasos 1 a 4 de Convolución |
-| `[` / `]` | Alternar módulo: Convolución $\to$ Convolución Discreta $\to$ Fourier $\to$ CTFT $\to$ Laplace $\to$ Z |
+| `[` / `]` | Alternar módulo: Convolución $\to$ Convolución Discreta $\to$ Fourier $\to$ CTFT $\to$ DTFT $\to$ Laplace $\to$ Z |
 | `Z` | Alternar modo pantalla completa / Zen |
 | `M` | Activar o desactivar sintetizador Web Audio |
 | `←` / `→` | Ajuste fino del parámetro de tiempo $t$ o frecuencia $\omega$ |

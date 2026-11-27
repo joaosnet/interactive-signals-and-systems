@@ -187,6 +187,13 @@ export const state = {
   dconvN: 1,           // deslocamento n (inteiro) de h[n-k]
   dconvCalculated: null,
 
+  // DTFT
+  dtftPresetKey: 'rect',
+  dtftParams: {},      // valor do parâmetro de cada par (chave = preset)
+  dtftN: 5,            // termos de cada lado na soma parcial
+  dtftOmega: 1.0,      // frequência de prova Ω (rad/amostra)
+  dtftCalculated: null,
+
   // Customização de Interface (ver apenas o que quer)
   visibleSections: initialVisibleSections,
   layers: initialLayers
