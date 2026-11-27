@@ -9,7 +9,10 @@ import {
   integrateSimpson,
   detectSupportAndRegions,
   calculateFourierData,
-  calculateCTFTData
+  calculateCTFTData,
+  formatSymbolic,
+  makeConvolver,
+  isZeroRegion
 } from '../js/math-engine.js';
 
 import {
@@ -178,4 +181,90 @@ test('CTFT: identidade de Parseval (<1%), tri unificado, bridge e sinal de X(0)'
   const customNeg = calculateCTFTData('custom_ctft', 2.0, 1.0, 4.0, '-rect(t/2)');
   assert.ok(customNeg.valX0 < -1.9);
   assert.ok(Math.abs(Math.abs(customNeg.fnPhase(0)) - Math.PI) < 0.01);
+});
+
+test('Parser: potencia de funcao, menos unario, notacao cientifica e whitelist de identificadores', () => {
+  const val = (expr, t) => {
+    const r = validateSignalExpression(expr);
+    assert.ok(r.valid, `"${expr}" deveria ser valida`);
+    return r.fn(t);
+  };
+  const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9, `${msg}: ${a} != ${b}`);
+
+  near(val('sin(t)^2', 1), Math.sin(1) ** 2, 'sin(t)^2');
+  near(val('cos(t)^2*rect(t/4)', 1), Math.cos(1) ** 2, 'cos(t)^2*rect(t/4)');
+  near(val('u(t)^2', 1), 1, 'u(t)^2');
+  near(val('(t-1)^2', 3), 4, '(t-1)^2');
+  near(val('-t^2', 2), -4, '-t^2 = -(t^2)');
+  near(val('t^-2', 2), 0.25, 't^-2');
+  near(val('2*-t', 2), -4, '2*-t');
+  near(val('2e^(-2t)u(t)', 1), 2 * Math.exp(-2), '2e^(-2t)u(t)');
+  near(val('1e-3*t', 0.7), 0.0007, '1e-3*t (notacao cientifica)');
+
+  for (const evil of ['(globalThis.__pwn=1)', 't.constructor', 'alert(1)', 't;t', 'window', '`x`']) {
+    assert.equal(validateSignalExpression(evil).valid, false, `"${evil}" deveria ser rejeitada`);
+  }
+  assert.equal(globalThis.__pwn, undefined);
+});
+
+test('formatSymbolic: formas com pi tem prioridade sobre fracoes de denominador grande', () => {
+  assert.equal(formatSymbolic(2 / Math.PI), String.raw`\frac{2}{\pi}`);
+  assert.equal(formatSymbolic(1 / Math.PI), String.raw`\frac{1}{\pi}`);
+  assert.equal(formatSymbolic(4 / Math.PI), String.raw`\frac{4}{\pi}`);
+  assert.equal(formatSymbolic(Math.PI / 2), String.raw`\frac{\pi}{2}`);
+  assert.equal(formatSymbolic(1 / 3), String.raw`\frac{1}{3}`);
+  assert.equal(formatSymbolic(-1 / 6), String.raw`-\frac{1}{6}`);
+  assert.equal(formatSymbolic(5 / 12), String.raw`\frac{5}{12}`);
+  assert.equal(formatSymbolic(2), '2');
+});
+
+test('Convolucao custom: sinais longe da origem, suporte alem de 10 e regiao nula', () => {
+  const conv = (ex, eh) => {
+    const fx = compileSignalExpr(ex);
+    const fh = compileSignalExpr(eh);
+    const auto = detectSupportAndRegions(fx, fh);
+    return { auto, y: makeConvolver(fx, fh, auto.supportX, auto.supportH) };
+  };
+
+  // rect(t-12) * rect(t+12) = tri(t): antes dava y(0) = 0 por causa da janela fixa
+  const far = conv('rect(t-12)', 'rect(t+12)');
+  assert.ok(Math.abs(far.y(0) - 1) < 0.02, `y(0)=${far.y(0)}`);
+  assert.ok(Math.abs(far.y(0.5) - 0.5) < 0.02, `y(0.5)=${far.y(0.5)}`);
+  assert.ok(Math.abs(far.y(2)) < 1e-6);
+
+  const wide = conv('u(t)-u(t-12)', 'rect(t)');
+  assert.ok(Math.abs(wide.auto.supportX[1] - 12) < 0.06, `suporte=${wide.auto.supportX}`);
+  assert.ok(Math.abs(wide.y(11) - 1) < 0.02);
+
+  // Semi-infinito continua correto: e^{-t}u(t) * u(t) = (1 - e^{-t})u(t)
+  const semi = conv('e^(-t)u(t)', 'u(t)');
+  assert.equal(semi.auto.supportX[1], Infinity);
+  assert.ok(Math.abs(semi.y(2) - (1 - Math.exp(-2))) < 0.01, `y(2)=${semi.y(2)}`);
+
+  assert.equal(isZeroRegion({ latex: String.raw`y(t) = 0 \quad (\text{Sem sobreposição})` }), true);
+  assert.equal(isZeroRegion({ latex: 'y(t) = 0' }), true);
+  assert.equal(isZeroRegion({ latex: 'y(t) = 0.5t' }), false);
+  assert.equal(isZeroRegion({ latex: String.raw`y(t) = \int_{0}^{t} x(\tau)h(t-\tau)\,d\tau` }), false);
+});
+
+test('CTFT: Parseval com cauda (<0.2% em todo o slider de a), truncamento sinalizado e pulso-base da ponte', () => {
+  for (const a of [0.5, 1, 2, 4, 5]) {
+    const c = calculateCTFTData('exp', 2.0, a, 4.0);
+    const relErr = Math.abs(c.energyTime - c.energyFreq) / c.energyTime;
+    assert.ok(relErr < 0.002, `exp a=${a}: err=${relErr}`);
+  }
+  for (const tau of [0.5, 1, 2, 4]) {
+    const c = calculateCTFTData('rect', tau, 1.0, 6.0);
+    const relErr = Math.abs(c.energyTime - c.energyFreq) / c.energyTime;
+    assert.ok(relErr < 0.002, `rect tau=${tau}: err=${relErr}`);
+  }
+
+  assert.equal(calculateCTFTData('custom_ctft', 2, 1, 4, 'u(t)').isTruncated, true);
+  assert.equal(calculateCTFTData('custom_ctft', 2, 1, 4, 'cos(t)').isTruncated, true);
+  assert.equal(calculateCTFTData('custom_ctft', 2, 1, 4, 'rect(t/2)').isTruncated, false);
+  assert.equal(calculateCTFTData('custom_ctft', 2, 1, 4, 'e^(-2t)u(t)').isTruncated, false);
+
+  const bridge = calculateCTFTData('bridge', 2.0, 1.0, 8.0);
+  assert.ok(!bridge.latexTime.includes('sum'), 'x(t) da ponte deve ser o pulso-base');
+  assert.ok(bridge.latexPeriodic.includes('sum'));
 });

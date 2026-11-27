@@ -3,9 +3,8 @@
 // ============================================================================
 
 import { state } from './state.js';
-import { renderMath } from './math-engine.js';
-import { BUILTIN_CONV_PRESETS, BUILTIN_FOURIER_PRESETS } from './presets.js';
-import { compileSignalExpr, detectSupportAndRegions, integrateSimpson } from './math-engine.js';
+import { renderMath, compileSignalExpr, detectSupportAndRegions, makeConvolver } from './math-engine.js';
+import { BUILTIN_CONV_PRESETS } from './presets.js';
 
 let canvasContainer = null;
 let stageCanvas = null;
@@ -72,39 +71,38 @@ export function setCameraPreset(presetName) {
   }
 }
 
+// Compilar as expressões e detectar suportes custa ~5000 avaliações; como
+// getEffectiveSignals roda a cada frame, o resultado fica em cache por expressão.
+let customSignalCache = { key: null, value: null };
+
+function buildCustomSignals(base, exprX, exprH) {
+  const key = `${base.id}|${exprX}|${exprH}|${state.isCommuted}`;
+  if (customSignalCache.key === key) return customSignalCache.value;
+  const fnX = compileSignalExpr(exprX);
+  const fnH = compileSignalExpr(exprH);
+  const auto = detectSupportAndRegions(fnX, fnH, exprX, exprH, state.isCommuted);
+  const value = {
+    ...base,
+    exprX,
+    exprH,
+    fnX,
+    fnH,
+    supportX: auto.supportX,
+    supportH: auto.supportH,
+    conv: makeConvolver(fnX, fnH, auto.supportX, auto.supportH),
+    regions: auto.regions
+  };
+  customSignalCache = { key, value };
+  return value;
+}
+
 export function getEffectiveSignals() {
   let p = BUILTIN_CONV_PRESETS[state.presetKey];
   if (!p) {
     const foundCustom = state.customPresets.find(cp => cp.id === state.presetKey);
-    if (foundCustom) {
-      const fnX = compileSignalExpr(foundCustom.exprX);
-      const fnH = compileSignalExpr(foundCustom.exprH);
-      const auto = detectSupportAndRegions(fnX, fnH, foundCustom.exprX, foundCustom.exprH, state.isCommuted);
-      p = {
-        ...foundCustom,
-        fnX,
-        fnH,
-        supportX: auto.supportX,
-        supportH: auto.supportH,
-        conv: (tVal) => integrateSimpson(fnX, fnH, tVal),
-        regions: auto.regions
-      };
-    } else {
-      const fnX = compileSignalExpr(state.exprX);
-      const fnH = compileSignalExpr(state.exprH);
-      const auto = detectSupportAndRegions(fnX, fnH, state.exprX, state.exprH, state.isCommuted);
-      p = {
-        id: 'custom_live',
-        exprX: state.exprX,
-        exprH: state.exprH,
-        fnX,
-        fnH,
-        supportX: auto.supportX,
-        supportH: auto.supportH,
-        conv: (tVal) => integrateSimpson(fnX, fnH, tVal),
-        regions: auto.regions
-      };
-    }
+    p = foundCustom
+      ? buildCustomSignals(foundCustom, foundCustom.exprX, foundCustom.exprH)
+      : buildCustomSignals({ id: 'custom_live' }, state.exprX, state.exprH);
   }
 
   if (!state.isCommuted) {
