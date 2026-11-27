@@ -14,7 +14,7 @@ Laboratório interativo para convolução contínua, decomposição em séries d
 
 <br/>
 
-<img src="./assets/demo.gif" alt="Demonstração 3D de Sinais e Sistemas Interativos" width="100%" style="border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1);" />
+<img src="./assets/demo.webp" alt="Demonstração 3D de Sinais e Sistemas Interativos" width="100%" style="border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1);" />
 
 </div>
 
@@ -243,7 +243,7 @@ interactive-signals-and-systems/
 ├── CONTRIBUTING.md         # Guia de contribuição para quem nunca usou git
 ├── graphify-out/           # Grafo de conhecimento do código (graphify)
 ├── assets/
-│   ├── demo.gif        # Registro em alta definição da simulação interativa
+│   ├── demo.webp       # Demonstração animada dos oito módulos (gerada do próprio palco)
 │   ├── favicon.svg     # Ícone vetorial
 │   └── og-banner.svg   # Banner Open Graph para compartilhamento social (1200x630)
 ├── server.js           # Servidor estático Node.js sem dependências

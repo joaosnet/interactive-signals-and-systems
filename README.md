@@ -14,7 +14,7 @@ Interactive laboratory for continuous-time convolution, Fourier series decomposi
 
 <br/>
 
-<img src="./assets/demo.gif" alt="Interactive Signals and Systems 3D Demonstration" width="100%" style="border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1);" />
+<img src="./assets/demo.webp" alt="Interactive Signals and Systems 3D Demonstration" width="100%" style="border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1);" />
 
 </div>
 
@@ -243,7 +243,7 @@ interactive-signals-and-systems/
 ├── CONTRIBUTING.md         # Contribution guide for people new to git (Portuguese)
 ├── graphify-out/           # Knowledge graph of the code (graphify)
 ├── assets/
-│   ├── demo.gif        # High-resolution demonstration capture
+│   ├── demo.webp       # Animated demo of the eight modules (rendered from the stage itself)
 │   ├── favicon.svg     # Vector favicon
 │   └── og-banner.svg   # Open Graph social sharing image (1200x630)
 ├── server.js           # Zero-dependency Node static development server
