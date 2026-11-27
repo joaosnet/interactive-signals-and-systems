@@ -257,6 +257,15 @@ Acesso direto por âncoras de rota:
 
 ---
 
+## Feedback e Contribuição
+
+- **Pelo site**: o botão **Feedback**, no canto do palco, abre um formulário que transforma o relato em uma issue, já com o módulo e o passo em que a pessoa está.
+- **Pelo navegador, sem git**: a mesma janela leva ao editor web do GitHub, que cria o fork e o pull request sozinho.
+- **Guia para iniciantes**: [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Envio sem conta no GitHub**: depende do Worker em [`worker/`](worker/README.md), que precisa ser publicado na Cloudflare.
+
+---
+
 ## Referências Acadêmicas
 
 - B. P. Lathi, *Sinais e Sistemas Lineares*, 2ª ed., Bookman / Oxford University Press.

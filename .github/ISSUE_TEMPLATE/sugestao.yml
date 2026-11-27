@@ -1,0 +1,19 @@
+name: Sugestão ou dúvida
+description: Uma ideia de melhoria, um pedido de novo conteúdo ou uma pergunta.
+title: "[Sugestão] "
+body:
+  - type: textarea
+    id: descricao
+    attributes:
+      label: Qual é a sua sugestão ou dúvida?
+      description: Se for uma ideia, conte para que ela serviria na hora de estudar.
+      placeholder: "Seria útil poder digitar a minha própria sequência na convolução discreta, para conferir os exercícios da lista."
+    validations:
+      required: true
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Onde você estava
+      description: O site preenche isto sozinho quando você usa o botão Feedback. Pode deixar em branco.
+    validations:
+      required: false

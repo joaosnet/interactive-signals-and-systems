@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Enviar pelo próprio site
+    url: https://joaosnet.github.io/interactive-signals-and-systems/
+    about: O botão Feedback, no canto do palco, preenche o relato com o módulo e o passo em que você está.
+  - name: Guia para quem nunca usou git
+    url: https://github.com/joaosnet/interactive-signals-and-systems/blob/main/CONTRIBUTING.md
+    about: Como corrigir um texto ou uma fórmula direto pelo navegador.
