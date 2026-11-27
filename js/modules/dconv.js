@@ -391,6 +391,7 @@ export const dconvModule = registerModule({
   defaultSliderValue: 0,
   notebookEveryFrames: 6,
   cameraTarget: { x: 0, y: 0.5, z: 3.3 },
+  mobileZoomOut: 1.25,   // recuo extra da câmera em telas estreitas
 
   slider() {
     const d = calc();

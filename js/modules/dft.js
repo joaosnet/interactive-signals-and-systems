@@ -470,6 +470,7 @@ export const dftModule = registerModule({
   defaultSliderValue: 0,
   notebookEveryFrames: 6,
   cameraTarget: { x: 0, y: 0.6, z: 3.3 },
+  mobileZoomOut: 1.3,   // recuo extra da câmera em telas estreitas
 
   slider() {
     syncAuxSlider(windowSlider());

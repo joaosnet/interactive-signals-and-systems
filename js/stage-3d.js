@@ -11,7 +11,14 @@ import { getModule } from './modules/registry.js';
 let canvasContainer = null;
 let stageCanvas = null;
 let ctx3d = null;
-let camera = null;
+// Câmera em perspectiva: posição e base (frente, direita, cima) recalculadas uma vez
+// por quadro em updateCameraFromOrbit e usadas por projectPoint3D em cada ponto.
+const FOV_DEG = 38;
+const cam = {
+  x: 0, y: 0, z: 10,
+  fwd: { x: 0, y: 0, z: -1 }, right: { x: 1, y: 0, z: 0 }, up: { x: 0, y: 1, z: 0 },
+  w: 384, h: 260, fovScale: 1
+};
 
 // Orbit target and spherical parameters with Critically Damped Spring (Emil Kowalski)
 export const camOrbit = {
@@ -232,13 +239,6 @@ function stepCriticallyDampedSpring(pos, vel, target, dt) {
   };
 }
 
-export function isStageSpringActive() {
-  if (!camOrbit.autoOrient) return false;
-  const dT = Math.abs(camOrbit.targetTheta - camOrbit.theta);
-  const dP = Math.abs(camOrbit.targetPhi - camOrbit.phi);
-  const dR = Math.abs(camOrbit.targetRadius - camOrbit.radius);
-  return dT > 0.0005 || dP > 0.0005 || dR > 0.0005;
-}
 
 export function updateCameraFromOrbit(dt = 0.016) {
   if (camOrbit.autoOrient) {
@@ -258,69 +258,51 @@ export function updateCameraFromOrbit(dt = 0.016) {
   const h = canvasContainer ? (canvasContainer.clientHeight || 260) : 260;
   const aspect = w / Math.max(h, 1);
   const responsiveScale = aspect < 0.85 ? 1.24 : aspect < 1.2 ? 1.08 : 0.95;
-  const r = camOrbit.radius * responsiveScale;
+  // Em telas estreitas, módulos de cena larga pedem um recuo extra para caber inteiros
+  const narrowFit = w < 520 ? (getModule(state.activeModule)?.mobileZoomOut || 1) : 1;
+  const r = camOrbit.radius * responsiveScale * narrowFit;
 
   const sinPhi = Math.sin(camOrbit.phi);
   const cx = camOrbit.target.x + r * sinPhi * Math.sin(camOrbit.theta);
   const cy = camOrbit.target.y + r * Math.cos(camOrbit.phi);
   const cz = camOrbit.target.z + r * Math.cos(camOrbit.theta) * sinPhi;
 
-  if (camera) {
-    camera.aspect = aspect;
-    camera.updateProjectionMatrix();
-    camera.position.set(cx, cy, cz);
-    camera.lookAt(camOrbit.target.x, camOrbit.target.y, camOrbit.target.z);
-    camera.updateMatrixWorld();
-  }
-  return { cx, cy, cz };
-}
-
-export function projectPoint3D(x, y, z) {
-  const w = canvasContainer ? (canvasContainer.clientWidth || 384) : 384;
-  const h = canvasContainer ? (canvasContainer.clientHeight || 260) : 260;
-
-  if (camera && window.THREE) {
-    const v = new THREE.Vector3(x, y, z);
-    const camDist = v.distanceTo(camera.position);
-    v.project(camera);
-    if (v.z > 1.05 || v.z < -1.05) return null;
-    return {
-      x: (v.x * 0.5 + 0.5) * w,
-      y: (-v.y * 0.5 + 0.5) * h,
-      depth: camDist
-    };
-  }
-
-  const { cx, cy, cz } = updateCameraFromOrbit();
+  // Base da câmera olhando para o alvo, com o eixo y do mundo como "cima"
   const fx = camOrbit.target.x - cx;
   const fy = camOrbit.target.y - cy;
   const fz = camOrbit.target.z - cz;
   const flen = Math.hypot(fx, fy, fz) || 1;
   const fwd = { x: fx / flen, y: fy / flen, z: fz / flen };
-
-  const rx = fwd.z;
-  const rz = -fwd.x;
-  const rlen = Math.hypot(rx, rz) || 1;
-  const right = { x: -rx / rlen, y: 0, z: -rz / rlen };
-  const up = {
+  const rlen = Math.hypot(fwd.z, fwd.x) || 1;
+  const right = { x: -fwd.z / rlen, y: 0, z: fwd.x / rlen };   // frente × cima do mundo
+  cam.x = cx;
+  cam.y = cy;
+  cam.z = cz;
+  cam.fwd = fwd;
+  cam.right = right;
+  cam.up = {                                                    // direita × frente
     x: right.y * fwd.z - right.z * fwd.y,
     y: right.z * fwd.x - right.x * fwd.z,
     z: right.x * fwd.y - right.y * fwd.x
   };
+  cam.w = w;
+  cam.h = h;
+  cam.fovScale = (h * 0.5) / Math.tan((FOV_DEG * Math.PI) / 360);
+  return { cx, cy, cz };
+}
 
-  const dx = x - cx;
-  const dy = y - cy;
-  const dz = z - cz;
-  const zCam = dx * fwd.x + dy * fwd.y + dz * fwd.z;
-  if (zCam <= 0.2) return null;
-  const xCam = dx * right.x + dy * right.y + dz * right.z;
-  const yCam = dx * up.x + dy * up.y + dz * up.z;
-  const fovScale = (h * 0.5) / Math.tan((38 * Math.PI) / 360);
-
+export function projectPoint3D(x, y, z) {
+  const dx = x - cam.x;
+  const dy = y - cam.y;
+  const dz = z - cam.z;
+  const zCam = dx * cam.fwd.x + dy * cam.fwd.y + dz * cam.fwd.z;
+  if (zCam <= 0.1) return null; // atrás da câmera (ou colado nela)
+  const xCam = dx * cam.right.x + dy * cam.right.y + dz * cam.right.z;
+  const yCam = dx * cam.up.x + dy * cam.up.y + dz * cam.up.z;
   return {
-    x: w * 0.5 + (xCam / zCam) * fovScale,
-    y: h * 0.5 - (yCam / zCam) * fovScale,
-    depth: zCam
+    x: cam.w * 0.5 + (xCam / zCam) * cam.fovScale,
+    y: cam.h * 0.5 - (yCam / zCam) * cam.fovScale,
+    depth: Math.hypot(dx, dy, dz)
   };
 }
 
@@ -1430,10 +1412,6 @@ export function init3DStage() {
   ctx3d = stageCanvas.getContext('2d');
   canvasContainer.innerHTML = '';
   canvasContainer.appendChild(stageCanvas);
-
-  if (window.THREE) {
-    camera = new THREE.PerspectiveCamera(38, 1, 0.1, 150);
-  }
 
   initPointerOrbitControls();
   window.addEventListener('resize', handleResize);

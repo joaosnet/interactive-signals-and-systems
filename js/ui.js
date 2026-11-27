@@ -146,6 +146,8 @@ export function switchModule(moduleName) {
   updateStepLabels();
 
   mod.onEnter();
+  const hintEl = document.getElementById('lbl-stage-hint');
+  if (hintEl) hintEl.textContent = stageHintText(state.lang === 'en');
   if (state.activeMathField) setActiveMathField(mod.defaultHudTarget);
   // Fora do módulo de Fourier isto silencia o oscilador (o botão de áudio fica oculto).
   updateAudioSynth();
@@ -201,6 +203,13 @@ function applySliderSpec(dict = I18N[state.lang] || I18N.pt) {
     slider.value = spec.get();
   }
   return spec;
+}
+
+/** Dica do rodapé do palco: só fala em editar o sinal nos módulos que têm editor de fórmula. */
+function stageHintText(isEn) {
+  const hasEditor = (activeModule().hudTargets || []).length > 0;
+  if (hasEditor) return isEn ? 'Click a signal to edit • Drag: Orbit' : 'Clique no sinal para editar • Arraste: Orbitar';
+  return isEn ? 'Drag: Orbit • Examples and editor in the panel' : 'Arraste: Orbitar • Exemplos e editor no painel';
 }
 
 export function setStep(stepNum, restartAnim = true) {
@@ -393,7 +402,7 @@ export function applyLanguage(lang) {
     'lbl-layer-grid': dict.layerGrid,
     'lbl-layer-thick': dict.layerThick,
     'lbl-zen-mode': isEn ? 'Focus' : 'Foco',
-    'lbl-stage-hint': isEn ? 'Click a signal to edit • Drag: Orbit' : 'Clique no sinal para editar • Arraste: Orbitar',
+    'lbl-stage-hint': stageHintText(isEn),
     'lbl-github-contribute': isEn ? 'Contribute' : 'Contribuir',
     'lbl-customize-btn': isEn ? 'Customize' : 'Personalizar',
     'zen-exit-btn': isEn ? '✕ Panel' : '✕ Painel',
@@ -847,15 +856,6 @@ export function syncInputsWithPreset() {
 
 export function setActiveMathField(field) {
   state.activeMathField = field;
-}
-
-export function mutateActiveExpr(mutatorFn) {
-  if (state.focusHUDActive) {
-    const hudInput = document.getElementById('hud-free-input');
-    const cur = hudInput ? (hudInput.value || '') : '';
-    const next = mutatorFn(cur);
-    setHUDExpressionLive(next, true);
-  }
 }
 
 // ============================================================================
