@@ -163,9 +163,49 @@ export function numericDTFT(fnSeq, omega, N = 2000) {
  * @returns x[n], X(e^{jΩ}) em forma fechada, soma parcial, energia e a leitura
  *          do par como filtro (passa-baixas / passa-altas).
  */
-export function calculateDTFTData(presetKey = 'rect', paramValue) {
-  const key = DTFT_PRESETS[presetKey] ? presetKey : 'rect';
-  const preset = DTFT_PRESETS[key];
+/** Par montado a partir de uma sequência finita digitada pelo aluno: { start, values }. */
+function customPreset(seq) {
+  const values = Array.isArray(seq?.values) && seq.values.length > 0 ? seq.values.map(Number) : [1];
+  const start = Number.isFinite(seq?.start) ? Math.round(seq.start) : 0;
+  const end = start + values.length - 1;
+  // X(e^{jΩ}) escrito termo a termo (até 4 termos; depois, reticências)
+  const terms = [];
+  values.forEach((v, i) => {
+    if (Math.abs(v) < 1e-12 || terms.length > 4) return;
+    const n = start + i;
+    const coef = Math.abs(Math.abs(v) - 1) < 1e-12 && n !== 0 ? '' : fmt(Math.abs(v));
+    const expo = n === 0 ? '' : `e^{${n > 0 ? '-' : ''}j${Math.abs(n) === 1 ? '' : Math.abs(n)}\\Omega}`;
+    terms.push({ sign: v < 0 ? '-' : '+', text: `${coef}${expo}` || '1' });
+  });
+  const shown = terms.slice(0, 4).map((t, i) => (i === 0 ? (t.sign === '-' ? '-' : '') : ` ${t.sign} `) + t.text).join('');
+  const shownValues = values.slice(0, 7).map((v, i) => (start + i === 0 ? `\\underset{\\uparrow}{${fmt(v)}}` : fmt(v)));
+  return {
+    param: null,
+    build: () => ({
+      fnSeq: (n) => (n >= start && n <= end ? values[n - start] : 0),
+      evalX: (w) => {
+        let re = 0;
+        let im = 0;
+        for (let i = 0; i < values.length; i++) {
+          re += values[i] * Math.cos(w * (start + i));
+          im -= values[i] * Math.sin(w * (start + i));
+        }
+        return { re, im };
+      },
+      energy: values.reduce((acc, v) => acc + v * v, 0),
+      latexTime: `\\{${shownValues.join(',\\,')}${values.length > 7 ? ',\\,\\ldots' : ''}\\}${start > 0 || end < 0 ? `_{\\;n \\ge ${start}}` : ''}`,
+      latexX: `${shown || '0'}${terms.length > 4 ? ' + \\cdots' : ''}`
+    })
+  };
+}
+
+/**
+ * @param customSeq  { start, values } quando presetKey === 'custom'
+ */
+export function calculateDTFTData(presetKey = 'rect', paramValue, customSeq = null) {
+  const isCustom = presetKey === 'custom' && Boolean(customSeq);
+  const key = isCustom ? 'custom' : (DTFT_PRESETS[presetKey] ? presetKey : 'rect');
+  const preset = isCustom ? customPreset(customSeq) : DTFT_PRESETS[key];
   const spec = preset.param;
   let param = null;
   if (spec) {
@@ -205,6 +245,8 @@ export function calculateDTFTData(presetKey = 'rect', paramValue) {
 
   return {
     presetKey: key,
+    // Distingue sequências do aluno entre si (a cena guarda curvas em cache por esta chave)
+    signature: isCustom ? `${customSeq.start}:${customSeq.values.join(',')}` : '',
     param,
     paramSpec: spec,
     fnSeq: built.fnSeq,

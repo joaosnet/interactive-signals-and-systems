@@ -172,11 +172,24 @@ export const DFT_MAX_BITS = 6;   // N = 64
 /**
  * Calcula a DFT de um preset com N = 2^bits amostras, pela soma direta e pela FFT.
  */
-export function calculateDFTData(presetKey = 'cosbin', bitsVal = 4, windowKeyVal = 'rect') {
-  const key = DFT_PRESETS[presetKey] ? presetKey : 'cosbin';
-  const preset = DFT_PRESETS[key];
+/**
+ * @param customValues  amostras digitadas pelo aluno quando presetKey === 'custom'.
+ *   N é a menor potência de 2 que as contém; aumentar N completa com zeros
+ *   (zero-padding), o que amostra a mesma DTFT em mais pontos.
+ */
+export function calculateDFTData(presetKey = 'cosbin', bitsVal = 4, windowKeyVal = 'rect', customValues = null) {
+  const isCustom = presetKey === 'custom' && Array.isArray(customValues) && customValues.length > 0;
+  const key = isCustom ? 'custom' : (DFT_PRESETS[presetKey] ? presetKey : 'cosbin');
+  const samples = isCustom ? customValues.slice(0, 2 ** DFT_MAX_BITS).map(Number) : null;
+  const preset = isCustom
+    ? {
+        fn: (n) => (n < samples.length ? samples[n] : 0),
+        latex: () => `\\{${samples.slice(0, 6).map((v) => fmt(v)).join(',\\,')}${samples.length > 6 ? ',\\,\\ldots' : ''}\\}`
+      }
+    : DFT_PRESETS[key];
   const b = Number.isFinite(Number(bitsVal)) ? Math.round(Number(bitsVal)) : 4;
-  const bits = Math.max(DFT_MIN_BITS, Math.min(DFT_MAX_BITS, b));
+  const minBits = isCustom ? Math.max(DFT_MIN_BITS, Math.ceil(Math.log2(samples.length))) : DFT_MIN_BITS;
+  const bits = Math.max(minBits, Math.min(DFT_MAX_BITS, b));
   const N = 2 ** bits;
 
   const windowKey = DFT_WINDOWS[windowKeyVal] ? windowKeyVal : 'rect';
@@ -231,6 +244,9 @@ export function calculateDFTData(presetKey = 'cosbin', bitsVal = 4, windowKeyVal
     presetKey: key,
     N,
     bits,
+    minBits,
+    // Zeros acrescentados depois das amostras digitadas (só em sinais do aluno)
+    zeroPadded: isCustom ? N - samples.length : 0,
     windowKey,
     window: w,
     rawX: raw,

@@ -189,6 +189,7 @@ export const state = {
   dconvPresetKey: 'rect_rect',
   dconvN: 1,           // deslocamento n (inteiro) de h[n-k]
   dconvK: 0,           // amostra em destaque nos passos 1 e 2
+  dconvCustom: { x: { start: 0, values: [1, 2, 1] }, h: { start: 0, values: [1, -1] } },
   dconvCalculated: null,
 
   // DTFT
@@ -196,6 +197,7 @@ export const state = {
   dtftParams: {},      // valor do parâmetro de cada par (chave = preset)
   dtftN: 5,            // termos de cada lado na soma parcial
   dtftOmega: 1.0,      // frequência de prova Ω (rad/amostra)
+  dtftCustom: { start: -1, values: [1, 2, 1] },
   dtftCalculated: null,
 
   // DFT / FFT
@@ -203,6 +205,7 @@ export const state = {
   dftBits: 4,          // N = 2^bits amostras
   dftK: 2,             // bin em destaque no passo 3
   dftWindow: 'rect',   // janela aplicada a x[n]: rect | hann | hamming
+  dftCustom: [1, 1, 1, 1, 0, 0, 0, 0],
   dftCalculated: null,
 
   // Customização de Interface (ver apenas o que quer)

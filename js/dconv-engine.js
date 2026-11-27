@@ -111,11 +111,22 @@ export function seqLatex(seq, maxItems = 9) {
  * Calcula a convolução discreta de um exemplo.
  * @returns x, h, y e as funções que descrevem o passo a passo para um n fixo.
  */
-export function calculateDConvData(presetKey = 'rect_rect') {
-  const key = DCONV_PRESETS[presetKey] ? presetKey : 'rect_rect';
+/** Sequência digitada pelo aluno: { start, values } vira um sinal como os de DCONV_SIGNALS. */
+function customSignal(seq) {
+  const values = Array.isArray(seq?.values) && seq.values.length > 0 ? seq.values.map(Number) : [1];
+  const start = Number.isFinite(seq?.start) ? Math.round(seq.start) : 0;
+  return { start, values, latex: seqLatex({ start, values }) };
+}
+
+/**
+ * @param custom  { x: { start, values }, h: { start, values } } quando presetKey === 'custom'
+ */
+export function calculateDConvData(presetKey = 'rect_rect', custom = null) {
+  const isCustom = presetKey === 'custom' && Boolean(custom);
+  const key = isCustom ? 'custom' : (DCONV_PRESETS[presetKey] ? presetKey : 'rect_rect');
   const preset = DCONV_PRESETS[key];
-  const x = DCONV_SIGNALS[preset.x];
-  const h = DCONV_SIGNALS[preset.h];
+  const x = isCustom ? customSignal(custom.x) : DCONV_SIGNALS[preset.x];
+  const h = isCustom ? customSignal(custom.h) : DCONV_SIGNALS[preset.h];
   const y = convolveSeq(x, h);
 
   // Trecho mostrado: sequências infinitas são desenhadas só até viewEnd
