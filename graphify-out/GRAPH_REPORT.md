@@ -1,17 +1,17 @@
 # Graph Report - Sinais e Sistemas forma interativa  (2026-11-27)
 
 ## Corpus Check
-- 50 files · ~80,566 words
+- 51 files · ~81,901 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 6 file(s) not represented in the graph (top: (none) 2, .css 2, .xml 1)
 
 ## Summary
-- 549 nodes · 1223 edges · 22 communities
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 14 edges (avg confidence: 0.85)
+- 565 nodes · 1278 edges · 23 communities
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 16 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d2d16a5e`
+- Built from commit: `422958c4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -38,39 +38,40 @@
 - body
 - contact_links
 - PULL_REQUEST_TEMPLATE.md
+- notebook-sheet.js
 
 ## God Nodes (most connected - your core abstractions)
 1. `initUIEventListeners()` - 42 edges
 2. `updateScene3D()` - 30 edges
-3. `updateNotebookUI()` - 27 edges
-4. `renderMath()` - 22 edges
+3. `updateNotebookUI()` - 25 edges
+4. `renderMath()` - 25 edges
 5. `renderPresetGallery()` - 22 edges
 6. `switchModule()` - 20 edges
-7. `setHUDExpressionLive()` - 16 edges
-8. `state` - 16 edges
-9. `activeModule()` - 15 edges
+7. `activeModule()` - 18 edges
+8. `state` - 17 edges
+9. `setHUDExpressionLive()` - 16 edges
 10. `applyLanguage()` - 15 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `rect()` --calls--> `calculateCTFTData()`  [EXTRACTED]
-  tests/ctft-extras.test.js → js/math-engine.js
 - `expo()` --calls--> `calculateCTFTData()`  [EXTRACTED]
+  tests/ctft-extras.test.js → js/math-engine.js
+- `rect()` --calls--> `calculateCTFTData()`  [EXTRACTED]
   tests/ctft-extras.test.js → js/math-engine.js
 - `tri()` --calls--> `calculateCTFTData()`  [EXTRACTED]
   tests/ctft-extras.test.js → js/math-engine.js
 - `assertMatchesSum()` --calls--> `numericZ()`  [EXTRACTED]
   tests/z-engine.test.js → js/z-engine.js
-- `animationLoop()` --indirect_call--> `setStep()`  [INFERRED]
-  js/app.js → js/ui.js
+- `animationLoop()` --calls--> `updateScene3D()`  [EXTRACTED]
+  js/app.js → js/stage-3d.js
 
 ## Import Cycles
 - None detected.
 
-## Communities (22 total, 0 thin omitted)
+## Communities (23 total, 0 thin omitted)
 
 ### Community 0 - "stage-3d.js"
-Cohesion: 0.15
-Nodes (29): renderMath(), buildCurveAreaPolygon(), camOrbit, customSignalCache, DEFAULT_CAMERA_TARGET, distToSegmentSq(), draw3DLine(), draw3DPolygon() (+21 more)
+Cohesion: 0.16
+Nodes (31): renderMath(), getModule(), buildCurveAreaPolygon(), camOrbit, customSignalCache, DEFAULT_CAMERA_TARGET, distToSegmentSq(), draw3DLine() (+23 more)
 
 ### Community 1 - "Sinais e Sistemas de Forma Interativa"
 Cohesion: 0.06
@@ -81,12 +82,12 @@ Cohesion: 0.11
 Nodes (31): calc(), CAUSALITY_TEXT, circlePts(), complexLatex(), cutRadius(), floorPt(), height(), listLatex() (+23 more)
 
 ### Community 3 - "ui.js"
-Cohesion: 0.10
-Nodes (63): animationLoop(), lastFrameTime, updateAudioSynth(), exprToLatex(), validateSignalExpression(), recomputeFourier(), activeModule(), clampToSlider() (+55 more)
+Cohesion: 0.09
+Nodes (64): animationLoop(), lastFrameTime, initAudioContext(), killOscillator(), stopAudio(), toggleAudio(), updateAudioSynth(), exprToLatex() (+56 more)
 
 ### Community 4 - "ctft.js"
-Cohesion: 0.08
-Nodes (27): initAudioContext(), killOscillator(), stopAudio(), toggleAudio(), boundarySlowdown(), convolutionModule, SHIFT, SWEEP (+19 more)
+Cohesion: 0.09
+Nodes (23): boundarySlowdown(), convolutionModule, SHIFT, SWEEP, fourierModule, RANGE, moduleFromHash(), modules (+15 more)
 
 ### Community 5 - "dft.js"
 Cohesion: 0.17
@@ -130,7 +131,7 @@ Nodes (36): buildContext(), buildIssueUrl(), buildPayload(), buildTitle(), CONTR
 
 ### Community 15 - "math-engine.js"
 Cohesion: 0.14
-Nodes (24): I18N, ALLOWED_IDENTIFIERS, buildConvolutionIntegralLatex(), buildSignalEvaluator(), calculateFourierData(), compileSignalExpr(), detectSupportAndRegions(), extractBraceGroup() (+16 more)
+Nodes (26): ALLOWED_IDENTIFIERS, buildConvolutionIntegralLatex(), buildSignalEvaluator(), calculateFourierData(), compileSignalExpr(), detectSupportAndRegions(), extractBraceGroup(), fmtBound() (+18 more)
 
 ### Community 16 - "Interactive Signals and Systems"
 Cohesion: 0.11
@@ -156,20 +157,24 @@ Nodes (5): blank_issues_enabled, contact_links, about, name, url
 Cohesion: 0.40
 Nodes (4): Antes de enviar, Como conferir, O que mudou, Por quê
 
+### Community 22 - "notebook-sheet.js"
+Cohesion: 0.28
+Nodes (14): I18N, el(), headerText(), init(), keyOf(), refreshPage(), setNotebookFocus(), snapToRule() (+6 more)
+
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `renderMath()` connect `stage-3d.js` to `z.js`, `ui.js`, `dft.js`, `math-engine.js`, `laplace.js`, `dtft.js`, `dconv.js`, `math-engine.js`?**
-  _High betweenness centrality (0.049) - this node is a cross-community bridge._
-- **Should `stage-3d.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.14623655913978495 - nodes in this community are weakly interconnected._
-- **Why does `state` connect `ctft.js` to `stage-3d.js`, `z.js`, `ui.js`, `dft.js`, `math-engine.js`, `laplace.js`, `dtft.js`, `dconv.js`, `feedback.js`, `math-engine.js`?**
-  _High betweenness centrality (0.046) - this node is a cross-community bridge._
+- **Why does `renderMath()` connect `stage-3d.js` to `z.js`, `ui.js`, `dft.js`, `math-engine.js`, `laplace.js`, `dtft.js`, `dconv.js`, `math-engine.js`, `notebook-sheet.js`?**
+  _High betweenness centrality (0.054) - this node is a cross-community bridge._
 - **Should `Sinais e Sistemas de Forma Interativa` be split into smaller, more focused modules?**
   _Cohesion score 0.05641025641025641 - nodes in this community are weakly interconnected._
-- **Why does `registerModule()` connect `ctft.js` to `z.js`, `dft.js`, `math-engine.js`, `laplace.js`, `dtft.js`, `dconv.js`?**
-  _High betweenness centrality (0.011) - this node is a cross-community bridge._
+- **Why does `state` connect `ctft.js` to `stage-3d.js`, `z.js`, `ui.js`, `dft.js`, `math-engine.js`, `laplace.js`, `dtft.js`, `dconv.js`, `feedback.js`, `math-engine.js`, `notebook-sheet.js`?**
+  _High betweenness centrality (0.047) - this node is a cross-community bridge._
 - **Should `z.js` be split into smaller, more focused modules?**
   _Cohesion score 0.10510510510510511 - nodes in this community are weakly interconnected._
+- **Why does `activeModule()` connect `ui.js` to `ctft.js`, `feedback.js`, `notebook-sheet.js`?**
+  _High betweenness centrality (0.011) - this node is a cross-community bridge._
 - **Should `ui.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.09859154929577464 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09018264840182648 - nodes in this community are weakly interconnected._
+- **Should `ctft.js` be split into smaller, more focused modules?**
+  _Cohesion score 0.09359605911330049 - nodes in this community are weakly interconnected._

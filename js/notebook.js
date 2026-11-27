@@ -447,6 +447,20 @@ function buildNotebookLinesCTFTBase(calc) {
   ];
 }
 
+/** Linhas do caderno do módulo e passo atuais: [{ label, latex }]. */
+function computeNotebookLines(isEn) {
+  const custom = getModule(state.activeModule)?.notebook || null;
+  if (custom) return custom.lines(isEn);
+  if (state.activeModule === 'ctft') return buildNotebookLinesCTFT(state.ctftCalculated);
+  if (state.activeModule === 'fourier') return buildNotebookLinesFourier(state.fourierCalculated);
+  return buildNotebookLinesConvolution(getEffectiveSignals());
+}
+
+/** Conteúdo atual do caderno, para outras apresentações (ex.: o caderno em foco). */
+export function getNotebookSnapshot() {
+  return { lines: computeNotebookLines(state.lang === 'en') || [] };
+}
+
 export function updateNotebookUI(animateHandwriting = false) {
   const dict = I18N[state.lang] || I18N.pt;
   const isFourier = state.activeModule === 'fourier';
@@ -518,13 +532,7 @@ export function updateNotebookUI(animateHandwriting = false) {
   // 2. Linhas do Caderno
   const container = document.getElementById('notebook-lines');
   if (container) {
-    const lines = custom
-      ? custom.lines(isEn)
-      : isCTFT
-      ? buildNotebookLinesCTFT(state.ctftCalculated)
-      : (isFourier
-        ? buildNotebookLinesFourier(state.fourierCalculated)
-        : buildNotebookLinesConvolution(getEffectiveSignals()));
+    const lines = computeNotebookLines(isEn);
 
     if (!animateHandwriting && container.children.length === lines.length) {
       lines.forEach((item, idx) => {
@@ -587,6 +595,8 @@ export function updateNotebookUI(animateHandwriting = false) {
       }
     }
   }
+
+  window.dispatchEvent(new CustomEvent('notebook-updated'));
 
   // 3. Tabela de Regiões / Espectro
   const regContainer = document.getElementById('regions-table');

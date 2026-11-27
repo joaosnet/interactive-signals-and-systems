@@ -167,6 +167,7 @@ export const state = {
   ctftBridgeT0: 4.0,
   ctftCustomPresets: initialCTFTCustomPresets,
   ctftCalculated: null,
+  notebookFocus: false, // caderno em foco: a folha pautada cobre o palco
   ctftMode: 'none',    // modo de exploração: none | shift | scale | mod | inverse
   ctftModeValues: {},  // parâmetro de cada modo (t₀, a, ω₀, banda W)
 
