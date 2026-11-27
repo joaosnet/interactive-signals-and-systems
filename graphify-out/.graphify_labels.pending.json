@@ -10,6 +10,6 @@
   "8": "server.js",
   "9": "laplace.js",
   "10": "package.json",
-  "11": "updateAudioSynth",
+  "11": "dtft.js",
   "12": "dconv.js"
 }

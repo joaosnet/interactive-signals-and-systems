@@ -143,6 +143,22 @@ Module features:
 
 ---
 
+### 7. Discrete-Time Fourier Transform (`#dtft`)
+
+The continuous, periodic spectrum of a sequence:
+
+$$X(e^{j\Omega}) = \sum_{n=-\infty}^{+\infty} x[n]\, e^{-j\Omega n}, \qquad x[n] = \frac{1}{2\pi}\int_{2\pi} X(e^{j\Omega})\, e^{j\Omega n}\, d\Omega$$
+
+Module features:
+- **Three Lanes**: Stems of $x[n]$ at the back, $|X(e^{j\Omega})|$ in the middle and the phase $\angle X(e^{j\Omega})$ in front.
+- **Partial Sum $X_N(\Omega)$**: The slider picks how many samples enter the sum. You can watch convergence, the Gibbs phenomenon on the ideal low-pass, and the cosine peaks growing into impulses.
+- **$2\pi$ Periodicity**: The spectrum is drawn from $-3\pi$ to $3\pi$ with the fundamental period highlighted.
+- **Probe at $\Omega$ and Filter Reading**: A marker sweeps the frequency while the notebook shows gain, phase and the response to $\cos(\Omega n)$, classifying the pair as low-pass, high-pass or all-pass.
+- **Parseval and Bridge to the Z-Transform**: Energy matches in both domains, and $X(e^{j\Omega})$ is $X(z)$ on the unit circle.
+- **Notable Pairs**: Rectangular pulse, causal and two-sided exponentials, ideal low-pass, cosine, moving average, first difference and impulse.
+
+---
+
 ## Interface and Display Systems
 
 - **Camera Projections**: Instant selection among `3D Free Orbit`, `2D Time (Front)`, `2D Spectrum (Lateral)`, and `Top Plan`.
@@ -160,7 +176,7 @@ Module features:
 | :--- | :--- |
 | `Space` | Play or pause simulation loop |
 | `1`, `2`, `3`, `4` | Direct jump to Convolution steps 1 through 4 |
-| `[` / `]` | Cycle modules: Convolution $\to$ Discrete Convolution $\to$ Fourier $\to$ CTFT $\to$ Laplace $\to$ Z |
+| `[` / `]` | Cycle modules: Convolution $\to$ Discrete Convolution $\to$ Fourier $\to$ CTFT $\to$ DTFT $\to$ Laplace $\to$ Z |
 | `Z` | Toggle Zen full-screen mode |
 | `M` | Toggle Web Audio synthesizer |
 | `←` / `→` | Incremental step of time parameter $t$ or frequency $\omega$ |

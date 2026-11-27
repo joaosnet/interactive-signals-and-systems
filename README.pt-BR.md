@@ -143,6 +143,22 @@ Recursos do módulo:
 
 ---
 
+### 7. Transformada de Fourier de Tempo Discreto (`#dtft`)
+
+O espectro contínuo e periódico de uma sequência:
+
+$$X(e^{j\Omega}) = \sum_{n=-\infty}^{+\infty} x[n]\, e^{-j\Omega n}, \qquad x[n] = \frac{1}{2\pi}\int_{2\pi} X(e^{j\Omega})\, e^{j\Omega n}\, d\Omega$$
+
+Recursos do módulo:
+- **Três Trilhos**: Hastes de $x[n]$ ao fundo, $|X(e^{j\Omega})|$ no meio e a fase $\angle X(e^{j\Omega})$ na frente.
+- **Soma Parcial $X_N(\Omega)$**: O slider escolhe quantas amostras entram na soma. Dá para ver a convergência, o fenômeno de Gibbs no passa-baixas ideal e os picos do cosseno crescendo até virarem impulsos.
+- **Periodicidade $2\pi$**: O espectro é desenhado de $-3\pi$ a $3\pi$ com o período fundamental destacado.
+- **Sonda em $\Omega$ e Leitura como Filtro**: Um marcador percorre a frequência e o caderno mostra o ganho, a fase e a resposta a $\cos(\Omega n)$, classificando o par como passa-baixas, passa-altas ou passa-tudo.
+- **Parseval e Ponte com a Transformada Z**: A energia confere nos dois domínios, e $X(e^{j\Omega})$ é $X(z)$ sobre o círculo unitário.
+- **Pares Notáveis**: Pulso retangular, exponenciais causal e bilateral, passa-baixas ideal, cosseno, média móvel, primeira diferença e impulso.
+
+---
+
 ## Fundamentos Didáticos e de Interface
 
 - **Projeções de Câmera**: Alternância imediata entre `3D Livre`, `2D Tempo (Frontal)`, `2D Espectro (Lateral)` e `Vista Superior`.
@@ -160,7 +176,7 @@ Recursos do módulo:
 | :--- | :--- |
 | `Espaço` | Reproduzir ou pausar o loop de simulação |
 | `1`, `2`, `3`, `4` | Salto direto para as etapas 1 a 4 da Convolução |
-| `[` / `]` | Alternar módulo: Convolução $\to$ Convolução Discreta $\to$ Fourier $\to$ CTFT $\to$ Laplace $\to$ Z |
+| `[` / `]` | Alternar módulo: Convolução $\to$ Convolução Discreta $\to$ Fourier $\to$ CTFT $\to$ DTFT $\to$ Laplace $\to$ Z |
 | `Z` | Alternar tela cheia / Modo Zen |
 | `M` | Ligar ou desligar sintetizador de áudio Web Audio |
 | `←` / `→` | Ajuste incremental do parâmetro de tempo $t$ ou frequência $\omega$ |
