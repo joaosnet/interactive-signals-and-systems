@@ -13,6 +13,7 @@ import { state } from '../state.js';
 import { renderMath } from '../math-engine.js';
 import { LAPLACE_PRESETS, calculateLaplaceData } from '../laplace-engine.js';
 import { registerModule } from './registry.js';
+import { AUX_SLIDER_ROW, syncAuxSlider } from './aux-slider.js';
 
 // ---- Geometria do palco -----------------------------------------------------
 const S_MAX = 4.0;      // σ ∈ [-4, 4] → x
@@ -120,6 +121,18 @@ function paramSlider(c) {
     };
   }
   return null;
+}
+
+/** Pares com dois parâmetros (amortecidos): ω₀ ganha o slider auxiliar. */
+function auxSlider(c) {
+  if (!(c.hasParamA && c.hasParamW0)) return null;
+  const spec = c.paramSpec.w0;
+  return {
+    key: `laplace-w0-${c.presetKey}`, titleKey: 'sliderLaplaceW0', min: spec.min, max: spec.max, step: 0.05,
+    get: () => state.laplaceW0,
+    set: (v) => { state.laplaceW0 = v; recomputeLaplace(); },
+    badge: () => `ω₀ = ${state.laplaceW0.toFixed(2)} rad/s`
+  };
 }
 
 // ---- Cena -------------------------------------------------------------------
@@ -480,7 +493,7 @@ export const laplaceModule = registerModule({
   hash: 'laplace',
   i18n: { title: 'modLaplaceTitle', sub: 'modLaplaceSub', stepPrefix: 'stepLaplace', regionsTitle: 'regionsLaplaceTitle' },
   zenLabel: 'X(s)',
-  controls: [],
+  controls: [AUX_SLIDER_ROW],
   hudTargets: [],          // os sinais vêm dos pares notáveis; não há editor livre
   defaultHudTarget: null,
   defaultSliderValue: 0,
@@ -488,6 +501,7 @@ export const laplaceModule = registerModule({
   cameraTarget: { x: 0, y: 0.7, z: 3.3 },
 
   slider() {
+    syncAuxSlider(auxSlider(calc()));
     if (state.step === 3) return sigmaSlider();
     return paramSlider(calc()) || sigmaSlider();
   },

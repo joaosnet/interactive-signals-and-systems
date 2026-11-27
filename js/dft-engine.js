@@ -146,20 +146,45 @@ export const DFT_PRESETS = {
   }
 };
 
+/**
+ * Janelas (forma periódica, a usada em análise espectral). `mainHalf` é a meia
+ * largura do lóbulo principal em bins: a janela retangular tem o lóbulo mais
+ * estreito e os lóbulos laterais mais altos; Hann e Hamming trocam uma coisa pela outra.
+ */
+export const DFT_WINDOWS = {
+  rect: { title: 'Retangular', titleEn: 'Rectangular', mainHalf: 1, fn: () => 1, latex: 'w[n] = 1' },
+  hann: {
+    title: 'Hann', titleEn: 'Hann', mainHalf: 2,
+    fn: (n, N) => 0.5 - 0.5 * Math.cos((TWO_PI * n) / N),
+    latex: 'w[n] = 0.5 - 0.5\\cos\\!\\left(\\tfrac{2\\pi n}{N}\\right)'
+  },
+  hamming: {
+    title: 'Hamming', titleEn: 'Hamming', mainHalf: 2,
+    fn: (n, N) => 0.54 - 0.46 * Math.cos((TWO_PI * n) / N),
+    latex: 'w[n] = 0.54 - 0.46\\cos\\!\\left(\\tfrac{2\\pi n}{N}\\right)'
+  }
+};
+export const DFT_WINDOW_KEYS = Object.keys(DFT_WINDOWS);
+
 export const DFT_MIN_BITS = 2;   // N = 4
 export const DFT_MAX_BITS = 6;   // N = 64
 
 /**
  * Calcula a DFT de um preset com N = 2^bits amostras, pela soma direta e pela FFT.
  */
-export function calculateDFTData(presetKey = 'cosbin', bitsVal = 4) {
+export function calculateDFTData(presetKey = 'cosbin', bitsVal = 4, windowKeyVal = 'rect') {
   const key = DFT_PRESETS[presetKey] ? presetKey : 'cosbin';
   const preset = DFT_PRESETS[key];
   const b = Number.isFinite(Number(bitsVal)) ? Math.round(Number(bitsVal)) : 4;
   const bits = Math.max(DFT_MIN_BITS, Math.min(DFT_MAX_BITS, b));
   const N = 2 ** bits;
 
-  const x = Array.from({ length: N }, (_, n) => preset.fn(n, N));
+  const windowKey = DFT_WINDOWS[windowKeyVal] ? windowKeyVal : 'rect';
+  const win = DFT_WINDOWS[windowKey];
+  const raw = Array.from({ length: N }, (_, n) => preset.fn(n, N));
+  const w = Array.from({ length: N }, (_, n) => win.fn(n, N));
+  // A DFT é calculada sobre o sinal já multiplicado pela janela
+  const x = raw.map((v, n) => v * w[n]);
   const naive = dftNaive(x);
   const fast = fft(x);
 
@@ -190,10 +215,27 @@ export function calculateDFTData(presetKey = 'cosbin', bitsVal = 4) {
   const energyFreq = mag.reduce((acc, v) => acc + v * v, 0) / N;
   const cycles = preset.cycles ? preset.cycles(N) : null;
 
+  // Espalhamento: fração da energia fora do lóbulo principal em torno do maior bin
+  // (e do seu espelho N - k). Mede o quanto a janela "segura" o vazamento.
+  let peakBin = 0;
+  for (let k = 0; k <= N / 2; k++) if (mag[k] > mag[peakBin]) peakBin = k;
+  let inMain = 0;
+  for (let k = 0; k < N; k++) {
+    const d = Math.min(Math.abs(k - peakBin), Math.abs(k - (N - peakBin)), Math.abs(k - peakBin - N), Math.abs(k + N - peakBin));
+    if (d <= win.mainHalf) inMain += mag[k] * mag[k];
+  }
+  const totalSq = mag.reduce((acc, v) => acc + v * v, 0);
+  const spread = totalSq > 1e-12 ? Math.max(0, 1 - inMain / totalSq) : 0;
+
   return {
     presetKey: key,
     N,
     bits,
+    windowKey,
+    window: w,
+    rawX: raw,
+    peakBin,
+    spread,
     x,
     re,
     im,
@@ -201,6 +243,7 @@ export function calculateDFTData(presetKey = 'cosbin', bitsVal = 4) {
     phase,
     peakMag: Math.max(...mag),
     maxAbsX: Math.max(...x.map(Math.abs)),
+    maxAbsRaw: Math.max(...raw.map(Math.abs)),
     envelope,
     energyTime,
     energyFreq,

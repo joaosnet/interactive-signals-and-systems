@@ -188,6 +188,7 @@ export const state = {
   // Convolução discreta
   dconvPresetKey: 'rect_rect',
   dconvN: 1,           // deslocamento n (inteiro) de h[n-k]
+  dconvK: 0,           // amostra em destaque nos passos 1 e 2
   dconvCalculated: null,
 
   // DTFT
@@ -201,6 +202,7 @@ export const state = {
   dftPresetKey: 'cosbin',
   dftBits: 4,          // N = 2^bits amostras
   dftK: 2,             // bin em destaque no passo 3
+  dftWindow: 'rect',   // janela aplicada a x[n]: rect | hann | hamming
   dftCalculated: null,
 
   // Customização de Interface (ver apenas o que quer)

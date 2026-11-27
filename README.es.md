@@ -171,7 +171,7 @@ $$X[k] = \sum_{n=0}^{N-1} x[n]\, e^{-j2\pi kn/N}, \qquad x[n] = \frac{1}{N}\sum_
 Recursos del módulo:
 - **Dos Carriles Alineados**: $N$ muestras de $x[n]$ al fondo y $N$ muestras de $|X[k]|$ al frente, con $N$ de 4 a 64.
 - **La DFT Muestrea la DTFT**: La envolvente continua aparece detrás de las muestras, mostrando que $X[k] = X(e^{j\Omega})$ en $\Omega = 2\pi k/N$ y que la resolución es $2\pi/N$.
-- **Fuga Espectral**: Un coseno con 2 ciclos en la ventana da dos líneas limpias; con 2,5 ciclos, la energía se reparte por todos los bins.
+- **Fuga Espectral**: Un coseno con 2 ciclos en la ventana da dos líneas limpias; con 2,5 ciclos, la energía se reparte por todos los bins. Las ventanas de Hann y Hamming, en el segundo deslizador, contienen esa dispersión.
 - **Lectura de un Bin**: El deslizador elige $k$ y dibuja sobre $x[n]$ el coseno de esa frecuencia. El cuaderno muestra valor, fase, frecuencia y por qué la mitad superior corresponde a las frecuencias negativas.
 - **FFT con Diagrama de Mariposas**: En el paso 4 la red de mariposas conecta $x[n]$ (en orden de bits invertidos) con $X[k]$, y el cuaderno compara $N^2$ productos con $\frac{N}{2}\log_2 N$ mariposas, contadas durante la ejecución.
 - **Ocho Señales**: Coseno en el bin y fuera de él, dos tonos, pulso rectangular, impulso, alternado, exponencial y rampa.

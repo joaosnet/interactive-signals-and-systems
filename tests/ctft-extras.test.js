@@ -148,3 +148,24 @@ test('CTFT extras: modos, limites e textos', () => {
   const c = complexX(expo(), 1);
   assert.ok(close(c.re, 0.5, 1e-12) && close(c.im, -0.5, 1e-12)); // 1/(1 + j)
 });
+
+test('CTFT propriedades: escala negativa reflete o sinal e espelha o espectro', () => {
+  const base = expo(); // assimetrico: a reflexao muda o sinal de verdade
+  for (const a of [-1, -2, -0.5]) {
+    const y = applyCTFTProperty(base, 'scale', a);
+    assert.ok(close(y.fnTime(-0.5), base.fnTime(-0.5 * a), 1e-12));
+    for (const w of [0.4, 1.7, -2.2]) {
+      const num = numericX(y.fnTime, w, -40, 40, 80000);
+      const m = y.fnMag(w);
+      const p = y.fnPhase(w);
+      assert.ok(close(num.re, m * Math.cos(p), 2e-3) && close(num.im, m * Math.sin(p), 2e-3), `a=${a} w=${w}`);
+    }
+    assert.ok(close(y.energyTime, base.energyTime / Math.abs(a), 1e-12));
+    assert.equal(y.effect, 'reflect');
+  }
+  assert.equal(applyCTFTProperty(base, 'scale', -2).labelTime, 'x(-2t)');
+  // Perto de zero o valor salta para +-0,25 (x(0·t) nao e um sinal de energia)
+  assert.equal(clampModeValue('scale', 0.1), 0.25);
+  assert.equal(clampModeValue('scale', -0.1), -0.25);
+  assert.equal(clampModeValue('scale', -9), -3);
+});

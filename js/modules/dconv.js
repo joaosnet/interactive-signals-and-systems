@@ -30,6 +30,7 @@ export function recomputeDConv() {
   state.dconvCalculated = calculateDConvData(state.dconvPresetKey);
   const d = state.dconvCalculated;
   state.dconvN = Math.max(d.nMin, Math.min(d.nMax, Math.round(state.dconvN)));
+  state.dconvK = Math.max(d.kMin, Math.min(d.kMax, Math.round(state.dconvK)));
   return d;
 }
 
@@ -42,6 +43,7 @@ export function selectDConvPreset(key) {
   state.dconvPresetKey = key;
   state.dconvCalculated = calculateDConvData(key);
   state.dconvN = state.dconvCalculated.yStart + 1;
+  state.dconvK = state.dconvCalculated.x.start;
 }
 
 // ---- Formatação -------------------------------------------------------------
@@ -108,12 +110,21 @@ function renderScene(scene, dt) {
     }
   };
 
+  // Passos 1 e 2: o slider escolhe uma amostra k, destacada nos dois trilhos
+  const probeK = showProduct ? null : state.dconvK;
+  if (probeK !== null) {
+    scene.polygon([
+      { x: xOfK(probeK) - half, y: 0, z: Z_X - 0.3 }, { x: xOfK(probeK) + half, y: 0, z: Z_X - 0.3 },
+      { x: xOfK(probeK) + half, y: 0, z: Z_H + 0.3 }, { x: xOfK(probeK) - half, y: 0, z: Z_H + 0.3 }
+    ], pal.prodSliceFill, pal.prodSliceStroke, 1);
+  }
+
   // 3. Trilhos, do fundo para a frente
-  drawLane(Z_X, (k) => seqAt(d.x, k), (k) => k >= d.x.start && k <= d.xEnd, pal.x1, AMP);
+  drawLane(Z_X, (k) => seqAt(d.x, k), (k) => k >= d.x.start && k <= d.xEnd, pal.x1, AMP, { highlight: probeK });
 
   // h[k] → h[-k] → h[n-k]: o argumento de h em função de k
   const hArg = step === 1 ? (k) => k : step === 2 ? (k) => -k : (k) => n - k;
-  drawLane(Z_H, (k) => seqAt(d.h, hArg(k)), (k) => hArg(k) >= d.h.start && hArg(k) <= d.hEnd, pal.x2, AMP);
+  drawLane(Z_H, (k) => seqAt(d.h, hArg(k)), (k) => hArg(k) >= d.h.start && hArg(k) <= d.hEnd, pal.x2, AMP, { highlight: probeK });
 
   if (showProduct) {
     drawLane(Z_P, (k) => seqAt(d.x, k) * seqAt(d.h, n - k), (k) => Boolean(range) && k >= range.lo && k <= range.hi, pal.prod, AMP);
@@ -141,6 +152,11 @@ function renderScene(scene, dt) {
     { slot: 'lbl-conv', latex: 'y[n]', x: left, y: 0.6, z: Z_Y, visible: showProduct },
     { slot: 'lbl-tau', latex: 'k', x: X_HALF + 0.5, y: -0.1, z: Z_X },
     { slot: 'lbl-t', latex: 'n', x: X_HALF + 0.5, y: -0.1, z: Z_Y, visible: showProduct },
+    {
+      slot: 'lbl-z',
+      latex: probeK === null ? '' : `x[${probeK}] = ${num(seqAt(d.x, probeK))},\\; ${step === 1 ? `h[${probeK}]` : `h[${-probeK}]`} = ${num(seqAt(d.h, hArg(probeK)))}`,
+      x: probeK === null ? 0 : xOfK(probeK), y: AMP + 0.75, z: Z_X, visible: probeK !== null
+    },
     {
       slot: 'lbl-b2',
       latex: `y[${n}] = ${num(yNow)}`,
@@ -189,6 +205,10 @@ const notebook = {
         {
           label: isEn ? '1.4 Change of Variable n → k (n becomes a fixed parameter):' : '1.4 Troca de Variável n → k (n vira um parâmetro fixo):',
           latex: 'x[n] \\to x[k], \\qquad h[n] \\to h[k]'
+        },
+        {
+          label: isEn ? `1.5 Sample Under the Slider (k = ${state.dconvK}):` : `1.5 Amostra Sob o Slider (k = ${state.dconvK}):`,
+          latex: `x[${state.dconvK}] = ${num(seqAt(d.x, state.dconvK))}, \\qquad h[${state.dconvK}] = ${num(seqAt(d.h, state.dconvK))}`
         }
       ];
     }
@@ -214,6 +234,10 @@ const notebook = {
         {
           label: isEn ? '2.4 Length Rule (finite sequences):' : '2.4 Regra do Comprimento (sequências finitas):',
           latex: 'L_y = L_x + L_h - 1'
+        },
+        {
+          label: isEn ? `2.5 Sample Under the Slider (k = ${state.dconvK}):` : `2.5 Amostra Sob o Slider (k = ${state.dconvK}):`,
+          latex: `h[-k]\\big|_{k = ${state.dconvK}} = h[${-state.dconvK}] = ${num(seqAt(d.h, -state.dconvK))}`
         }
       ];
     }
@@ -353,6 +377,15 @@ export const dconvModule = registerModule({
 
   slider() {
     const d = calc();
+    if (state.step < 3) {
+      // Antes do deslocamento, n ainda não entrou: o slider percorre as amostras k
+      return {
+        titleKey: 'sliderDConvK', min: d.kMin, max: d.kMax, step: 1, keyStep: 1,
+        get: () => state.dconvK,
+        set: (v) => { state.dconvK = Math.max(d.kMin, Math.min(d.kMax, Math.round(v))); },
+        badge: () => `k = ${state.dconvK}`
+      };
+    }
     return {
       titleKey: 'sliderDConvN', min: d.nMin, max: d.nMax, step: 1, keyStep: 1,
       get: () => state.dconvN,
@@ -368,12 +401,15 @@ export const dconvModule = registerModule({
   onStepEnter() {},
 
   tick(spd) {
-    // n só importa a partir do deslocamento; avança uma amostra por vez
-    if (state.step < 3) return;
+    // Uma amostra por vez: k nos passos 1 e 2, n a partir do deslocamento
     const d = calc();
     tickAcc += 0.03 * spd;
     if (tickAcc < 1) return;
     tickAcc = 0;
+    if (state.step < 3) {
+      state.dconvK = state.dconvK >= d.kMax ? d.kMin : state.dconvK + 1;
+      return;
+    }
     state.dconvN = state.dconvN >= d.nMax ? d.nMin : state.dconvN + 1;
   },
 
