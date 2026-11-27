@@ -14,14 +14,16 @@ import { renderMath } from './math-engine.js';
 import { activeModule } from './modules/registry.js';
 import { getNotebookSnapshot } from './notebook.js';
 import { setStep } from './ui.js';
+import { langKey } from './lang.js';
 
 const RULE = 32;            // distância entre as pautas, em px (igual ao CSS)
 const PEN_SPEED = 520;      // px por segundo com que a "caneta" percorre a linha
 const TEXT = {
   pt: { open: 'Abrir caderno', openTitle: 'Abrir o caderno em foco, como uma folha', close: 'Voltar ao palco', prev: 'Passo anterior', next: 'Próximo passo', rewrite: 'Escrever de novo', step: 'Passo', sheet: 'Caderno em foco' },
-  en: { open: 'Open notebook', openTitle: 'Open the notebook in focus, as a sheet of paper', close: 'Back to the stage', prev: 'Previous step', next: 'Next step', rewrite: 'Write again', step: 'Step', sheet: 'Notebook in focus' }
+  en: { open: 'Open notebook', openTitle: 'Open the notebook in focus, as a sheet of paper', close: 'Back to the stage', prev: 'Previous step', next: 'Next step', rewrite: 'Write again', step: 'Step', sheet: 'Notebook in focus' },
+  es: { open: 'Abrir cuaderno', openTitle: 'Abrir el cuaderno en foco, como una hoja', close: 'Volver al escenario', prev: 'Paso anterior', next: 'Paso siguiente', rewrite: 'Escribir de nuevo', step: 'Paso', sheet: 'Cuaderno en foco' }
 };
-const txt = () => TEXT[state.lang === 'en' ? 'en' : 'pt'];
+const txt = () => TEXT[langKey()];
 
 const PEN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg>';
 
@@ -106,8 +108,9 @@ async function writePage(snapshot) {
     ink.style.setProperty('--write-ms', `${duration}ms`);
     ink.style.setProperty('--write-px', `${width}px`);
     row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    // Dois quadros para o navegador registrar o estado inicial antes da transição
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    // Uma pausa curta para o navegador registrar o estado inicial antes da transição
+    // (temporizador, e não requestAnimationFrame, que para quando a aba fica em segundo plano)
+    await wait(40);
     if (token !== writeToken) return;
     ink.classList.add('is-inking');
     await wait(duration + 140);

@@ -188,6 +188,7 @@ Recursos do módulo:
 - **Modo Zen (`Z`)**: Oculta barras laterais e dedica 100% da viewport ao palco 3D.
 - **Interface Bilíngue**: Suporte a Inglês e Português do Brasil com armazenamento local de preferências (`localStorage`).
 - **Caderno em Foco**: O botão "Abrir caderno" tira a dedução do painel e a põe no lugar do palco, como uma folha pautada em que cada linha é escrita à mão, com a caneta acompanhando o traço. Trocar de passo vira uma página nova; mexer no slider atualiza os números no lugar.
+- **Três Idiomas**: Português, inglês e espanhol, na interface, nos cadernos e nos exemplos. O botão de idioma percorre os três e a escolha fica salva; `#lang=es` na URL abre direto em espanhol.
 
 ---
 

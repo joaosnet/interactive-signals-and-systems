@@ -10,6 +10,7 @@ import { ctftModeNotebookLines, renderCTFTPropertyTable } from './modules/ctft.j
 import { getEffectiveSignals, updateScene3D } from './stage-3d.js';
 import { updateAudioSynth } from './audio.js';
 import { getModule } from './modules/registry.js';
+import { loc, tx } from './lang.js';
 
 let handwritingTimer = null;
 const PEN_SVG = `<span class="pen-nib"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg></span>`;
@@ -35,15 +36,15 @@ function buildNotebookLinesFourier(calc) {
 
     return [
       {
-        label: isEn ? '1.1 Fourier Series Representation:' : '1.1 Representação em Série de Fourier:',
+        label: isEn ? '1.1 Fourier Series Representation:' : tx('1.1 Representação em Série de Fourier:', '1.1 Representación en Serie de Fourier:'),
         latex: repLatex
       },
       {
-        label: isEn ? '1.2 Fundamental Period and Frequency:' : '1.2 Período e Frequência Fundamental:',
+        label: isEn ? '1.2 Fundamental Period and Frequency:' : tx('1.2 Período e Frequência Fundamental:', '1.2 Período y Frecuencia Fundamental:'),
         latex: `T_0 = ${T0Str}\\text{ s}, \\quad \\omega_0 = \\frac{2\\pi}{T_0} = ${w0Str}\\text{ rad/s}, \\quad f_0 = ${(1.0 / calc.T0).toFixed(2)}\\text{ Hz}`
       },
       {
-        label: isEn ? '1.3 DC Level (Average a₀):' : '1.3 Nível Médio Contínuo a₀:',
+        label: isEn ? '1.3 DC Level (Average a₀):' : tx('1.3 Nível Médio Contínuo a₀:', '1.3 Nivel Medio Continuo a₀:'),
         latex: `a_0 = \\frac{1}{T_0} \\int_{0}^{T_0} f(t)\\,dt = ${a0Str}`
       }
     ];
@@ -55,50 +56,50 @@ function buildNotebookLinesFourier(calc) {
     if (calc.symmetryType === 'quarter_even') {
       symLatex = isEn
         ? 'f(-t)=f(t) \\text{ and } f(t - T_0/2)=-f(t) \\implies \\text{Quarter-Wave Even}'
-        : 'f(-t)=f(t) \\text{ e } f(t - T_0/2)=-f(t) \\implies \\text{Quarto de Onda Par}';
+        : tx('f(-t)=f(t) \\text{ e } f(t - T_0/2)=-f(t) \\implies \\text{Quarto de Onda Par}', 'f(-t)=f(t) \\text{ y } f(t - T_0/2)=-f(t) \\implies \\text{Cuarto de Onda Par}');
       symExpl = isEn
         ? '\\text{Only odd cosine harmonics: } b_n = 0, \\; a_n = 0 \\text{ for even } n.'
-        : '\\text{Apenas cossenos ímpares: } b_n = 0, \\; a_n = 0 \\text{ para } n \\text{ par}.';
+        : tx('\\text{Apenas cossenos ímpares: } b_n = 0, \\; a_n = 0 \\text{ para } n \\text{ par}.', '\\text{Solo cosenos impares: } b_n = 0, \\; a_n = 0 \\text{ para } n \\text{ par}.');
     } else if (calc.symmetryType === 'quarter_odd') {
       symLatex = isEn
         ? 'f(-t)=-f(t) \\text{ and } f(t - T_0/2)=-f(t) \\implies \\text{Quarter-Wave Odd}'
-        : 'f(-t)=-f(t) \\text{ e } f(t - T_0/2)=-f(t) \\implies \\text{Quarto de Onda Ímpar}';
+        : tx('f(-t)=-f(t) \\text{ e } f(t - T_0/2)=-f(t) \\implies \\text{Quarto de Onda Ímpar}', 'f(-t)=-f(t) \\text{ y } f(t - T_0/2)=-f(t) \\implies \\text{Cuarto de Onda Impar}');
       symExpl = isEn
         ? '\\text{Only odd sine harmonics: } a_0 = a_n = 0, \\; b_n = 0 \\text{ for even } n.'
-        : '\\text{Apenas senos ímpares: } a_0 = a_n = 0, \\; b_n = 0 \\text{ para } n \\text{ par}.';
+        : tx('\\text{Apenas senos ímpares: } a_0 = a_n = 0, \\; b_n = 0 \\text{ para } n \\text{ par}.', '\\text{Solo senos impares: } a_0 = a_n = 0, \\; b_n = 0 \\text{ para } n \\text{ par}.');
     } else if (calc.symmetryType === 'half_wave') {
       symLatex = isEn
         ? 'f(t - T_0/2) = -f(t) \\implies \\text{Half-Wave Symmetry}'
-        : 'f(t - T_0/2) = -f(t) \\implies \\text{Simetria de Meia-Onda (Half-Wave)}';
+        : tx('f(t - T_0/2) = -f(t) \\implies \\text{Simetria de Meia-Onda (Half-Wave)}', 'f(t - T_0/2) = -f(t) \\implies \\text{Simetría de Media Onda (Half-Wave)}');
       symExpl = isEn
         ? '\\text{All even harmonics vanish: } a_n = b_n = 0 \\text{ for } n = 2, 4, 6\\dots'
-        : '\\text{Todas as harmônicas pares se anulam: } a_n = b_n = 0 \\text{ para } n \\text{ par}.';
+        : tx('\\text{Todas as harmônicas pares se anulam: } a_n = b_n = 0 \\text{ para } n \\text{ par}.', '\\text{Todos los armónicos pares se anulan: } a_n = b_n = 0 \\text{ para } n \\text{ par}.');
     } else if (calc.symmetryType === 'even') {
       symLatex = isEn
         ? 'f(-t) = f(t) \\implies \\text{Even Symmetry: } b_n = 0'
-        : 'f(-t) = f(t) \\implies \\text{Simetria Par: } b_n = 0';
+        : tx('f(-t) = f(t) \\implies \\text{Simetria Par: } b_n = 0', 'f(-t) = f(t) \\implies \\text{Simetría Par: } b_n = 0');
       symExpl = isEn
         ? '\\text{Only cosine harmonics are present: } b_n = 0.'
-        : '\\text{Somente coeficientes em cosseno: } a_n \\text{ ativos, } b_n = 0.';
+        : tx('\\text{Somente coeficientes em cosseno: } a_n \\text{ ativos, } b_n = 0.', '\\text{Solo coeficientes en coseno: } a_n \\text{ activos, } b_n = 0.');
     } else if (calc.symmetryType === 'odd') {
       symLatex = isEn
         ? 'f(-t) = -f(t) \\implies \\text{Odd Symmetry: } a_0 = 0, \\; a_n = 0'
-        : 'f(-t) = -f(t) \\implies \\text{Simetria Ímpar: } a_0 = 0, \\; a_n = 0';
+        : tx('f(-t) = -f(t) \\implies \\text{Simetria Ímpar: } a_0 = 0, \\; a_n = 0', 'f(-t) = -f(t) \\implies \\text{Simetría Impar: } a_0 = 0, \\; a_n = 0');
       symExpl = isEn
         ? '\\text{DC level is zero; only sine harmonics } b_n \\text{ exist.}'
-        : '\\text{Nível DC nulo; apenas harmônicas em seno } b_n \\text{ existem.}';
+        : tx('\\text{Nível DC nulo; apenas harmônicas em seno } b_n \\text{ existem.}', '\\text{Nivel DC nulo; solo existen armónicos en seno } b_n \\text{.}');
     } else {
       symLatex = isEn
         ? 'f(-t) \\ne \\pm f(t) \\implies \\text{No Pure Symmetry}'
-        : 'f(-t) \\ne \\pm f(t) \\implies \\text{Sem Simetria Pura}';
+        : tx('f(-t) \\ne \\pm f(t) \\implies \\text{Sem Simetria Pura}', 'f(-t) \\ne \\pm f(t) \\implies \\text{Sin Simetría Pura}');
       symExpl = isEn
         ? '\\text{General waveform: both } a_n \\text{ and } b_n \\text{ active.}'
-        : '\\text{Forma geral: ambos coeficientes } a_n \\text{ e } b_n \\text{ estão ativos.}';
+        : tx('\\text{Forma geral: ambos coeficientes } a_n \\text{ e } b_n \\text{ estão ativos.}', '\\text{Forma general: ambos coeficientes } a_n \\text{ y } b_n \\text{ están activos.}');
     }
 
     return [
       {
-        label: isEn ? '2.1 Symmetry Classification:' : '2.1 Classificação de Simetria:',
+        label: isEn ? '2.1 Symmetry Classification:' : tx('2.1 Classificação de Simetria:', '2.1 Clasificación de Simetría:'),
         latex: symLatex
       },
       {
@@ -106,10 +107,10 @@ function buildNotebookLinesFourier(calc) {
         latex: symExpl
       },
       {
-        label: isEn ? '2.3 Dirichlet Conditions:' : '2.3 Condições de Dirichlet:',
+        label: isEn ? '2.3 Dirichlet Conditions:' : tx('2.3 Condições de Dirichlet:', '2.3 Condiciones de Dirichlet:'),
         latex: isEn
           ? '\\int_0^{T_0} |f(t)|\\,dt < \\infty \\quad (\\text{Abs. integrable in period})'
-          : '\\int_0^{T_0} |f(t)|\\,dt < \\infty \\quad (\\text{Absolutamente integrável no período})'
+          : tx('\\int_0^{T_0} |f(t)|\\,dt < \\infty \\quad (\\text{Absolutamente integrável no período})', '\\int_0^{T_0} |f(t)|\\,dt < \\infty \\quad (\\text{Absolutamente integrable en el período})')
       }
     ];
   }
@@ -127,15 +128,15 @@ function buildNotebookLinesFourier(calc) {
 
     return [
       {
-        label: isEn ? '3.1 Harmonic Spectrum Sample:' : '3.1 Amostra do Espectro Harmônico:',
+        label: isEn ? '3.1 Harmonic Spectrum Sample:' : tx('3.1 Amostra do Espectro Harmônico:', '3.1 Muestra del Espectro Armónico:'),
         latex: `\\begin{aligned} ${sampleRows} \\end{aligned}`
       },
       {
-        label: isEn ? '3.2 Form Conversions:' : '3.2 Relação entre Formas:',
+        label: isEn ? '3.2 Form Conversions:' : tx('3.2 Relação entre Formas:', '3.2 Relación entre Formas:'),
         latex: 'C_n = \\sqrt{a_n^2 + b_n^2}, \\quad \\theta_n = \\operatorname{atan2}(-b_n, a_n), \\quad D_n = \\frac{a_n - j b_n}{2} = \\frac{C_n}{2}e^{j\\theta_n}'
       },
       {
-        label: isEn ? '3.3 Parseval Power & Efficiency:' : '3.3 Potência e Eficiência de Parseval:',
+        label: isEn ? '3.3 Parseval Power & Efficiency:' : tx('3.3 Potência e Eficiência de Parseval:', '3.3 Potencia y Eficiencia de Parseval:'),
         latex: `P_{\\text{total}} = ${calc.totalPower.toFixed(3)}\\text{ W}, \\; P_N = ${calc.harmonicPower.toFixed(3)}\\text{ W} \\implies \\eta = \\mathbf{${calc.efficiency.toFixed(1)}\\%}`
       }
     ];
@@ -144,15 +145,15 @@ function buildNotebookLinesFourier(calc) {
   // Step 4
   return [
     {
-      label: isEn ? '4.1 Truncated Series S_N(t):' : '4.1 Série Truncada S_N(t):',
+      label: isEn ? '4.1 Truncated Series S_N(t):' : tx('4.1 Série Truncada S_N(t):', '4.1 Serie Truncada S_N(t):'),
       latex: `S_N(t) = a_0 + \\sum_{n=1}^{${calc.harmonics.length}} C_n \\cos(n\\omega_0 t + \\theta_n)`
     },
     {
-      label: isEn ? '4.2 Instantaneous Value at t:' : '4.2 Valor Instantâneo em t:',
+      label: isEn ? '4.2 Instantaneous Value at t:' : tx('4.2 Valor Instantâneo em t:', '4.2 Valor Instantáneo en t:'),
       latex: `t = ${tNow.toFixed(2)} \\implies S_{${calc.harmonics.length}}(${tNow.toFixed(2)}) = ${recVal.toFixed(4)}, \\quad f(${tNow.toFixed(2)}) = ${origVal.toFixed(4)}`
     },
     {
-      label: isEn ? '4.3 Mean Squared Error (MSE):' : '4.3 Erro Médio Quadrático (MSE):',
+      label: isEn ? '4.3 Mean Squared Error (MSE):' : tx('4.3 Erro Médio Quadrático (MSE):', '4.3 Error Cuadrático Medio (MSE):'),
       latex: `\\text{MSE}_N = \\frac{1}{T_0}\\int_0^{T_0} |f(t) - S_N(t)|^2 dt \\approx ${calc.mse.toFixed(5)}`
     }
   ];
@@ -183,19 +184,19 @@ function buildNotebookLinesConvolution(sig) {
     const valM = sig.fnMoving(tauNow);
     return [
       {
-        label: isEn ? '1.1 Convolution Integral:' : '1.1 Integral de Convolução:',
+        label: isEn ? '1.1 Convolution Integral:' : tx('1.1 Integral de Convolução:', '1.1 Integral de Convolución:'),
         latex: `y(t) = ${fSym}(t) \\ast ${mSym}(t) = \\int_{-\\infty}^{+\\infty} ${fSym}(\\tau)\\,${mSym}(t-\\tau)\\,d\\tau`
       },
       {
-        label: isEn ? '1.2 Domain Transformation (t → τ):' : '1.2 Mudança de Domínio (t → τ):',
+        label: isEn ? '1.2 Domain Transformation (t → τ):' : tx('1.2 Mudança de Domínio (t → τ):', '1.2 Cambio de Dominio (t → τ):'),
         latex: `${fSym}(\\tau) = ${exprToLatex(sig.exprFixed || sig.preset.exprX, '\\tau')}, \\quad \\tau \\in ${fLBr}${fAStr},\\, ${fBStr}${fRBr}`
       },
       {
-        label: isEn ? '1.3 Moving Kernel in τ:' : '1.3 Segundo Sinal no Domínio τ:',
+        label: isEn ? '1.3 Moving Kernel in τ:' : tx('1.3 Segundo Sinal no Domínio τ:', '1.3 Segunda Señal en el Dominio τ:'),
         latex: `${mSym}(\\tau) = ${exprToLatex(sig.exprMoving || sig.preset.exprH, '\\tau')}, \\quad \\tau \\in ${mLBr}${mAStr},\\, ${mBStr}${mRBr}`
       },
       {
-        label: isEn ? `1.4 Value at τ = ${tauNow.toFixed(2)}:` : `1.4 Valor no Instante τ = ${tauNow.toFixed(2)}:`,
+        label: isEn ? `1.4 Value at τ = ${tauNow.toFixed(2)}:` : tx(`1.4 Valor no Instante τ = ${tauNow.toFixed(2)}:`, `1.4 Valor en el Instante τ = ${tauNow.toFixed(2)}:`),
         latex: `${fSym}(${tauNow.toFixed(2)}) = ${valF.toFixed(3)}, \\quad ${mSym}(${tauNow.toFixed(2)}) = ${valM.toFixed(3)}`
       }
     ];
@@ -208,21 +209,21 @@ function buildNotebookLinesConvolution(sig) {
     const opMB = Number.isFinite(mB) ? '\\le' : '<';
     return [
       {
-        label: isEn ? '2.1 Time Reflection:' : '2.1 Reflexão Temporal:',
+        label: isEn ? '2.1 Time Reflection:' : tx('2.1 Reflexão Temporal:', '2.1 Reflexión Temporal:'),
         latex: isEn
           ? `\\text{Keep } ${fSym}(\\tau) \\text{ fixed and mirror } ${mSym}(\\tau) \\to ${mSym}(-\\tau)`
-          : `\\text{Mantemos } ${fSym}(\\tau) \\text{ fixo e espelhamos } ${mSym}(\\tau) \\to ${mSym}(-\\tau)`
+          : tx(`\\text{Mantemos } ${fSym}(\\tau) \\text{ fixo e espelhamos } ${mSym}(\\tau) \\to ${mSym}(-\\tau)`, `\\text{Mantenemos } ${fSym}(\\tau) \\text{ fijo y reflejamos } ${mSym}(\\tau) \\to ${mSym}(-\\tau)`)
       },
       {
-        label: isEn ? '2.2 Argument Inversion (τ → -τ):' : '2.2 Inversão de Sinal (τ → -τ):',
+        label: isEn ? '2.2 Argument Inversion (τ → -τ):' : tx('2.2 Inversão de Sinal (τ → -τ):', '2.2 Inversión de Signo (τ → -τ):'),
         latex: `${mSym}(-\\tau) = ${exprToLatex(sig.exprMoving || sig.preset.exprH, '(-\\tau)')}`
       },
       {
-        label: isEn ? '2.3 Domain Inversion:' : '2.3 Inversão do Suporte Temporal:',
+        label: isEn ? '2.3 Domain Inversion:' : tx('2.3 Inversão do Suporte Temporal:', '2.3 Inversión del Soporte Temporal:'),
         latex: `${mAStr} ${opMA} -\\tau ${opMB} ${mBStr} \\iff ${negA} ${opMB} \\tau ${opMA} ${negB}`
       },
       {
-        label: isEn ? '2.4 Rotation Phase:' : '2.4 Rotação de Reflexão:',
+        label: isEn ? '2.4 Rotation Phase:' : tx('2.4 Rotação de Reflexão:', '2.4 Rotación de Reflexión:'),
         latex: `\\theta = ${degNow}^\\circ \\; (${(state.flipAngle / Math.PI).toFixed(2)}\\pi\\text{ rad})`
       }
     ];
@@ -237,15 +238,15 @@ function buildNotebookLinesConvolution(sig) {
     const opMB = Number.isFinite(mB) ? '\\le' : '<';
     return [
       {
-        label: isEn ? '3.1 Time Shift by t:' : '3.1 Translação Temporal por t:',
+        label: isEn ? '3.1 Time Shift by t:' : tx('3.1 Translação Temporal por t:', '3.1 Traslación Temporal por t:'),
         latex: `${mSym}(-\\tau) \\to ${mSym}(t-\\tau) = ${exprToLatex(sig.exprMoving || sig.preset.exprH, '(t-\\tau)')}`
       },
       {
-        label: isEn ? '3.2 Mobile Boundaries in τ:' : '3.2 Limites Móveis em Função de t:',
+        label: isEn ? '3.2 Mobile Boundaries in τ:' : tx('3.2 Limites Móveis em Função de t:', '3.2 Límites Móviles en Función de t:'),
         latex: `${mAStr} ${opMA} t - \\tau ${opMB} ${mBStr} \\iff ${symLeft} ${opMB} \\tau ${opMA} ${symRight}`
       },
       {
-        label: isEn ? `3.3 Numerical Edge Positions (t = ${tNow.toFixed(2)}):` : `3.3 Posição dos Limites (t = ${tNow.toFixed(2)}):`,
+        label: isEn ? `3.3 Numerical Edge Positions (t = ${tNow.toFixed(2)}):` : tx(`3.3 Posição dos Limites (t = ${tNow.toFixed(2)}):`, `3.3 Posición de los Límites (t = ${tNow.toFixed(2)}):`),
         latex: `\\tau_{\\text{inf}} = ${bLeft}, \\quad \\tau_{\\text{sup}} = ${bRight}`
       }
     ];
@@ -302,11 +303,11 @@ function buildNotebookLinesConvolution(sig) {
   if (critPts.length === 0) {
     boundaryProof = isEn
       ? '\\text{Smooth support: } y(t) \\text{ has no finite transition boundaries.}'
-      : '\\text{Suporte ilimitado: } y(t) \\text{ é suave em todo } \\mathbb{R}.';
+      : tx('\\text{Suporte ilimitado: } y(t) \\text{ é suave em todo } \\mathbb{R}.', '\\text{Soporte ilimitado: } y(t) \\text{ es suave en todo } \\mathbb{R}.');
   } else if (maxJump < 0.06) {
     boundaryProof = isEn
       ? `y(${tkStr}^-) = ${yLeftSample.toFixed(3)} = y(${tkStr}^+) \\implies \\text{Continuous junctions } (\\Delta y \\approx 0).`
-      : `y(${tkStr}^-) = ${yLeftSample.toFixed(3)} = y(${tkStr}^+) \\implies \\text{Contínuo nas fronteiras } (\\Delta y \\approx 0).`;
+      : tx(`y(${tkStr}^-) = ${yLeftSample.toFixed(3)} = y(${tkStr}^+) \\implies \\text{Contínuo nas fronteiras } (\\Delta y \\approx 0).`, `y(${tkStr}^-) = ${yLeftSample.toFixed(3)} = y(${tkStr}^+) \\implies \\text{Continua en las fronteras } (\\Delta y \\approx 0).`);
   } else {
     boundaryProof = isEn
       ? `y(${tkStr}^-) = ${yLeftSample.toFixed(2)}, \\; y(${tkStr}^+) = ${yRightSample.toFixed(2)} \\implies \\text{Jump } \\Delta y = ${maxJump.toFixed(2)}`
@@ -315,21 +316,21 @@ function buildNotebookLinesConvolution(sig) {
 
   return [
     {
-      label: isEn ? `4.1 Active Region at Current t = ${tNow.toFixed(2)}:` : `4.1 Região Ativa para t = ${tNow.toFixed(2)}:`,
+      label: isEn ? `4.1 Active Region at Current t = ${tNow.toFixed(2)}:` : tx(`4.1 Região Ativa para t = ${tNow.toFixed(2)}:`, `4.1 Región Activa para t = ${tNow.toFixed(2)}:`),
       latex: `\\text{${isEn ? 'Current Interval: ' : 'Intervalo: '}} ${activeRegion.range}`
     },
     {
-      label: isEn ? '4.2 Product Integral in τ:' : '4.2 Integral do Produto em τ:',
+      label: isEn ? '4.2 Product Integral in τ:' : tx('4.2 Integral do Produto em τ:', '4.2 Integral del Producto en τ:'),
       latex: hasOverlap
         ? `y(${tNow.toFixed(2)}) = \\int_{${lowStr}}^{${highStr}} ${fSym}(\\tau)\\,${mSym}(${tNow.toFixed(2)}-\\tau)\\,d\\tau = ${yNow.toFixed(4)}`
-        : (isEn ? `\\text{Empty intersection } (\\emptyset) \\implies y(${tNow.toFixed(2)}) = 0` : `\\text{Interseção vazia } (\\emptyset) \\implies y(${tNow.toFixed(2)}) = 0`)
+        : (isEn ? `\\text{Empty intersection } (\\emptyset) \\implies y(${tNow.toFixed(2)}) = 0` : tx(`\\text{Interseção vazia } (\\emptyset) \\implies y(${tNow.toFixed(2)}) = 0`, `\\text{Intersección vacía } (\\emptyset) \\implies y(${tNow.toFixed(2)}) = 0`))
     },
     {
-      label: isEn ? '4.3 Boundary Continuity Check (UFPA Zero-Error Test):' : '4.3 Teste de Fronteira (Conferência de Erro Zero da UFPA):',
+      label: isEn ? '4.3 Boundary Continuity Check (UFPA Zero-Error Test):' : tx('4.3 Teste de Fronteira (Conferência de Erro Zero da UFPA):', '4.3 Prueba de Frontera (Comprobación de Error Cero de la UFPA):'),
       latex: boundaryProof
     },
     {
-      label: isEn ? '4.4 Canonical Piecewise Solution y(t):' : '4.4 Expressão Sintetizada por Ramos (Conclusão):',
+      label: isEn ? '4.4 Canonical Piecewise Solution y(t):' : tx('4.4 Expressão Sintetizada por Ramos (Conclusão):', '4.4 Expresión Sintetizada por Tramos (Conclusión):'),
       latex: piecewiseLatex
     }
   ];
@@ -350,33 +351,33 @@ function buildNotebookLinesCTFTBase(calc) {
   // Sinal customizado que não decai: os números são de uma versão truncada.
   const truncNote = calc.isTruncated
     ? [{
-        label: isEn ? '⚠ Truncated signal:' : '⚠ Sinal truncado:',
+        label: isEn ? '⚠ Truncated signal:' : tx('⚠ Sinal truncado:', '⚠ Señal truncada:'),
         latex: isEn
           ? '\\text{x(t) does not decay inside } |t| \\le 7 \\text{: energy and } X(\\omega) \\text{ refer to the truncated window.}'
-          : '\\text{x(t) não decai em } |t| \\le 7 \\text{: a energia e } X(\\omega) \\text{ são da janela truncada.}'
+          : tx('\\text{x(t) não decai em } |t| \\le 7 \\text{: a energia e } X(\\omega) \\text{ são da janela truncada.}', '\\text{x(t) no decae en } |t| \\le 7 \\text{: la energía y } X(\\omega) \\text{ son de la ventana truncada.}')
       }]
     : [];
 
   if (state.step === 1) {
     const lines = [
       {
-        label: isEn ? '1.1 Continuous-Time Fourier Transform (CTFT) Definition:' : '1.1 Definição Canônica da Transformada de Fourier:',
+        label: isEn ? '1.1 Continuous-Time Fourier Transform (CTFT) Definition:' : tx('1.1 Definição Canônica da Transformada de Fourier:', '1.1 Definición Canónica de la Transformada de Fourier:'),
         latex: 'X(\\omega) = \\mathcal{F}\\{x(t)\\} = \\int_{-\\infty}^{+\\infty} x(t) e^{-j\\omega t}\\,dt'
       },
       {
         label: calc.latexPeriodic
-          ? (isEn ? '1.2 Base Pulse x(t) (one period):' : '1.2 Pulso-Base x(t) (um período):')
-          : (isEn ? '1.2 Time-Domain Signal x(t):' : '1.2 Sinal de Entrada no Domínio do Tempo x(t):'),
+          ? (isEn ? '1.2 Base Pulse x(t) (one period):' : tx('1.2 Pulso-Base x(t) (um período):', '1.2 Pulso Base x(t) (un período):'))
+          : (isEn ? '1.2 Time-Domain Signal x(t):' : tx('1.2 Sinal de Entrada no Domínio do Tempo x(t):', '1.2 Señal de Entrada en el Dominio del Tiempo x(t):')),
         latex: `x(t) = ${calc.latexTime}`
       },
       {
-        label: isEn ? '1.3 Signal Energy in Time Domain (Rayleigh):' : '1.3 Energia Total no Domínio do Tempo (Rayleigh):',
+        label: isEn ? '1.3 Signal Energy in Time Domain (Rayleigh):' : tx('1.3 Energia Total no Domínio do Tempo (Rayleigh):', '1.3 Energía Total en el Dominio del Tiempo (Rayleigh):'),
         latex: `E_x = \\int_{-\\infty}^{+\\infty} |x(t)|^2\\,dt = ${calc.energyTime.toFixed(4)}\\text{ J}`
       }
     ];
     if (calc.latexPeriodic) {
       lines.push({
-        label: isEn ? '1.4 Periodic Extension Drawn on Stage:' : '1.4 Extensão Periódica Desenhada no Palco:',
+        label: isEn ? '1.4 Periodic Extension Drawn on Stage:' : tx('1.4 Extensão Periódica Desenhada no Palco:', '1.4 Extensión Periódica Dibujada en el Escenario:'),
         latex: `x_{T_0}(t) = ${calc.latexPeriodic}`
       });
     }
@@ -386,15 +387,15 @@ function buildNotebookLinesCTFTBase(calc) {
   if (state.step === 2) {
     return [
       {
-        label: isEn ? '2.1 Integral Formulation:' : '2.1 Montagem da Integral da Transformada:',
+        label: isEn ? '2.1 Integral Formulation:' : tx('2.1 Montagem da Integral da Transformada:', '2.1 Planteamiento de la Integral de la Transformada:'),
         latex: `X(\\omega) = \\int_{-\\infty}^{+\\infty} \\left[ ${calc.latexTime} \\right] e^{-j\\omega t}\\,dt`
       },
       {
-        label: isEn ? '2.2 Analytical Transform Result:' : '2.2 Resolução Analítica Fechada:',
+        label: isEn ? '2.2 Analytical Transform Result:' : tx('2.2 Resolução Analítica Fechada:', '2.2 Resolución Analítica Cerrada:'),
         latex: `X(\\omega) = ${calc.latexCTFT}`
       },
       {
-        label: isEn ? '2.3 DC Level / Net Area X(0):' : '2.3 Nível Médio Contínuo / Área Líquida X(0):',
+        label: isEn ? '2.3 DC Level / Net Area X(0):' : tx('2.3 Nível Médio Contínuo / Área Líquida X(0):', '2.3 Nivel Medio Continuo / Área Neta X(0):'),
         latex: `X(0) = \\int_{-\\infty}^{+\\infty} x(t)\\,dt = ${x0Val.toFixed(4)}`
       },
       ...truncNote
@@ -412,15 +413,15 @@ function buildNotebookLinesCTFTBase(calc) {
     }
     return [
       {
-        label: isEn ? '3.1 Continuous Magnitude Spectrum |X(ω)|:' : '3.1 Espectro Contínuo de Magnitude |X(ω)|:',
+        label: isEn ? '3.1 Continuous Magnitude Spectrum |X(ω)|:' : tx('3.1 Espectro Contínuo de Magnitude |X(ω)|:', '3.1 Espectro Continuo de Magnitud |X(ω)|:'),
         latex: `|X(\\omega)| = \\sqrt{\\operatorname{Re}\\{X\\}^2 + \\operatorname{Im}\\{X\\}^2}`
       },
       {
-        label: isEn ? '3.2 Continuous Phase Spectrum ∠X(ω):' : '3.2 Espectro Contínuo de Fase ∠X(ω):',
+        label: isEn ? '3.2 Continuous Phase Spectrum ∠X(ω):' : tx('3.2 Espectro Contínuo de Fase ∠X(ω):', '3.2 Espectro Continuo de Fase ∠X(ω):'),
         latex: `\\angle X(\\omega) = \\operatorname{atan2}\\left(\\operatorname{Im}\\{X\\},\\, \\operatorname{Re}\\{X\\}\\right)`
       },
       {
-        label: isEn ? '3.3 Spectral Properties & Nulls:' : '3.3 Largura de Faixa e Nulos Espectrais:',
+        label: isEn ? '3.3 Spectral Properties & Nulls:' : tx('3.3 Largura de Faixa e Nulos Espectrais:', '3.3 Ancho de Banda y Nulos Espectrales:'),
         latex: propLatex
       }
     ];
@@ -429,19 +430,19 @@ function buildNotebookLinesCTFTBase(calc) {
   // Step 4
   return [
     {
-      label: isEn ? '4.1 Khutoryansky Bridge (T₀ → ∞ Limit):' : '4.1 Ponte Didática de Khutoryansky (T₀ → ∞):',
+      label: isEn ? '4.1 Khutoryansky Bridge (T₀ → ∞ Limit):' : tx('4.1 Ponte Didática de Khutoryansky (T₀ → ∞):', '4.1 Puente Didáctico de Khutoryansky (T₀ → ∞):'),
       latex: `\\lim_{T_0 \\to \\infty} T_0 \\cdot D_n = X(\\omega), \\quad \\Delta\\omega = \\frac{2\\pi}{T_0} \\to 0`
     },
     {
-      label: isEn ? `4.2 Discrete Harmonics Density at T₀ = ${calc.T0.toFixed(1)}s:` : `4.2 Densidade Espectral Discreta em T₀ = ${calc.T0.toFixed(1)}s:`,
-      latex: `\\omega_0 = \\frac{2\\pi}{T_0} = ${calc.w0.toFixed(2)}\\text{ rad/s}, \\quad N_{\\text{${isEn ? 'lines' : 'raias'}}} = ${calc.bridgeHarmonics.length}`
+      label: isEn ? `4.2 Discrete Harmonics Density at T₀ = ${calc.T0.toFixed(1)}s:` : tx(`4.2 Densidade Espectral Discreta em T₀ = ${calc.T0.toFixed(1)}s:`, `4.2 Densidad Espectral Discreta en T₀ = ${calc.T0.toFixed(1)}s:`),
+      latex: `\\omega_0 = \\frac{2\\pi}{T_0} = ${calc.w0.toFixed(2)}\\text{ rad/s}, \\quad N_{\\text{${isEn ? 'lines' : tx('raias', 'líneas')}}} = ${calc.bridgeHarmonics.length}`
     },
     {
-      label: isEn ? '4.3 Parseval-Rayleigh Energy Conservation:' : '4.3 Teorema de Conservação de Energia (Parseval / Rayleigh):',
+      label: isEn ? '4.3 Parseval-Rayleigh Energy Conservation:' : tx('4.3 Teorema de Conservação de Energia (Parseval / Rayleigh):', '4.3 Teorema de Conservación de la Energía (Parseval / Rayleigh):'),
       latex: `\\int_{-\\infty}^{+\\infty} |x(t)|^2 dt = \\frac{1}{2\\pi} \\int_{-\\infty}^{+\\infty} |X(\\omega)|^2 d\\omega \\approx ${calc.energyFreq.toFixed(4)}\\text{ J}`
     },
     {
-      label: isEn ? '4.4 Fundamental CTFT Property for Exams:' : '4.4 Propriedade Operacional de Prova (Lathi):',
+      label: isEn ? '4.4 Fundamental CTFT Property for Exams:' : tx('4.4 Propriedade Operacional de Prova (Lathi):', '4.4 Propiedad Operacional de Examen (Lathi):'),
       latex: `\\mathcal{F}\\{x(t - t_0)\\} = X(\\omega) e^{-j\\omega t_0}, \\quad \\mathcal{F}\\{x(at)\\} = \\frac{1}{|a|} X\\left(\\frac{\\omega}{a}\\right)`
     }
   ];
@@ -593,16 +594,16 @@ export function fourierNotebookMetric(metricsEl, isEn) {
     } else if (state.step === 2) {
       const symBadge =
         calc.symmetryType === 'quarter_even'
-          ? isEn ? '\\text{Quarter-Wave Even } (b_n=0)' : '\\text{Quarto de Onda Par } (b_n=0)'
+          ? isEn ? '\\text{Quarter-Wave Even } (b_n=0)' : tx('\\text{Quarto de Onda Par } (b_n=0)', '\\text{Cuarto de Onda Par } (b_n=0)')
           : calc.symmetryType === 'quarter_odd'
-          ? isEn ? '\\text{Quarter-Wave Odd } (a_n=0)' : '\\text{Quarto de Onda Ímpar } (a_n=0)'
+          ? isEn ? '\\text{Quarter-Wave Odd } (a_n=0)' : tx('\\text{Quarto de Onda Ímpar } (a_n=0)', '\\text{Cuarto de Onda Impar } (a_n=0)')
           : calc.symmetryType === 'even'
           ? isEn ? '\\text{Even } (b_n=0)' : '\\text{Par } (b_n=0)'
           : calc.symmetryType === 'odd'
-          ? isEn ? '\\text{Odd } (a_0=a_n=0)' : '\\text{Ímpar } (a_0=a_n=0)'
+          ? isEn ? '\\text{Odd } (a_0=a_n=0)' : tx('\\text{Ímpar } (a_0=a_n=0)', '\\text{Impar } (a_0=a_n=0)')
           : calc.symmetryType.includes('half')
-          ? isEn ? '\\text{Half-Wave}' : '\\text{Meia-Onda}'
-          : isEn ? '\\text{General}' : '\\text{Geral}';
+          ? isEn ? '\\text{Half-Wave}' : tx('\\text{Meia-Onda}', '\\text{Media Onda}')
+          : isEn ? '\\text{General}' : tx('\\text{Geral}', '\\text{General}');
       metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.symmClass}</span><span>${latexToHtml(symBadge)}</span>`;
     } else if (state.step === 3) {
       metricsEl.innerHTML = `<span class="font-semibold text-sec">${dict.activeHarm}</span><span>${latexToHtml(`N = ${calc.harmonics.length}, \\; \\eta = ${calc.efficiency.toFixed(1)}\\%`)}</span>`;
@@ -636,9 +637,9 @@ export function convolutionNotebookTable(regContainer, isEn) {
   const tableHeader = document.createElement('div');
   tableHeader.className = 'table-header-ufpa grid grid-cols-3 gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[10px] font-bold text-sec uppercase tracking-wider mb-1';
   tableHeader.innerHTML = `
-    <span>${isEn ? 'Regime / Overlap' : 'Regime / Sobreposição'}</span>
+    <span>${isEn ? 'Regime / Overlap' : tx('Regime / Sobreposição', 'Régimen / Solapamiento')}</span>
     <span>${isEn ? 'Interval of t' : 'Intervalo de t'}</span>
-    <span class="text-right">${isEn ? 'Result y(t)' : 'Expressão y(t)'}</span>
+    <span class="text-right">${isEn ? 'Result y(t)' : tx('Expressão y(t)', 'Expresión y(t)')}</span>
   `;
   regContainer.appendChild(tableHeader);
 
@@ -657,29 +658,29 @@ export function convolutionNotebookTable(regContainer, isEn) {
     btn.type = 'button';
     btn.className = `region-row w-full text-left px-2 py-1.5 rounded-lg grid grid-cols-3 items-center gap-2 ui-control ${isCurrent ? 'active font-semibold' : ''}`;
 
-    let regimeLabel = isEn ? 'Full Overlap' : 'Sobreposição Total';
+    let regimeLabel = isEn ? 'Full Overlap' : tx('Sobreposição Total', 'Solapamiento Total');
     if (isZeroRegion(reg)) {
       regimeLabel = idx === 0
-        ? (isEn ? 'No Overlap (t < tin)' : 'Sem Sobreposição (t < tin)')
-        : (isEn ? 'No Overlap (t > tout)' : 'Sem Sobreposição (t > tout)');
+        ? (isEn ? 'No Overlap (t < tin)' : tx('Sem Sobreposição (t < tin)', 'Sin Solapamiento (t < tin)'))
+        : (isEn ? 'No Overlap (t > tout)' : tx('Sem Sobreposição (t > tout)', 'Sin Solapamiento (t > tout)'));
     } else {
       const activePos = activeIndices.indexOf(idx);
       if (bothFinite) {
         if (activeIndices.length <= 1) {
-          regimeLabel = isEn ? 'Active Overlap' : 'Sobreposição Ativa';
+          regimeLabel = isEn ? 'Active Overlap' : tx('Sobreposição Ativa', 'Solapamiento Activo');
         } else if (activePos === 0) {
           regimeLabel = isEn ? 'Partial Entry' : 'Entrada Parcial';
         } else if (activePos === activeIndices.length - 1) {
-          regimeLabel = isEn ? 'Partial Exit' : 'Saída Parcial';
+          regimeLabel = isEn ? 'Partial Exit' : tx('Saída Parcial', 'Salida Parcial');
         } else {
-          regimeLabel = isEn ? 'Full Overlap' : 'Sobreposição Total';
+          regimeLabel = isEn ? 'Full Overlap' : tx('Sobreposição Total', 'Solapamiento Total');
         }
       } else if (activeIndices.length <= 1) {
-        regimeLabel = isEn ? 'Continuous Overlap' : 'Sobreposição Contínua';
+        regimeLabel = isEn ? 'Continuous Overlap' : tx('Sobreposição Contínua', 'Solapamiento Continuo');
       } else if (activePos === 0 && Number.isFinite(fA) && Number.isFinite(mA)) {
         regimeLabel = isEn ? 'Partial Entry' : 'Entrada Parcial';
       } else {
-        regimeLabel = isEn ? 'Full Overlap' : 'Sobreposição Total';
+        regimeLabel = isEn ? 'Full Overlap' : tx('Sobreposição Total', 'Solapamiento Total');
       }
     }
 
@@ -791,7 +792,7 @@ export function ctftNotebookTable(regContainer, isEn) {
     btn.type = 'button';
     btn.className = `region-row w-full text-left px-2 py-1.5 rounded-lg grid grid-cols-3 items-center gap-2 ui-control ${isCurrent ? 'active font-semibold' : ''}`;
     btn.innerHTML = `
-      <span class="text-[10px] font-mono-code">${isEn ? p.titleEn : p.title}</span>
+      <span class="text-[10px] font-mono-code">${loc(p, 'title')}</span>
       <span class="ctft-formula text-[10px] truncate"></span>
       <span class="text-[9px] text-mut text-right truncate">${key === 'bridge' ? 'Eugene Khutoryansky' : dict.ctftNotablePair}</span>
     `;

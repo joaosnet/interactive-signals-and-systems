@@ -7,6 +7,7 @@ import { reconstructionCurve } from './ctft-extras.js';
 import { renderMath, compileSignalExpr, detectSupportAndRegions, makeConvolver } from './math-engine.js';
 import { BUILTIN_CONV_PRESETS } from './presets.js';
 import { getModule } from './modules/registry.js';
+import { tx } from './lang.js';
 
 let canvasContainer = null;
 let stageCanvas = null;
@@ -956,7 +957,7 @@ function setLabelMath(id, latex, allowEdit = true) {
     const mathSpan = el.querySelector('.lbl-math-inner');
     renderMath(mathSpan, latex, false);
     const isEn = state.lang === 'en';
-    el.title = isEn ? 'Click to edit signal formula' : 'Clique para editar a fórmula deste sinal';
+    el.title = isEn ? 'Click to edit signal formula' : tx('Clique para editar a fórmula deste sinal', 'Haz clic para editar la fórmula de esta señal');
     el.classList.add('label-3d-editable');
   } else {
     el.classList.remove('label-3d-editable');
@@ -1034,11 +1035,11 @@ function updateFloatingLabels(sig, effectiveT, yNow, WALL_X) {
   if (livePill) {
     const isEn = state.lang === 'en';
     const latex = state.step === 1
-      ? `\\text{${isEn ? 'Step 1' : 'Passo 1'}} \\; (t \\to \\tau): \\; \\tau = ${state.tauSweep.toFixed(2)}`
+      ? `\\text{${isEn ? 'Step 1' : tx('Passo 1', 'Paso 1')}} \\; (t \\to \\tau): \\; \\tau = ${state.tauSweep.toFixed(2)}`
       : state.step === 2
-      ? `\\text{${isEn ? 'Step 2' : 'Passo 2'}} \\; (\\theta = ${Math.round((state.flipAngle / Math.PI) * 180)}^\\circ)`
+      ? `\\text{${isEn ? 'Step 2' : tx('Passo 2', 'Paso 2')}} \\; (\\theta = ${Math.round((state.flipAngle / Math.PI) * 180)}^\\circ)`
       : state.step === 3
-      ? `\\text{${isEn ? 'Step 3' : 'Passo 3'}} \\; (t = ${effectiveT.toFixed(2)})`
+      ? `\\text{${isEn ? 'Step 3' : tx('Passo 3', 'Paso 3')}} \\; (t = ${effectiveT.toFixed(2)})`
       : `y(${effectiveT.toFixed(2)}) = ${yNow.toFixed(4)}`;
     if (livePill.dataset.lastLatex !== latex) {
       livePill.dataset.lastLatex = latex;

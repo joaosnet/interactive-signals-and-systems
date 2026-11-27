@@ -7,6 +7,7 @@ import { validateSignalExpression } from '../math-engine.js';
 import { updateScene3D } from '../stage-3d.js';
 import { updatePlayButtonUI } from '../ui.js';
 import { hudState, renderHUDOscilloscope } from './hud.js';
+import { pick } from '../lang.js';
 
 export function setFontScale(scale) {
   const clamped = Math.max(0.8, Math.min(1.4, Math.round(scale * 10) / 10));
@@ -83,9 +84,11 @@ export function updateThemeCycleButtonUI(animateIcon = false) {
     light: `<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`
   };
 
-  const labelMap = isEn
-    ? { projector: 'Projector', dark: 'Dark', light: 'Light' }
-    : { projector: 'Projetor', dark: 'Escuro', light: 'Claro' };
+  const labelMap = pick({
+    pt: { projector: 'Projetor', dark: 'Escuro', light: 'Claro' },
+    en: { projector: 'Projector', dark: 'Dark', light: 'Light' },
+    es: { projector: 'Proyector', dark: 'Oscuro', light: 'Claro' }
+  });
 
   if (iconEl) {
     if (animateIcon) {

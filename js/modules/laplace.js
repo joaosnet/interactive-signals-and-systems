@@ -16,6 +16,7 @@ import { registerModule } from './registry.js';
 import { AUX_SLIDER_ROW, syncAuxSlider } from './aux-slider.js';
 import { renderPZEditor } from './pz-editor.js';
 import { buildLaplaceCustom, laplaceRocOptions } from '../pz-engine.js';
+import { langKey, loc, tx } from '../lang.js';
 
 // ---- Geometria do palco -----------------------------------------------------
 const S_MAX = 4.0;      // σ ∈ [-4, 4] → x
@@ -94,9 +95,9 @@ function listLatex(points, emptyText) {
 }
 
 const STABILITY_TEXT = {
-  stable: { pt: 'Estável', en: 'Stable' },
-  marginal: { pt: 'Marginalmente estável', en: 'Marginally stable' },
-  unstable: { pt: 'Instável', en: 'Unstable' }
+  stable: { pt: 'Estável', en: 'Stable', es: 'Estable' },
+  marginal: { pt: 'Marginalmente estável', en: 'Marginally stable', es: 'Marginalmente estable' },
+  unstable: { pt: 'Instável', en: 'Unstable', es: 'Inestable' }
 };
 
 // ---- Slider -----------------------------------------------------------------
@@ -285,7 +286,7 @@ function renderScene(scene, dt) {
 const notebook = {
   metric(isEn) {
     const c = calc();
-    if (state.step === 1) return { label: isEn ? 'Complex frequency' : 'Frequência complexa', latex: 's = \\sigma + j\\omega' };
+    if (state.step === 1) return { label: isEn ? 'Complex frequency' : tx('Frequência complexa', 'Frecuencia compleja'), latex: 's = \\sigma + j\\omega' };
     if (state.step === 2) return { label: 'ROC', latex: c.latexROC };
     if (state.step === 3) {
       const sc = cutSigma();
@@ -294,7 +295,7 @@ const notebook = {
         : (isEn ? '\\notin \\text{ROC (diverges)}' : '\\notin \\text{ROC (diverge)}');
       return { label: isEn ? 'Cut' : 'Corte', latex: `\\sigma = ${num(sc)} \\; ${verdict}` };
     }
-    const txt = STABILITY_TEXT[c.stability][isEn ? 'en' : 'pt'];
+    const txt = STABILITY_TEXT[c.stability][langKey()];
     return { label: isEn ? 'System h(t) = x(t)' : 'Sistema h(t) = x(t)', latex: `\\text{${txt}}` };
   },
 
@@ -305,15 +306,15 @@ const notebook = {
     if (state.step === 1) {
       return [
         {
-          label: isEn ? '1.1 Bilateral Laplace Transform Definition:' : '1.1 Definição da Transformada de Laplace Bilateral:',
+          label: isEn ? '1.1 Bilateral Laplace Transform Definition:' : tx('1.1 Definição da Transformada de Laplace Bilateral:', '1.1 Definición de la Transformada de Laplace Bilateral:'),
           latex: 'X(s) = \\mathcal{L}\\{x(t)\\} = \\int_{-\\infty}^{+\\infty} x(t)\\,e^{-st}\\,dt, \\quad s = \\sigma + j\\omega'
         },
         {
-          label: isEn ? '1.2 Time-Domain Signal:' : '1.2 Sinal no Domínio do Tempo:',
+          label: isEn ? '1.2 Time-Domain Signal:' : tx('1.2 Sinal no Domínio do Tempo:', '1.2 Señal en el Dominio del Tiempo:'),
           latex: `x(t) = ${c.latexTime}`
         },
         {
-          label: isEn ? '1.3 Laplace as a Fourier Transform with a Convergence Factor:' : '1.3 Laplace é uma Fourier com Fator de Convergência:',
+          label: isEn ? '1.3 Laplace as a Fourier Transform with a Convergence Factor:' : tx('1.3 Laplace é uma Fourier com Fator de Convergência:', '1.3 Laplace es una Fourier con Factor de Convergencia:'),
           latex: 'X(\\sigma + j\\omega) = \\mathcal{F}\\{x(t)\\,e^{-\\sigma t}\\}'
         }
       ];
@@ -323,13 +324,13 @@ const notebook = {
       const rocRule = {
         causal: isEn
           ? '\\text{Right-sided signal} \\implies \\text{ROC to the right of the rightmost pole}'
-          : '\\text{Sinal causal (lateral direito)} \\implies \\text{ROC à direita do polo mais à direita}',
+          : tx('\\text{Sinal causal (lateral direito)} \\implies \\text{ROC à direita do polo mais à direita}', '\\text{Señal causal (lateral derecha)} \\implies \\text{ROC a la derecha del polo más a la derecha}'),
         anticausal: isEn
           ? '\\text{Left-sided signal} \\implies \\text{ROC to the left of the leftmost pole}'
-          : '\\text{Sinal anticausal (lateral esquerdo)} \\implies \\text{ROC à esquerda do polo mais à esquerda}',
+          : tx('\\text{Sinal anticausal (lateral esquerdo)} \\implies \\text{ROC à esquerda do polo mais à esquerda}', '\\text{Señal anticausal (lateral izquierda)} \\implies \\text{ROC a la izquierda del polo más a la izquierda}'),
         bilateral: isEn
           ? '\\text{Two-sided signal} \\implies \\text{ROC is a strip between poles}'
-          : '\\text{Sinal bilateral} \\implies \\text{ROC é uma faixa entre polos}'
+          : tx('\\text{Sinal bilateral} \\implies \\text{ROC é uma faixa entre polos}', '\\text{Señal bilateral} \\implies \\text{la ROC es una franja entre polos}')
       }[c.causality];
       return [
         {
@@ -337,15 +338,15 @@ const notebook = {
           latex: `${c.latexTime} \\;\\longleftrightarrow\\; X(s) = ${c.latexX}`
         },
         {
-          label: isEn ? '2.2 Poles (×) and Zeros (○):' : '2.2 Polos (×) e Zeros (○):',
-          latex: `p: \\; ${listLatex(c.poles, isEn ? 'none' : 'nenhum')} \\qquad z: \\; ${listLatex(c.zeros, isEn ? 'none' : 'nenhum')}`
+          label: isEn ? '2.2 Poles (×) and Zeros (○):' : tx('2.2 Polos (×) e Zeros (○):', '2.2 Polos (×) y Ceros (○):'),
+          latex: `p: \\; ${listLatex(c.poles, isEn ? 'none' : tx('nenhum', 'ninguno'))} \\qquad z: \\; ${listLatex(c.zeros, isEn ? 'none' : tx('nenhum', 'ninguno'))}`
         },
         {
-          label: isEn ? '2.3 Region of Convergence (ROC):' : '2.3 Região de Convergência (ROC):',
+          label: isEn ? '2.3 Region of Convergence (ROC):' : tx('2.3 Região de Convergência (ROC):', '2.3 Región de Convergencia (ROC):'),
           latex: c.latexROC
         },
         {
-          label: isEn ? '2.4 Why this ROC:' : '2.4 Por que essa ROC:',
+          label: isEn ? '2.4 Why this ROC:' : tx('2.4 Por que essa ROC:', '2.4 Por Qué Esta ROC:'),
           latex: rocRule
         }
       ];
@@ -356,22 +357,22 @@ const notebook = {
       const value = c.mag(sc, 0);
       return [
         {
-          label: isEn ? `3.1 Vertical Cut at σ = ${num(sc)}:` : `3.1 Corte Vertical em σ = ${num(sc)}:`,
+          label: isEn ? `3.1 Vertical Cut at σ = ${num(sc)}:` : tx(`3.1 Corte Vertical em σ = ${num(sc)}:`, `3.1 Corte Vertical en σ = ${num(sc)}:`),
           latex: `X(${num(sc)} + j\\omega) = \\int_{-\\infty}^{+\\infty} \\left[x(t)\\,e^{${num(-sc)}t}\\right] e^{-j\\omega t}\\,dt`
         },
         {
-          label: isEn ? '3.2 Does the Integral Converge Here?' : '3.2 A Integral Converge Aqui?',
+          label: isEn ? '3.2 Does the Integral Converge Here?' : tx('3.2 A Integral Converge Aqui?', '3.2 ¿La Integral Converge Aquí?'),
           latex: inside
             ? `\\sigma = ${num(sc)} \\in \\text{ROC} \\implies |X(${num(sc)})| = ${Number.isFinite(value) ? value.toFixed(3) : '\\infty'}`
             : (isEn
               ? `\\sigma = ${num(sc)} \\notin \\text{ROC} \\implies x(t)e^{-\\sigma t} \\text{ is not absolutely integrable}`
-              : `\\sigma = ${num(sc)} \\notin \\text{ROC} \\implies x(t)e^{-\\sigma t} \\text{ não é absolutamente integrável}`)
+              : tx(`\\sigma = ${num(sc)} \\notin \\text{ROC} \\implies x(t)e^{-\\sigma t} \\text{ não é absolutamente integrável}`, `\\sigma = ${num(sc)} \\notin \\text{ROC} \\implies x(t)e^{-\\sigma t} \\text{ no es absolutamente integrable}`))
         },
         {
-          label: isEn ? '3.3 Surface Reading:' : '3.3 Leitura da Superfície:',
+          label: isEn ? '3.3 Surface Reading:' : tx('3.3 Leitura da Superfície:', '3.3 Lectura de la Superficie:'),
           latex: isEn
             ? '|X(s)| \\to \\infty \\text{ at poles}, \\quad |X(s)| = 0 \\text{ at zeros}'
-            : '|X(s)| \\to \\infty \\text{ nos polos}, \\quad |X(s)| = 0 \\text{ nos zeros}'
+            : tx('|X(s)| \\to \\infty \\text{ nos polos}, \\quad |X(s)| = 0 \\text{ nos zeros}', '|X(s)| \\to \\infty \\text{ en los polos}, \\quad |X(s)| = 0 \\text{ en los ceros}')
         }
       ];
     }
@@ -382,35 +383,35 @@ const notebook = {
       : (c.stability === 'marginal'
         ? (isEn
           ? '\\text{Pole on the } j\\omega \\text{ axis} \\implies \\text{Fourier exists only with impulses } \\delta(\\omega)'
-          : '\\text{Polo sobre o eixo } j\\omega \\implies \\text{Fourier só existe com impulsos } \\delta(\\omega)')
+          : tx('\\text{Polo sobre o eixo } j\\omega \\implies \\text{Fourier só existe com impulsos } \\delta(\\omega)', '\\text{Polo sobre el eje } j\\omega \\implies \\text{Fourier solo existe con impulsos } \\delta(\\omega)'))
         : (isEn
           ? 'j\\omega \\notin \\text{ROC} \\implies \\text{the Fourier transform does not exist}'
-          : 'j\\omega \\notin \\text{ROC} \\implies \\text{a transformada de Fourier não existe}'));
-    const stab = STABILITY_TEXT[c.stability][isEn ? 'en' : 'pt'];
+          : tx('j\\omega \\notin \\text{ROC} \\implies \\text{a transformada de Fourier não existe}', 'j\\omega \\notin \\text{ROC} \\implies \\text{la transformada de Fourier no existe}')));
+    const stab = STABILITY_TEXT[c.stability][langKey()];
     const stabLine = c.stability === 'stable'
       ? `j\\omega \\in \\text{ROC} \\implies \\int_{-\\infty}^{+\\infty} |h(t)|\\,dt < \\infty \\implies \\textbf{${stab}}`
       : c.stability === 'marginal'
       ? (isEn
         ? `\\text{Pole on the } j\\omega \\text{ axis} \\implies \\int_{-\\infty}^{+\\infty} |h(t)|\\,dt = \\infty \\implies \\textbf{${stab}} \\text{ (not BIBO)}`
-        : `\\text{Polo sobre o eixo } j\\omega \\implies \\int_{-\\infty}^{+\\infty} |h(t)|\\,dt = \\infty \\implies \\textbf{${stab}} \\text{ (não é BIBO)}`)
+        : tx(`\\text{Polo sobre o eixo } j\\omega \\implies \\int_{-\\infty}^{+\\infty} |h(t)|\\,dt = \\infty \\implies \\textbf{${stab}} \\text{ (não é BIBO)}`, `\\text{Polo sobre el eje } j\\omega \\implies \\int_{-\\infty}^{+\\infty} |h(t)|\\,dt = \\infty \\implies \\textbf{${stab}} \\text{ (no es BIBO)}`))
       : `j\\omega \\notin \\text{ROC} \\implies \\int_{-\\infty}^{+\\infty} |h(t)|\\,dt = \\infty \\implies \\textbf{${stab}}`;
     return [
       {
-        label: isEn ? '4.1 Bridge to the Fourier Transform:' : '4.1 Ponte com a Transformada de Fourier:',
+        label: isEn ? '4.1 Bridge to the Fourier Transform:' : tx('4.1 Ponte com a Transformada de Fourier:', '4.1 Puente con la Transformada de Fourier:'),
         latex: fourierLine
       },
       {
-        label: isEn ? '4.2 BIBO Stability of a System with h(t) = x(t):' : '4.2 Estabilidade BIBO de um Sistema com h(t) = x(t):',
+        label: isEn ? '4.2 BIBO Stability of a System with h(t) = x(t):' : tx('4.2 Estabilidade BIBO de um Sistema com h(t) = x(t):', '4.2 Estabilidad BIBO de un Sistema con h(t) = x(t):'),
         latex: stabLine
       },
       {
-        label: isEn ? '4.3 Causal Systems Shortcut:' : '4.3 Atalho para Sistemas Causais:',
+        label: isEn ? '4.3 Causal Systems Shortcut:' : tx('4.3 Atalho para Sistemas Causais:', '4.3 Atajo para Sistemas Causales:'),
         latex: isEn
           ? '\\text{Causal and stable} \\iff \\text{all poles in } \\operatorname{Re}\\{s\\} < 0'
-          : '\\text{Causal e estável} \\iff \\text{todos os polos em } \\operatorname{Re}\\{s\\} < 0'
+          : tx('\\text{Causal e estável} \\iff \\text{todos os polos em } \\operatorname{Re}\\{s\\} < 0', '\\text{Causal y estable} \\iff \\text{todos los polos en } \\operatorname{Re}\\{s\\} < 0')
       },
       {
-        label: isEn ? '4.4 Operational Properties:' : '4.4 Propriedades Operacionais:',
+        label: isEn ? '4.4 Operational Properties:' : tx('4.4 Propriedades Operacionais:', '4.4 Propiedades Operacionales:'),
         latex: '\\mathcal{L}\\{x(t - t_0)\\} = e^{-st_0}X(s), \\quad \\mathcal{L}\\left\\{\\tfrac{dx}{dt}\\right\\} = sX(s), \\quad \\mathcal{L}\\{x * h\\} = X(s)H(s)'
       }
     ];
@@ -419,7 +420,7 @@ const notebook = {
   table(container, isEn) {
     const header = document.createElement('div');
     header.className = 'grid grid-cols-3 gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[10px] font-bold text-sec uppercase tracking-wider mb-1';
-    [isEn ? 'Signal x(t)' : 'Sinal x(t)', 'X(s)', 'ROC'].forEach((text, i) => {
+    [isEn ? 'Signal x(t)' : tx('Sinal x(t)', 'Señal x(t)'), 'X(s)', 'ROC'].forEach((text, i) => {
       const span = document.createElement('span');
       span.textContent = text;
       if (i === 2) span.className = 'text-right';
@@ -501,7 +502,7 @@ function renderGallery(gallery, isEn, refresh) {
     head.className = 'flex items-center justify-between gap-1';
     const title = document.createElement('span');
     title.className = 'text-[11px] font-bold truncate text-primary';
-    title.textContent = isEn ? preset.titleEn : preset.title;
+    title.textContent = loc(preset, 'title');
     const badge = document.createElement('span');
     badge.className = 'text-[9px] font-mono-code font-semibold';
     badge.style.color = 'var(--c-conv)';

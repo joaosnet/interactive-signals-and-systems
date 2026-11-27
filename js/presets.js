@@ -7,9 +7,9 @@ export const BUILTIN_CONV_PRESETS = {
   ex8: {
     id: 'ex8',
     shortTitle: 'Exemplo #8',
-    shortTitleEn: 'Example #8',
+    shortTitleEn: 'Example #8', shortTitleEs: 'Ejemplo #8',
     subtitle: 'Exponencial e Pulso [0, 3]',
-    subtitleEn: 'Exponential & Pulse [0, 3]',
+    subtitleEn: 'Exponential & Pulse [0, 3]', subtitleEs: 'Exponencial y Pulso [0, 3]',
     exprX: 'e^(-t)*u(t)',
     exprH: 'u(t)-u(t-3)',
     latexX: 'e^{-t}u(t)',
@@ -32,9 +32,9 @@ export const BUILTIN_CONV_PRESETS = {
   ex1: {
     id: 'ex1',
     shortTitle: 'Exemplo #1 / #2',
-    shortTitleEn: 'Example #1 / #2',
+    shortTitleEn: 'Example #1 / #2', shortTitleEs: 'Ejemplo #1 / #2',
     subtitle: 'Exponencial e Degrau u(t)',
-    subtitleEn: 'Exponential & Step u(t)',
+    subtitleEn: 'Exponential & Step u(t)', subtitleEs: 'Exponencial y Escalón u(t)',
     exprX: 'e^(-t)*u(t)',
     exprH: 'u(t)',
     latexX: 'e^{-t}u(t)',
@@ -52,9 +52,9 @@ export const BUILTIN_CONV_PRESETS = {
   two_rect: {
     id: 'two_rect',
     shortTitle: 'Dois Pulsos (Prova)',
-    shortTitleEn: 'Two Pulses (Exam)',
+    shortTitleEn: 'Two Pulses (Exam)', shortTitleEs: 'Dos Pulsos (Examen)',
     subtitle: 'Dois Pulsos [0, 2] → Triângulo',
-    subtitleEn: 'Two Pulses [0, 2] → Triangle',
+    subtitleEn: 'Two Pulses [0, 2] → Triangle', subtitleEs: 'Dos Pulsos [0, 2] → Triángulo',
     exprX: 'u(t)-u(t-2)',
     exprH: 'u(t)-u(t-2)',
     latexX: 'p_{[0,2]}(t)',
@@ -79,9 +79,9 @@ export const BUILTIN_CONV_PRESETS = {
   lathi25: {
     id: 'lathi25',
     shortTitle: 'Lathi Ex. 2.5',
-    shortTitleEn: 'Lathi Ex. 2.5',
+    shortTitleEn: 'Lathi Ex. 2.5', shortTitleEs: 'Lathi Ej. 2.5',
     subtitle: 'Duas Exponenciais Causais',
-    subtitleEn: 'Two Causal Exponentials',
+    subtitleEn: 'Two Causal Exponentials', subtitleEs: 'Dos Exponenciales Causales',
     exprX: 'e^(-t)*u(t)',
     exprH: 'e^(-2*t)*u(t)',
     latexX: 'e^{-t}u(t)',
@@ -99,9 +99,9 @@ export const BUILTIN_CONV_PRESETS = {
   ex5: {
     id: 'ex5',
     shortTitle: 'Exemplo #5',
-    shortTitleEn: 'Example #5',
+    shortTitleEn: 'Example #5', shortTitleEs: 'Ejemplo #5',
     subtitle: 'Pulso [-1,1] e Rampa t/3',
-    subtitleEn: 'Pulse [-1,1] & Ramp t/3',
+    subtitleEn: 'Pulse [-1,1] & Ramp t/3', subtitleEs: 'Pulso [-1,1] y Rampa t/3',
     exprX: 'u(t+1)-u(t-1)',
     exprH: '(t/3)*(u(t)-u(t-3))',
     latexX: 'u(t+1)-u(t-1)',
@@ -127,9 +127,9 @@ export const BUILTIN_CONV_PRESETS = {
   ex7: {
     id: 'ex7',
     shortTitle: 'Exemplo #7',
-    shortTitleEn: 'Example #7',
+    shortTitleEn: 'Example #7', shortTitleEs: 'Ejemplo #7',
     subtitle: 'Pulso Dipolo e Rampa t/2',
-    subtitleEn: 'Dipole Pulse & Ramp t/2',
+    subtitleEn: 'Dipole Pulse & Ramp t/2', subtitleEs: 'Pulso Dipolo y Rampa t/2',
     exprX: '2*(u(t+1)-u(t)) - 2*(u(t)-u(t-1))',
     exprH: '(t/2)*(u(t)-u(t-2))',
     latexX: '2p_{[-1,0]}(t) - 2p_{[0,1]}(t)',
@@ -164,9 +164,9 @@ export const BUILTIN_FOURIER_PRESETS = {
   square: {
     id: 'square',
     title: 'Onda Quadrada',
-    titleEn: 'Square Wave',
+    titleEn: 'Square Wave', titleEs: 'Onda Cuadrada',
     subtitle: 'Simetria Ímpar e Meia-Onda, harmônicas 1/n',
-    subtitleEn: 'Odd & Half-Wave Symmetry, 1/n odd harmonics',
+    subtitleEn: 'Odd & Half-Wave Symmetry, 1/n odd harmonics', subtitleEs: 'Simetría Impar y de Media Onda, armónicos impares 1/n',
     expr: '(u(t) - u(t-1.5)) - (u(t-1.5) - u(t-3))',
     T0: 3.0,
     N: 7
@@ -174,9 +174,9 @@ export const BUILTIN_FOURIER_PRESETS = {
   sawtooth: {
     id: 'sawtooth',
     title: 'Dente de Serra',
-    titleEn: 'Sawtooth Wave',
+    titleEn: 'Sawtooth Wave', titleEs: 'Onda Diente de Sierra',
     subtitle: 'Rampa periódica linear por partes',
-    subtitleEn: 'Piecewise linear periodic ramp',
+    subtitleEn: 'Piecewise linear periodic ramp', subtitleEs: 'Rampa periódica lineal por tramos',
     expr: '(2*t/2.0 - 1) * (u(t) - u(t-2.0))',
     T0: 2.0,
     N: 9
@@ -184,9 +184,9 @@ export const BUILTIN_FOURIER_PRESETS = {
   triangular: {
     id: 'triangular',
     title: 'Onda Triangular',
-    titleEn: 'Triangular Wave',
+    titleEn: 'Triangular Wave', titleEs: 'Onda Triangular',
     subtitle: 'Simetria Par e Meia-Onda, decaimento 1/n²',
-    subtitleEn: 'Even & Half-Wave Symmetry, fast 1/n² decay',
+    subtitleEn: 'Even & Half-Wave Symmetry, fast 1/n² decay', subtitleEs: 'Simetría Par y de Media Onda, decaimiento rápido 1/n²',
     expr: '(2*tri((t - 1.5) / 1.5) - 1) * (u(t) - u(t-3))',
     T0: 3.0,
     N: 5
@@ -194,9 +194,9 @@ export const BUILTIN_FOURIER_PRESETS = {
   half_wave: {
     id: 'half_wave',
     title: 'Retificada Meia Onda',
-    titleEn: 'Half-Wave Rectified',
+    titleEn: 'Half-Wave Rectified', titleEs: 'Rectificada de Media Onda',
     subtitle: 'Senoide truncada no semiciclo positivo',
-    subtitleEn: 'Truncated sine on positive half-cycle',
+    subtitleEn: 'Truncated sine on positive half-cycle', subtitleEs: 'Seno truncado al semiciclo positivo',
     expr: 'sin(pi*t) * (u(t) - u(t-1.0))',
     T0: 2.0,
     N: 8
@@ -204,9 +204,9 @@ export const BUILTIN_FOURIER_PRESETS = {
   full_wave: {
     id: 'full_wave',
     title: 'Retificada Onda Completa',
-    titleEn: 'Full-Wave Rectified',
+    titleEn: 'Full-Wave Rectified', titleEs: 'Rectificada de Onda Completa',
     subtitle: '|sin(πt)| com período reduzido à metade, T₀ = 1',
-    subtitleEn: '|sin(πt)| with doubled period T₀ = 1',
+    subtitleEn: '|sin(πt)| with doubled period T₀ = 1', subtitleEs: '|sin(πt)| con período T₀ = 1',
     expr: 'abs(sin(pi*t)) * (u(t) - u(t-1.0))',
     T0: 1.0,
     N: 6
@@ -214,9 +214,9 @@ export const BUILTIN_FOURIER_PRESETS = {
   pulse_train: {
     id: 'pulse_train',
     title: 'Trem de Pulsos (Duty 25%)',
-    titleEn: 'Pulse Train (Duty 25%)',
+    titleEn: 'Pulse Train (Duty 25%)', titleEs: 'Tren de Pulsos (Ciclo 25%)',
     subtitle: 'Pulso retangular simétrico de largura T₀/4',
-    subtitleEn: 'Symmetric rectangular pulse of width T₀/4',
+    subtitleEn: 'Symmetric rectangular pulse of width T₀/4', subtitleEs: 'Pulso rectangular simétrico de ancho T₀/4',
     expr: 'u(t-0.75) - u(t-1.25)',
     T0: 2.0,
     N: 11
@@ -224,9 +224,9 @@ export const BUILTIN_FOURIER_PRESETS = {
   sinc_train: {
     id: 'sinc_train',
     title: 'Trem de Pulsos Sinc',
-    titleEn: 'Sinc Pulse Train',
+    titleEn: 'Sinc Pulse Train', titleEs: 'Tren de Pulsos Sinc',
     subtitle: 'Pulsos limitados em banda periódicos',
-    subtitleEn: 'Periodic bandlimited sinc pulses',
+    subtitleEn: 'Periodic bandlimited sinc pulses', subtitleEs: 'Pulsos sinc periódicos de banda limitada',
     expr: 'sinc(2*pi*(t - 1)) * (u(t) - u(t-2))',
     T0: 2.0,
     N: 11
@@ -237,7 +237,7 @@ export const BUILTIN_CTFT_PRESETS = {
   rect: {
     id: 'rect',
     title: 'Pulso Retangular Canônico',
-    titleEn: 'Canonical Rectangular Pulse',
+    titleEn: 'Canonical Rectangular Pulse', titleEs: 'Pulso Rectangular Canónico',
     subtitle: 'x(t) = rect(t/τ₀) ↔ X(ω) = τ₀ sinc(ωτ₀/2)',
     subtitleEn: 'x(t) = rect(t/τ₀) ↔ X(ω) = τ₀ sinc(ωτ₀/2)',
     expr: 'rect(t/2)',
@@ -254,7 +254,7 @@ export const BUILTIN_CTFT_PRESETS = {
   exp: {
     id: 'exp',
     title: 'Exponencial Unilateral Real',
-    titleEn: 'Real Unilateral Exponential',
+    titleEn: 'Real Unilateral Exponential', titleEs: 'Exponencial Unilateral Real',
     subtitle: 'x(t) = e^(-at)u(t) ↔ X(ω) = 1/(a + jω)',
     subtitleEn: 'x(t) = e^(-at)u(t) ↔ X(ω) = 1/(a + jω)',
     expr: 'e^(-t)*u(t)',
@@ -268,7 +268,7 @@ export const BUILTIN_CTFT_PRESETS = {
   tri: {
     id: 'tri',
     title: 'Pulso Triangular Simétrico',
-    titleEn: 'Symmetric Triangular Pulse',
+    titleEn: 'Symmetric Triangular Pulse', titleEs: 'Pulso Triangular Simétrico',
     subtitle: 'x(t) = tri(t/a) ↔ X(ω) = a sinc²(ωa/2)',
     subtitleEn: 'x(t) = tri(t/a) ↔ X(ω) = a sinc²(ωa/2)',
     expr: 'tri(t)',
@@ -286,7 +286,7 @@ export const BUILTIN_CTFT_PRESETS = {
   bilateral_exp: {
     id: 'bilateral_exp',
     title: 'Exponencial Bilateral',
-    titleEn: 'Bilateral Exponential',
+    titleEn: 'Bilateral Exponential', titleEs: 'Exponencial Bilateral',
     subtitle: 'x(t) = e^(-a|t|) ↔ X(ω) = 2a/(a² + ω²)',
     subtitleEn: 'x(t) = e^(-a|t|) ↔ X(ω) = 2a/(a² + ω²)',
     expr: 'e^(-abs(t))',
@@ -300,7 +300,7 @@ export const BUILTIN_CTFT_PRESETS = {
   gauss: {
     id: 'gauss',
     title: 'Gaussiana (Autodual)',
-    titleEn: 'Gaussian (Self-Dual)',
+    titleEn: 'Gaussian (Self-Dual)', titleEs: 'Gaussiana (Autodual)',
     subtitle: 'x(t) = e^(-π(t/τ)²) ↔ X(ω) = τ e^(-(ωτ)²/4π)',
     subtitleEn: 'x(t) = e^(-π(t/τ)²) ↔ X(ω) = τ e^(-(ωτ)²/4π)',
     expr: 'e^(-pi*t^2)',
@@ -314,7 +314,7 @@ export const BUILTIN_CTFT_PRESETS = {
   sinc: {
     id: 'sinc',
     title: 'Sinc (Dual do Retângulo)',
-    titleEn: 'Sinc (Dual of the Rectangle)',
+    titleEn: 'Sinc (Dual of the Rectangle)', titleEs: 'Sinc (Dual del Rectángulo)',
     subtitle: 'x(t) = sinc(Wt) ↔ X(ω) = (π/W) rect(ω/2W)',
     subtitleEn: 'x(t) = sinc(Wt) ↔ X(ω) = (π/W) rect(ω/2W)',
     expr: 'sinc(2*t)',
@@ -328,9 +328,9 @@ export const BUILTIN_CTFT_PRESETS = {
   bridge: {
     id: 'bridge',
     title: 'Ponte de Khutoryansky (T₀ → ∞)',
-    titleEn: 'Khutoryansky Bridge (T₀ → ∞)',
+    titleEn: 'Khutoryansky Bridge (T₀ → ∞)', titleEs: 'Puente de Khutoryansky (T₀ → ∞)',
     subtitle: 'Trem de pulsos com T₀ expansível mostrando raias adensando em sinc(ω)',
-    subtitleEn: 'Pulse train with expanding T₀ showing discrete stems merging into sinc(ω)',
+    subtitleEn: 'Pulse train with expanding T₀ showing discrete stems merging into sinc(ω)', subtitleEs: 'Tren de pulsos con T₀ creciente: las líneas discretas se funden en sinc(ω)',
     expr: 'rect(t)',
     latexX: '\\sum_{k} \\operatorname{rect}(t - k T_0)',
     latexCTFT: '\\operatorname{sinc}(\\omega/2)',

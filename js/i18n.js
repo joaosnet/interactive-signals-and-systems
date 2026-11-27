@@ -2,6 +2,8 @@
 // I18N.JS — Dicionário Bilíngue Didático e Micro-Copy Autoexplicativo
 // ============================================================================
 
+import { ES } from './i18n-es.js';
+
 export const I18N = {
   pt: {
     langBtn: 'EN',
@@ -67,13 +69,9 @@ export const I18N = {
 
     // Vistas de Câmera 3D/2D
     view3D: '3D Livre',
-    view3DDesc: 'Visão orbital 3D',
     view2DTime: '2D Tempo',
-    view2DTimeDesc: 'Projeção ortográfica no domínio do tempo',
     view2DSpec: '2D Espectro',
-    view2DSpecDesc: 'Projeção ortográfica lateral: resposta y(t) ou espectro |Cn|',
     viewTop: 'Topo',
-    viewTopDesc: 'Vista superior do plano de coordenadas',
 
     // Camadas do Palco 3D
     layersTitle: 'Camadas 3D',
@@ -83,13 +81,10 @@ export const I18N = {
     layerPhase: 'Espectro de Fase ∠X(ω)',
     layerGrid: 'Grade e Eixos de Coordenadas',
     layerThick: 'Traço Reforçado (Projetor)',
-    layerCycles: 'Janela Periódica de Fourier',
 
     // Controles Principais
     btnPlayPlay: 'Reproduzir',
     btnPlayPause: 'Pausar',
-    btnPlayTitle: 'Reproduzir / Pausar (Espaço)',
-    sliderTime: 'Deslocamento t',
     sliderHarmonics: 'Harmônicas N',
     sliderEvalPoint: 'Instante t',
     sliderSweep: 'Varredura τ (Passo 1)',
@@ -107,13 +102,7 @@ export const I18N = {
     sliderCTFTMod: 'Portadora ω₀ de x(t)·cos(ω₀t)',
     sliderCTFTBand: 'Banda de Reconstrução W',
     btnSeqMode: '1º→4º',
-    btnSeqTitle: 'Sequencial: encadear Passos 1 a 4',
-    btnCommute: 'x∗h ⇄ h∗x',
-    btnCommuteTitle: 'Comutativa: alternar sinal fixo e refletido',
-    btnZenMode: 'Modo Foco',
-    btnZenTitle: 'Alternar Modo Foco (Z)',
     btnAudio: 'Áudio Web',
-    btnAudioTitle: 'Áudio das Harmônicas Ativas (M)',
 
     // 4 Passos
     stepTag1: '1º Passo',
@@ -136,12 +125,7 @@ export const I18N = {
     // Caderno Analítico
     notebookTitle: 'Dedução Analítica Passo a Passo',
     btnRewatch: 'Reescrever Passo',
-    btnRewatchTitle: 'Repetir Escrita Analítica',
-    fourierFormCompact: 'Compacta (Cₙ, θₙ)',
-    fourierFormTrig: 'Trigonométrica (aₙ, bₙ)',
-    fourierFormExp: 'Exponencial (Dₙ)',
     parsevalEfficiency: 'Eficiência de Parseval',
-    meanSquareError: 'Erro Médio Quadrático (MSE)',
     regionsTitle: 'Síntese por Intervalos de t:',
     regionsFourierTitle: 'Tabela Espectral de Harmônicas:',
     regionsCTFTTitle: 'Pares Notáveis & Propriedades:',
@@ -152,23 +136,13 @@ export const I18N = {
 
     // Galeria & Editor
     galleryTitle: 'Exemplos Canônicos & Salvos',
-    gallerySubtitle: 'Selecione para carregar',
-    inputsTitle: 'Definição de Sinais',
-    btnPin: '+ Salvar na Galeria',
-    lblPeriodT0: 'Período T₀ =',
-    lblFundamentalFreq: 'Freq. Fundamental:',
     customSignal: 'Sinal Personalizado',
     savedPreset: 'Salvo #',
     delPreset: 'Remover',
 
     // Configurações & Temas
-    settingsTitle: 'Configurações',
-    themeProjector: 'Projetor',
-    themeDark: 'Escuro',
-    themeLight: 'Claro',
     speedLabel: 'Velocidade:',
     shortcutsTitle: 'Atalhos de Teclado',
-    shortcutSpace: 'Play / Pause',
     shortcutArrows: 'Ajuste fino de t / N',
     shortcutSteps: 'Passos 1 a 4',
     shortcutTab: 'Alternar Módulo',
@@ -180,7 +154,6 @@ export const I18N = {
 
     // Acessibilidade (A11y)
     a11yBarLabel: 'Barra de Ferramentas e Acessibilidade',
-    a11yTitle: 'Acessibilidade',
     fontDecTitle: 'Diminuir fonte (Alt -)',
     fontResetTitle: 'Redefinir fonte para 100% (Alt 0)',
     fontIncTitle: 'Aumentar fonte (Alt +)',
@@ -190,16 +163,8 @@ export const I18N = {
     motionTitle: 'Reduzir Movimento (Alt R)',
 
     // Personalização de Seções
-    filtersTitle: 'Mostrar no Painel:',
-    filterNotebook: 'Passo a Passo',
-    filterRegions: 'Tabela',
-    filterGallery: 'Exemplos',
-    filterEditor: 'Editor',
 
     // Teclado Matemático
-    mkbSignals: 'Sinais',
-    mkbAlgebra: 'Álgebra & 123',
-    mkbDone: 'Concluir',
 
     // Métricas Instantâneas
     sampleTau: 'Valor em τ:',
@@ -211,37 +176,18 @@ export const I18N = {
     approxAtT: 'Aproximação em t:',
     metricEnergy: 'Energia:',
     metricBridge: 'Ponte T₀:',
-    noOverlap: 'Sem sobreposição',
-    fullOverlap: 'Sobreposição ativa',
 
     // Floating Signal Focus HUD
-    hudTitleX: 'Editar Sinal x(t)',
-    hudTitleH: 'Editar Sinal h(t)',
-    hudTitleFourier: 'Editar Sinal Periódico f(t)',
-    hudTitleCTFT: 'Editar Sinal Aperiódico x(t)',
-    hudTabParam: 'Formas & Sliders',
-    hudTabFree: 'Teclado MathLive',
-    hudShapesTitle: 'Forma Canônica:',
     hudShapeRect: 'Retângulo',
     hudShapeTri: 'Triângulo',
     hudShapePulse: 'Chave',
     hudShapeStep: 'Degrau u(t)',
-    hudShapeExp: 'Exponencial',
     hudShapeRamp: 'Rampa',
     hudShapeSin: 'Senoide',
     hudSliderA: 'Amplitude A',
     hudSliderW: 'Largura W',
     hudSliderT0: 'Deslocamento t₀',
     hudSliderAlpha: 'Decaimento α',
-    hudPreviewTitle: 'Expressão & Suporte:',
-    hudFreeInputLabel: 'Equação Analítica:',
-    hudFreePreviewTitle: 'Fórmula:',
-    hudBtnApply: '✓ Concluir',
-    hudBtnCancel: 'Fechar',
-    hudBtnPin: '+ Salvar na Galeria',
-    hudBtnOpenMkb: 'Teclado',
-    hudStageEdit: 'Editar Sinal',
-    hudFocusTag: 'Editor',
     hudStatusValid: 'Sinal válido',
     hudStatusZero: 'Sinal nulo (0)',
     hudStatusTyping: 'Digitando fórmula...',
@@ -251,7 +197,7 @@ export const I18N = {
   },
 
   en: {
-    langBtn: 'PT-BR',
+    langBtn: 'ES',
     docTitle: '3D Signals & Systems — Interactive Convolution & Fourier Analysis',
     appHeading: '3D Signals & Systems',
 
@@ -314,13 +260,9 @@ export const I18N = {
 
     // Camera Views
     view3D: '3D Free',
-    view3DDesc: 'Orbital 3D view',
     view2DTime: '2D Time',
-    view2DTimeDesc: 'Orthographic front projection in time domain',
     view2DSpec: '2D Spectrum',
-    view2DSpecDesc: 'Orthographic side projection: y(t) output or |Cn| line spectrum',
     viewTop: 'Top View',
-    viewTopDesc: 'Top-down coordinate view',
 
     // 3D Layers
     layersTitle: '3D Layers',
@@ -330,13 +272,10 @@ export const I18N = {
     layerPhase: 'Phase Spectrum ∠X(ω)',
     layerGrid: 'Coordinate Axes & Grid',
     layerThick: 'Reinforced Stroke (Projector)',
-    layerCycles: 'Periodic Display Cycles',
 
     // Main Controls
     btnPlayPlay: 'Play',
     btnPlayPause: 'Pause',
-    btnPlayTitle: 'Play / Pause (Space)',
-    sliderTime: 'Time Shift t',
     sliderHarmonics: 'Harmonics N',
     sliderEvalPoint: 'Time Instant t',
     sliderSweep: 'Tau Sweep τ (Step 1)',
@@ -354,13 +293,7 @@ export const I18N = {
     sliderCTFTMod: 'Carrier ω₀ of x(t)·cos(ω₀t)',
     sliderCTFTBand: 'Reconstruction Band W',
     btnSeqMode: '1st→4th',
-    btnSeqTitle: 'Sequential: chain Steps 1 through 4',
-    btnCommute: 'x∗h ⇄ h∗x',
-    btnCommuteTitle: 'Commutative: swap fixed vs moving signals',
-    btnZenMode: 'Focus Mode',
-    btnZenTitle: 'Toggle Focus Mode (Z)',
     btnAudio: 'Web Audio',
-    btnAudioTitle: 'Harmonic Audio (M)',
 
     // 4 Steps
     stepTag1: 'Step 1',
@@ -383,12 +316,7 @@ export const I18N = {
     // Analytical Notebook
     notebookTitle: 'Step-by-Step Analytical Derivation',
     btnRewatch: 'Rewrite Step',
-    btnRewatchTitle: 'Replay Analytical Derivation',
-    fourierFormCompact: 'Compact (Cₙ, θₙ)',
-    fourierFormTrig: 'Trigonometric (aₙ, bₙ)',
-    fourierFormExp: 'Exponential (Dₙ)',
     parsevalEfficiency: 'Parseval Efficiency',
-    meanSquareError: 'Mean Squared Error (MSE)',
     regionsTitle: 'Summary by Intervals of t:',
     regionsFourierTitle: 'Harmonic Spectrum Table:',
     regionsCTFTTitle: 'Notable Pairs & Properties:',
@@ -399,23 +327,13 @@ export const I18N = {
 
     // Gallery & Editor
     galleryTitle: 'Canonical & Saved Examples',
-    gallerySubtitle: 'Select to load',
-    inputsTitle: 'Signal Definition',
-    btnPin: '+ Save to Gallery',
-    lblPeriodT0: 'Period T₀ =',
-    lblFundamentalFreq: 'Fundamental Freq:',
     customSignal: 'Custom Signal',
     savedPreset: 'Saved #',
     delPreset: 'Remove',
 
     // Settings & Themes
-    settingsTitle: 'Settings',
-    themeProjector: 'Projector',
-    themeDark: 'Dark',
-    themeLight: 'Light',
     speedLabel: 'Speed:',
     shortcutsTitle: 'Keyboard Shortcuts',
-    shortcutSpace: 'Play / Pause',
     shortcutArrows: 'Fine tune t / N',
     shortcutSteps: 'Steps 1 to 4',
     shortcutTab: 'Switch Module',
@@ -427,7 +345,6 @@ export const I18N = {
 
     // Accessibility (A11y)
     a11yBarLabel: 'Tools and Accessibility Bar',
-    a11yTitle: 'Accessibility',
     fontDecTitle: 'Decrease font (Alt -)',
     fontResetTitle: 'Reset font to 100% (Alt 0)',
     fontIncTitle: 'Increase font (Alt +)',
@@ -437,16 +354,8 @@ export const I18N = {
     motionTitle: 'Reduce Motion (Alt R)',
 
     // Section Filters
-    filtersTitle: 'Show in Panel:',
-    filterNotebook: 'Step by Step',
-    filterRegions: 'Table',
-    filterGallery: 'Examples',
-    filterEditor: 'Editor',
 
     // Math Keyboard
-    mkbSignals: 'Signals',
-    mkbAlgebra: 'Algebra & 123',
-    mkbDone: 'Done',
 
     // Instant Metrics
     sampleTau: 'Value at τ:',
@@ -458,37 +367,18 @@ export const I18N = {
     approxAtT: 'Approximation at t:',
     metricEnergy: 'Energy:',
     metricBridge: 'Bridge T₀:',
-    noOverlap: 'No overlap',
-    fullOverlap: 'Active overlap',
 
     // Floating Signal Focus HUD
-    hudTitleX: 'Edit Signal x(t)',
-    hudTitleH: 'Edit Signal h(t)',
-    hudTitleFourier: 'Edit Periodic Signal f(t)',
-    hudTitleCTFT: 'Edit Aperiodic Signal x(t)',
-    hudTabParam: 'Shapes & Sliders',
-    hudTabFree: 'MathLive Keyboard',
-    hudShapesTitle: 'Canonical Shape:',
     hudShapeRect: 'Rectangle',
     hudShapeTri: 'Triangle',
     hudShapePulse: 'Switch',
     hudShapeStep: 'Step u(t)',
-    hudShapeExp: 'Exponential',
     hudShapeRamp: 'Ramp',
     hudShapeSin: 'Sine Wave',
     hudSliderA: 'Amplitude A',
     hudSliderW: 'Width W',
     hudSliderT0: 'Shift t₀',
     hudSliderAlpha: 'Decay α',
-    hudPreviewTitle: 'Expression & Support:',
-    hudFreeInputLabel: 'Analytical Equation:',
-    hudFreePreviewTitle: 'Formula:',
-    hudBtnApply: '✓ Done',
-    hudBtnCancel: 'Close',
-    hudBtnPin: '+ Save to Gallery',
-    hudBtnOpenMkb: 'Keyboard',
-    hudStageEdit: 'Edit Signal',
-    hudFocusTag: 'Editor',
     hudStatusValid: 'Valid signal',
     hudStatusZero: 'Zero signal (0)',
     hudStatusTyping: 'Typing formula...',
@@ -497,3 +387,6 @@ export const I18N = {
     hudBtnModeTitle: 'Switch Math / Native Text Keyboard'
   }
 };
+
+// O espanhol fica em arquivo próprio (i18n-es.js), com as mesmas chaves.
+I18N.es = ES;

@@ -17,6 +17,7 @@ import {
 import { registerModule } from './registry.js';
 import { AUX_SLIDER_ROW, syncAuxSlider } from './aux-slider.js';
 import { renderSequenceEditor } from './seq-editor.js';
+import { loc, tx } from '../lang.js';
 
 // ---- Geometria do palco -----------------------------------------------------
 const X_HALF = 4.5;
@@ -91,7 +92,7 @@ function windowSlider() {
     key: 'dft-window', titleKey: 'sliderDftWindow', min: 0, max: DFT_WINDOW_KEYS.length - 1, step: 1,
     get: () => Math.max(0, DFT_WINDOW_KEYS.indexOf(state.dftWindow)),
     set: (v) => { state.dftWindow = DFT_WINDOW_KEYS[Math.round(v)] || 'rect'; recomputeDFT(); },
-    badge: () => (isEn ? DFT_WINDOWS[state.dftWindow].titleEn : DFT_WINDOWS[state.dftWindow].title)
+    badge: () => (loc(DFT_WINDOWS[state.dftWindow], 'title'))
   };
 }
 
@@ -232,10 +233,10 @@ function renderScene(scene, dt) {
 const notebook = {
   metric(isEn) {
     const d = calc();
-    if (state.step === 1) return { label: isEn ? 'Samples' : 'Amostras', latex: `N = ${d.N}` };
-    if (state.step === 2) return { label: isEn ? 'Resolution' : 'Resolução', latex: `\\Delta\\Omega = ${d.resolutionLatex}` };
+    if (state.step === 1) return { label: isEn ? 'Samples' : tx('Amostras', 'Muestras'), latex: `N = ${d.N}` };
+    if (state.step === 2) return { label: isEn ? 'Resolution' : tx('Resolução', 'Resolución'), latex: `\\Delta\\Omega = ${d.resolutionLatex}` };
     if (state.step === 3) return { label: isEn ? 'Bin' : 'Bin', latex: `|X[${state.dftK}]| = ${num(d.mag[state.dftK], 3)}` };
-    return { label: isEn ? 'FFT speedup' : 'Ganho da FFT', latex: `\\times\\,${num(d.speedup, 1)}` };
+    return { label: isEn ? 'FFT speedup' : tx('Ganho da FFT', 'Ganancia de la FFT'), latex: `\\times\\,${num(d.speedup, 1)}` };
   },
 
   lines(isEn) {
@@ -246,22 +247,22 @@ const notebook = {
     if (state.step === 1) {
       return [
         {
-          label: isEn ? '1.1 Analysis (DFT):' : '1.1 Análise (DFT):',
+          label: isEn ? '1.1 Analysis (DFT):' : tx('1.1 Análise (DFT):', '1.1 Análisis (DFT):'),
           latex: 'X[k] = \\sum_{n=0}^{N-1} x[n]\\,e^{-j2\\pi kn/N}, \\quad k = 0, \\ldots, N-1'
         },
         {
-          label: isEn ? '1.2 Synthesis (inverse DFT):' : '1.2 Síntese (DFT inversa):',
+          label: isEn ? '1.2 Synthesis (inverse DFT):' : tx('1.2 Síntese (DFT inversa):', '1.2 Síntesis (DFT inversa):'),
           latex: 'x[n] = \\frac{1}{N}\\sum_{k=0}^{N-1} X[k]\\,e^{j2\\pi kn/N}'
         },
         {
-          label: isEn ? '1.3 Sequence:' : '1.3 Sequência:',
-          latex: `x[n] = ${d.latexTime}, \\quad N = ${N}${d.zeroPadded > 0 ? `\\;(${d.zeroPadded}\\ \\text{${isEn ? 'zeros appended' : 'zeros acrescentados'}})` : ''}`
+          label: isEn ? '1.3 Sequence:' : tx('1.3 Sequência:', '1.3 Secuencia:'),
+          latex: `x[n] = ${d.latexTime}, \\quad N = ${N}${d.zeroPadded > 0 ? `\\;(${d.zeroPadded}\\ \\text{${isEn ? 'zeros appended' : tx('zeros acrescentados', 'ceros añadidos')}})` : ''}`
         },
         {
-          label: isEn ? '1.4 Finite on Both Sides (what a computer can store):' : '1.4 Finita nos Dois Lados (o que um computador consegue guardar):',
+          label: isEn ? '1.4 Finite on Both Sides (what a computer can store):' : tx('1.4 Finita nos Dois Lados (o que um computador consegue guardar):', '1.4 Finita en Ambos Lados (lo que una computadora puede guardar):'),
           latex: isEn
             ? `${N} \\text{ time samples} \\;\\longleftrightarrow\\; ${N} \\text{ frequency samples}`
-            : `${N} \\text{ amostras no tempo} \\;\\longleftrightarrow\\; ${N} \\text{ amostras na frequência}`
+            : tx(`${N} \\text{ amostras no tempo} \\;\\longleftrightarrow\\; ${N} \\text{ amostras na frequência}`, `${N} \\text{ muestras en el tiempo} \\;\\longleftrightarrow\\; ${N} \\text{ muestras en frecuencia}`)
         }
       ];
     }
@@ -271,37 +272,37 @@ const notebook = {
       if (d.leaks === true) {
         window = isEn
           ? `${num(d.cycles)} \\text{ cycles in the window (not an integer)} \\implies \\textbf{leakage}`
-          : `${num(d.cycles)} \\text{ ciclos na janela (não inteiro)} \\implies \\textbf{vazamento}`;
+          : tx(`${num(d.cycles)} \\text{ ciclos na janela (não inteiro)} \\implies \\textbf{vazamento}`, `${num(d.cycles)} \\text{ ciclos en la ventana (no entero)} \\implies \\textbf{fuga espectral}`);
       } else if (d.leaks === false) {
         window = isEn
           ? `${num(d.cycles)} \\text{ whole cycles in the window} \\implies \\text{clean lines}`
-          : `${num(d.cycles)} \\text{ ciclos inteiros na janela} \\implies \\text{linhas limpas}`;
+          : tx(`${num(d.cycles)} \\text{ ciclos inteiros na janela} \\implies \\text{linhas limpas}`, `${num(d.cycles)} \\text{ ciclos enteros en la ventana} \\implies \\text{líneas limpias}`);
       } else {
         window = isEn
           ? '\\text{the DFT sees } x[n] \\text{ repeated with period } N'
-          : '\\text{a DFT enxerga } x[n] \\text{ repetido com período } N';
+          : tx('\\text{a DFT enxerga } x[n] \\text{ repetido com período } N', '\\text{la DFT ve } x[n] \\text{ repetido con período } N');
       }
       const winInfo = DFT_WINDOWS[d.windowKey];
       const windowLines = [
         {
-          label: isEn ? `2.5 Window: ${winInfo.titleEn} (try the second slider):` : `2.5 Janela: ${winInfo.title} (experimente o segundo slider):`,
+          label: isEn ? `2.5 Window: ${winInfo.titleEn} (try the second slider):` : tx(`2.5 Janela: ${winInfo.title} (experimente o segundo slider):`, `2.5 Ventana: ${winInfo.title} (prueba el segundo deslizador):`),
           latex: winInfo.latex
         },
         {
-          label: isEn ? '2.6 Energy Outside the Main Lobe:' : '2.6 Energia Fora do Lóbulo Principal:',
+          label: isEn ? '2.6 Energy Outside the Main Lobe:' : tx('2.6 Energia Fora do Lóbulo Principal:', '2.6 Energía Fuera del Lóbulo Principal:'),
           latex: `${(100 * d.spread).toFixed(2)}\\% \\quad (${isEn ? '\\text{main lobe: } \\pm' : '\\text{lóbulo principal: } \\pm'}${winInfo.mainHalf}\\ \\text{bin${winInfo.mainHalf > 1 ? 's' : ''}})`
         }
       ];
       return [
         {
-          label: isEn ? '2.1 The DFT Samples the DTFT:' : '2.1 A DFT Amostra a DTFT:',
+          label: isEn ? '2.1 The DFT Samples the DTFT:' : tx('2.1 A DFT Amostra a DTFT:', '2.1 La DFT Muestrea la DTFT:'),
           latex: 'X[k] = X(e^{j\\Omega})\\big|_{\\Omega = 2\\pi k/N}'
         },
         {
-          label: isEn ? '2.2 Frequency Resolution:' : '2.2 Resolução em Frequência:',
+          label: isEn ? '2.2 Frequency Resolution:' : tx('2.2 Resolução em Frequência:', '2.2 Resolución en Frecuencia:'),
           latex: `\\Delta\\Omega = ${d.resolutionLatex}\\ \\text{rad}, \\qquad \\Delta f = \\tfrac{f_s}{${N}}`
         },
-        { label: isEn ? '2.3 The Window Matters:' : '2.3 A Janela Importa:', latex: window },
+        { label: isEn ? '2.3 The Window Matters:' : tx('2.3 A Janela Importa:', '2.3 La Ventana Importa:'), latex: window },
         {
           label: isEn ? '2.4 Parseval:' : '2.4 Parseval:',
           latex: `\\sum_n |x[n]|^2 = \\frac{1}{N}\\sum_k |X[k]|^2 = ${num(d.energyTime, 3)}`
@@ -318,29 +319,29 @@ const notebook = {
           latex: `X[${k}] = ${complexLatex(d.re[k], d.im[k])}`
         },
         {
-          label: isEn ? '3.2 Magnitude and Phase:' : '3.2 Magnitude e Fase:',
+          label: isEn ? '3.2 Magnitude and Phase:' : tx('3.2 Magnitude e Fase:', '3.2 Magnitud y Fase:'),
           latex: `|X[${k}]| = ${num(d.mag[k], 3)}, \\qquad \\angle X[${k}] = ${Number.isNaN(ph) ? (isEn ? '\\text{undefined}' : '\\text{indefinida}') : `${num(ph, 3)}\\ \\text{rad}`}`
         },
         {
-          label: isEn ? '3.3 Frequency of This Bin:' : '3.3 Frequência Deste Bin:',
+          label: isEn ? '3.3 Frequency of This Bin:' : tx('3.3 Frequência Deste Bin:', '3.3 Frecuencia de Este Bin:'),
           latex: `\\Omega_{${k}} = \\tfrac{2\\pi \\cdot ${k}}{${N}} = ${num(d.binOmega(k), 3)}\\ \\text{rad}, \\qquad f_{${k}} = \\tfrac{${k}}{${N}}\\,f_s`
         }
       ];
       if (k > N / 2) {
         lines.push({
-          label: isEn ? '3.4 Upper Half = Negative Frequencies:' : '3.4 Metade Superior = Frequências Negativas:',
+          label: isEn ? '3.4 Upper Half = Negative Frequencies:' : tx('3.4 Metade Superior = Frequências Negativas:', '3.4 Mitad Superior = Frecuencias Negativas:'),
           latex: `k = ${k} \\equiv ${k} - ${N} = ${k - N}, \\qquad X[${k}] = X^*[${N - k}]`
         });
       } else if (k === N / 2) {
         lines.push({
-          label: isEn ? '3.4 Nyquist Bin (fastest oscillation):' : '3.4 Bin de Nyquist (oscilação mais rápida):',
+          label: isEn ? '3.4 Nyquist Bin (fastest oscillation):' : tx('3.4 Bin de Nyquist (oscilação mais rápida):', '3.4 Bin de Nyquist (oscilación más rápida):'),
           latex: `\\Omega_{${k}} = \\pi, \\qquad e^{j\\pi n} = (-1)^n, \\qquad f = \\tfrac{f_s}{2}`
         });
       } else {
         lines.push({
-          label: isEn ? '3.4 Conjugate Symmetry (real x[n]):' : '3.4 Simetria Conjugada (x[n] real):',
+          label: isEn ? '3.4 Conjugate Symmetry (real x[n]):' : tx('3.4 Simetria Conjugada (x[n] real):', '3.4 Simetría Conjugada (x[n] real):'),
           latex: k === 0
-            ? (isEn ? 'X[0] = \\sum_n x[n] \\quad (\\text{DC value})' : 'X[0] = \\sum_n x[n] \\quad (\\text{valor médio} \\times N)')
+            ? (isEn ? 'X[0] = \\sum_n x[n] \\quad (\\text{DC value})' : tx('X[0] = \\sum_n x[n] \\quad (\\text{valor médio} \\times N)', 'X[0] = \\sum_n x[n] \\quad (\\text{valor medio} \\times N)'))
             : `X[${N - k}] = X^*[${k}] \\implies |X[${N - k}]| = |X[${k}]|`
         });
       }
@@ -350,23 +351,23 @@ const notebook = {
     // Passo 4
     return [
       {
-        label: isEn ? '4.1 Direct Sum:' : '4.1 Soma Direta:',
-        latex: `N^2 = ${N}^2 = ${thousands(d.naiveMults)}\\ ${isEn ? '\\text{complex products}' : '\\text{produtos complexos}'}`
+        label: isEn ? '4.1 Direct Sum:' : tx('4.1 Soma Direta:', '4.1 Suma Directa:'),
+        latex: `N^2 = ${N}^2 = ${thousands(d.naiveMults)}\\ ${isEn ? '\\text{complex products}' : tx('\\text{produtos complexos}', '\\text{productos complejos}')}`
       },
       {
-        label: isEn ? '4.2 Radix-2 FFT (counted while running):' : '4.2 FFT Radix-2 (contado na execução):',
-        latex: `\\tfrac{N}{2}\\log_2 N = ${N / 2} \\cdot ${d.stages} = ${thousands(d.butterflies)}\\ ${isEn ? '\\text{butterflies}' : '\\text{borboletas}'}`
+        label: isEn ? '4.2 Radix-2 FFT (counted while running):' : tx('4.2 FFT Radix-2 (contado na execução):', '4.2 FFT Radix-2 (contado durante la ejecución):'),
+        latex: `\\tfrac{N}{2}\\log_2 N = ${N / 2} \\cdot ${d.stages} = ${thousands(d.butterflies)}\\ ${isEn ? '\\text{butterflies}' : tx('\\text{borboletas}', '\\text{mariposas}')}`
       },
       {
-        label: isEn ? '4.3 Speedup (and at N = 1024):' : '4.3 Ganho (e em N = 1024):',
+        label: isEn ? '4.3 Speedup (and at N = 1024):' : tx('4.3 Ganho (e em N = 1024):', '4.3 Ganancia (y en N = 1024):'),
         latex: `\\times\\,${num(d.speedup, 1)} \\qquad \\left(1\\,048\\,576 \\;\\text{vs.}\\; 5\\,120 \\implies \\times\\,204.8\\right)`
       },
       {
-        label: isEn ? '4.4 The Butterfly (split into even and odd samples):' : '4.4 A Borboleta (divide em amostras pares e ímpares):',
+        label: isEn ? '4.4 The Butterfly (split into even and odd samples):' : tx('4.4 A Borboleta (divide em amostras pares e ímpares):', '4.4 La Mariposa (divide en muestras pares e impares):'),
         latex: 'X[k] = E[k] + W_N^k\\,O[k], \\quad X[k + \\tfrac{N}{2}] = E[k] - W_N^k\\,O[k], \\quad W_N = e^{-j2\\pi/N}'
       },
       {
-        label: isEn ? '4.5 Check: Same Answer as the Direct Sum:' : '4.5 Conferência: Mesma Resposta da Soma Direta:',
+        label: isEn ? '4.5 Check: Same Answer as the Direct Sum:' : tx('4.5 Conferência: Mesma Resposta da Soma Direta:', '4.5 Comprobación: Misma Respuesta que la Suma Directa:'),
         latex: `\\max_k \\left|X_{\\text{FFT}}[k] - X_{\\text{DFT}}[k]\\right| = ${d.fftError < 1e-15 ? '0' : d.fftError.toExponential(1).replace('e', '\\times 10^{') + '}'}`
       }
     ];
@@ -411,7 +412,7 @@ const notebook = {
 function renderGallery(gallery, isEn, refresh) {
   renderSequenceEditor(gallery, {
     isEn,
-    title: isEn ? 'Type your own samples (from n = 0)' : 'Digite as suas amostras (a partir de n = 0)',
+    title: isEn ? 'Type your own samples (from n = 0)' : tx('Digite as suas amostras (a partir de n = 0)', 'Escribe tus muestras (a partir de n = 0)'),
     active: state.dftPresetKey === 'custom',
     fields: [{ id: 'x', label: 'x[n]:', values: state.dftCustom, hasStart: false, maxLen: 64 }],
     onApply: (result) => {
@@ -432,11 +433,11 @@ function renderGallery(gallery, isEn, refresh) {
 
     const title = document.createElement('span');
     title.className = 'text-[11px] font-bold truncate text-primary';
-    title.textContent = isEn ? preset.titleEn : preset.title;
+    title.textContent = loc(preset, 'title');
     const idea = document.createElement('span');
     idea.className = 'text-[9px] font-semibold truncate';
     idea.style.color = 'var(--c-conv)';
-    idea.textContent = isEn ? preset.ideaEn : preset.idea;
+    idea.textContent = loc(preset, 'idea');
     const math = document.createElement('div');
     math.className = 'preset-math text-[10px] pt-0.5 truncate';
     renderMath(math, `x[n] = ${preset.latex()}`, false);

@@ -12,6 +12,7 @@ import { updateAudioSynth } from '../audio.js';
 import { recomputeFourier } from '../modules/fourier.js';
 import { selectCTFTPreset, renderPresetGallery } from '../ui.js';
 import { syncInputsWithPreset, openSignalHUD } from './hud.js';
+import { loc, tx } from '../lang.js';
 
 // Escapa texto vindo de presets salvos (localStorage) antes de interpolar em innerHTML.
 export function esc(value) {
@@ -28,7 +29,7 @@ export function renderCTFTGallery(gallery, isEn) {
   createCard.innerHTML = `
     <div class="flex flex-col min-w-0">
       <div class="flex items-center gap-1.5">
-        <span class="text-[11px] font-bold" style="color: var(--c-x1)">${isEn ? '+ Create / Edit Aperiodic Signal x(t)' : '+ Criar / Editar Sinal Aperiódico x(t)'}</span>
+        <span class="text-[11px] font-bold" style="color: var(--c-x1)">${isEn ? '+ Create / Edit Aperiodic Signal x(t)' : tx('+ Criar / Editar Sinal Aperiódico x(t)', '+ Crear / Editar Señal Aperiódica x(t)')}</span>
         <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30">MathLive</span>
       </div>
       <div class="create-card-math text-[10px] text-secondary truncate mt-0.5"></div>
@@ -53,8 +54,8 @@ export function renderCTFTGallery(gallery, isEn) {
     const isActive = state.ctftPresetKey === p.id;
     const card = document.createElement('div');
     card.className = `preset-pill rounded-lg p-2 cursor-pointer flex flex-col justify-between gap-1 relative ${isActive ? 'active' : ''}`;
-    const pTitle = isEn ? (p.titleEn || p.title) : p.title;
-    const pSub = isEn ? (p.subtitleEn || p.subtitle) : p.subtitle;
+    const pTitle = loc(p, 'title');
+    const pSub = loc(p, 'subtitle');
 
     card.innerHTML = `
       <div class="flex items-center justify-between gap-1">
@@ -102,7 +103,7 @@ export function renderFourierGallery(gallery, isEn) {
   createCard.innerHTML = `
     <div class="flex flex-col min-w-0">
       <div class="flex items-center gap-1.5">
-        <span class="text-[11px] font-bold" style="color: var(--c-x1)">${isEn ? '+ Create / Edit Periodic Signal f(t)' : '+ Criar / Editar Sinal Periódico f(t)'}</span>
+        <span class="text-[11px] font-bold" style="color: var(--c-x1)">${isEn ? '+ Create / Edit Periodic Signal f(t)' : tx('+ Criar / Editar Sinal Periódico f(t)', '+ Crear / Editar Señal Periódica f(t)')}</span>
         <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30">MathLive</span>
       </div>
       <div class="create-card-math text-[10px] text-secondary truncate mt-0.5"></div>
@@ -128,8 +129,8 @@ export function renderFourierGallery(gallery, isEn) {
     const isActive = state.fourierPresetKey === p.id;
     const card = document.createElement('div');
     card.className = `preset-pill rounded-lg p-2 cursor-pointer flex flex-col justify-between gap-1 relative ${isActive ? 'active' : ''}`;
-    const pTitle = isEn ? (p.titleEn || p.title) : p.title;
-    const pSub = isEn ? (p.subtitleEn || p.subtitle) : p.subtitle;
+    const pTitle = loc(p, 'title');
+    const pSub = loc(p, 'subtitle');
 
     card.innerHTML = `
       <div class="flex items-center justify-between gap-1">
@@ -193,10 +194,10 @@ export function renderConvolutionGallery(gallery, isEn) {
   createCard.innerHTML = `
     <div class="flex items-center justify-between gap-2">
       <div class="flex items-center gap-1.5">
-        <span class="text-[11px] font-bold" style="color: var(--c-x1)">${isEn ? '+ Create / Edit Signals in Simulation' : '+ Criar / Editar Sinais na Simulação'}</span>
+        <span class="text-[11px] font-bold" style="color: var(--c-x1)">${isEn ? '+ Create / Edit Signals in Simulation' : tx('+ Criar / Editar Sinais na Simulação', '+ Crear / Editar Señales en la Simulación')}</span>
         <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30">MathLive</span>
       </div>
-      <span class="text-[9px] text-mut hidden sm:inline">${isEn ? 'Or click curves in 3D' : 'Ou clique nas curvas 3D'}</span>
+      <span class="text-[9px] text-mut hidden sm:inline">${isEn ? 'Or click curves in 3D' : tx('Ou clique nas curvas 3D', 'O haz clic en las curvas 3D')}</span>
     </div>
     <div class="grid grid-cols-2 gap-1.5">
       <button type="button" id="gallery-btn-edit-x" class="ctrl-pill px-2 py-1.5 rounded-lg text-left flex items-center justify-between gap-1 hover:border-emerald-400/60 transition-all">
@@ -239,8 +240,8 @@ export function renderConvolutionGallery(gallery, isEn) {
     const isActive = state.presetKey === p.id;
     const card = document.createElement('div');
     card.className = `preset-pill rounded-lg p-2 cursor-pointer flex flex-col justify-between gap-1 relative ${isActive ? 'active' : ''}`;
-    const bTitle = isEn ? (p.shortTitleEn || p.shortTitle) : p.shortTitle;
-    const bSub = isEn ? (p.subtitleEn || p.subtitle) : (p.subtitle || '');
+    const bTitle = loc(p, 'shortTitle');
+    const bSub = loc(p, 'subtitle');
 
     card.innerHTML = `
       <div class="flex items-center justify-between gap-1">

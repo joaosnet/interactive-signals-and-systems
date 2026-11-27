@@ -17,6 +17,7 @@ import { registerModule } from './registry.js';
 import { AUX_SLIDER_ROW, syncAuxSlider } from './aux-slider.js';
 import { renderPZEditor } from './pz-editor.js';
 import { buildZCustom, zRocOptions } from '../pz-engine.js';
+import { langKey, loc, tx } from '../lang.js';
 
 // ---- Geometria do palco -----------------------------------------------------
 const K = 1.5;          // unidades de cena por unidade do plano z
@@ -99,16 +100,16 @@ function listLatex(points, emptyText) {
 }
 
 const STABILITY_TEXT = {
-  stable: { pt: 'Estável', en: 'Stable' },
-  marginal: { pt: 'Marginalmente estável', en: 'Marginally stable' },
-  unstable: { pt: 'Instável', en: 'Unstable' }
+  stable: { pt: 'Estável', en: 'Stable', es: 'Estable' },
+  marginal: { pt: 'Marginalmente estável', en: 'Marginally stable', es: 'Marginalmente estable' },
+  unstable: { pt: 'Instável', en: 'Unstable', es: 'Inestable' }
 };
 
 const CAUSALITY_TEXT = {
-  causal: { pt: 'causal', en: 'causal' },
-  anticausal: { pt: 'anticausal', en: 'anticausal' },
-  bilateral: { pt: 'bilateral', en: 'two-sided' },
-  finite: { pt: 'finita', en: 'finite' }
+  causal: { pt: 'causal', en: 'causal', es: 'causal' },
+  anticausal: { pt: 'anticausal', en: 'anticausal', es: 'anticausal' },
+  bilateral: { pt: 'bilateral', en: 'two-sided', es: 'bilateral' },
+  finite: { pt: 'finita', en: 'finite', es: 'finita' }
 };
 
 // ---- Slider -----------------------------------------------------------------
@@ -309,7 +310,7 @@ function renderScene(scene, dt) {
 const notebook = {
   metric(isEn) {
     const c = calc();
-    if (state.step === 1) return { label: isEn ? 'Complex variable' : 'Variável complexa', latex: 'z = r\\,e^{j\\Omega}' };
+    if (state.step === 1) return { label: isEn ? 'Complex variable' : tx('Variável complexa', 'Variable compleja'), latex: 'z = r\\,e^{j\\Omega}' };
     if (state.step === 2) return { label: 'ROC', latex: c.latexROC };
     if (state.step === 3) {
       const rc = cutRadius();
@@ -318,7 +319,7 @@ const notebook = {
         : (isEn ? '\\notin \\text{ROC (diverges)}' : '\\notin \\text{ROC (diverge)}');
       return { label: isEn ? 'Cut' : 'Corte', latex: `|z| = ${num(rc)} \\; ${verdict}` };
     }
-    const txt = STABILITY_TEXT[c.stability][isEn ? 'en' : 'pt'];
+    const txt = STABILITY_TEXT[c.stability][langKey()];
     return { label: isEn ? 'System h[n] = x[n]' : 'Sistema h[n] = x[n]', latex: `\\text{${txt}}` };
   },
 
@@ -329,15 +330,15 @@ const notebook = {
     if (state.step === 1) {
       return [
         {
-          label: isEn ? '1.1 Bilateral Z-Transform Definition:' : '1.1 Definição da Transformada Z Bilateral:',
+          label: isEn ? '1.1 Bilateral Z-Transform Definition:' : tx('1.1 Definição da Transformada Z Bilateral:', '1.1 Definición de la Transformada Z Bilateral:'),
           latex: 'X(z) = \\mathcal{Z}\\{x[n]\\} = \\sum_{n=-\\infty}^{+\\infty} x[n]\\,z^{-n}, \\quad z = r\\,e^{j\\Omega}'
         },
         {
-          label: isEn ? '1.2 Discrete-Time Sequence:' : '1.2 Sequência no Tempo Discreto:',
+          label: isEn ? '1.2 Discrete-Time Sequence:' : tx('1.2 Sequência no Tempo Discreto:', '1.2 Secuencia en Tiempo Discreto:'),
           latex: `x[n] = ${c.latexTime}`
         },
         {
-          label: isEn ? '1.3 The Z-Transform is a DTFT with a Convergence Factor:' : '1.3 A Transformada Z é uma DTFT com Fator de Convergência:',
+          label: isEn ? '1.3 The Z-Transform is a DTFT with a Convergence Factor:' : tx('1.3 A Transformada Z é uma DTFT com Fator de Convergência:', '1.3 La Transformada Z es una DTFT con Factor de Convergencia:'),
           latex: 'X(r\\,e^{j\\Omega}) = \\sum_{n=-\\infty}^{+\\infty} \\left[x[n]\\,r^{-n}\\right] e^{-j\\Omega n} = \\text{DTFT}\\{x[n]\\,r^{-n}\\}'
         }
       ];
@@ -347,16 +348,16 @@ const notebook = {
       const rocRule = {
         causal: isEn
           ? '\\text{Right-sided sequence} \\implies \\text{ROC outside the outermost pole}'
-          : '\\text{Sequência causal (lateral direita)} \\implies \\text{ROC fora do polo de maior módulo}',
+          : tx('\\text{Sequência causal (lateral direita)} \\implies \\text{ROC fora do polo de maior módulo}', '\\text{Secuencia causal (lateral derecha)} \\implies \\text{ROC fuera del polo de mayor módulo}'),
         anticausal: isEn
           ? '\\text{Left-sided sequence} \\implies \\text{ROC inside the innermost pole}'
-          : '\\text{Sequência anticausal (lateral esquerda)} \\implies \\text{ROC dentro do polo de menor módulo}',
+          : tx('\\text{Sequência anticausal (lateral esquerda)} \\implies \\text{ROC dentro do polo de menor módulo}', '\\text{Secuencia anticausal (lateral izquierda)} \\implies \\text{ROC dentro del polo de menor módulo}'),
         bilateral: isEn
           ? '\\text{Two-sided sequence} \\implies \\text{ROC is a ring between poles}'
-          : '\\text{Sequência bilateral} \\implies \\text{ROC é um anel entre polos}',
+          : tx('\\text{Sequência bilateral} \\implies \\text{ROC é um anel entre polos}', '\\text{Secuencia bilateral} \\implies \\text{la ROC es un anillo entre polos}'),
         finite: isEn
           ? '\\text{Finite-length sequence} \\implies \\text{ROC is the whole } z \\text{-plane}'
-          : '\\text{Sequência de duração finita} \\implies \\text{ROC é todo o plano } z'
+          : tx('\\text{Sequência de duração finita} \\implies \\text{ROC é todo o plano } z', '\\text{Secuencia de duración finita} \\implies \\text{la ROC es todo el plano } z')
       }[c.causality];
       return [
         {
@@ -364,15 +365,15 @@ const notebook = {
           latex: `${c.latexTime} \\;\\longleftrightarrow\\; X(z) = ${c.latexX}`
         },
         {
-          label: isEn ? '2.2 Poles (×) and Zeros (○):' : '2.2 Polos (×) e Zeros (○):',
-          latex: `p: \\; ${listLatex(c.poles, isEn ? 'none' : 'nenhum')} \\qquad z: \\; ${listLatex(c.zeros, isEn ? 'none' : 'nenhum')}`
+          label: isEn ? '2.2 Poles (×) and Zeros (○):' : tx('2.2 Polos (×) e Zeros (○):', '2.2 Polos (×) y Ceros (○):'),
+          latex: `p: \\; ${listLatex(c.poles, isEn ? 'none' : tx('nenhum', 'ninguno'))} \\qquad z: \\; ${listLatex(c.zeros, isEn ? 'none' : tx('nenhum', 'ninguno'))}`
         },
         {
-          label: isEn ? '2.3 Region of Convergence (ROC):' : '2.3 Região de Convergência (ROC):',
+          label: isEn ? '2.3 Region of Convergence (ROC):' : tx('2.3 Região de Convergência (ROC):', '2.3 Región de Convergencia (ROC):'),
           latex: c.latexROC
         },
         {
-          label: isEn ? '2.4 Why this ROC:' : '2.4 Por que essa ROC:',
+          label: isEn ? '2.4 Why this ROC:' : tx('2.4 Por que essa ROC:', '2.4 Por Qué Esta ROC:'),
           latex: rocRule
         }
       ];
@@ -383,25 +384,25 @@ const notebook = {
       const value = c.magPolar(rc, 0);
       return [
         {
-          label: isEn ? `3.1 Circular Cut at |z| = ${num(rc)}:` : `3.1 Corte Circular em |z| = ${num(rc)}:`,
+          label: isEn ? `3.1 Circular Cut at |z| = ${num(rc)}:` : tx(`3.1 Corte Circular em |z| = ${num(rc)}:`, `3.1 Corte Circular en |z| = ${num(rc)}:`),
           latex: `X(${num(rc)}\\,e^{j\\Omega}) = \\sum_{n=-\\infty}^{+\\infty} \\left[x[n]\\,${num(rc)}^{-n}\\right] e^{-j\\Omega n}`
         },
         {
-          label: isEn ? '3.2 Does the Sum Converge Here?' : '3.2 A Soma Converge Aqui?',
+          label: isEn ? '3.2 Does the Sum Converge Here?' : tx('3.2 A Soma Converge Aqui?', '3.2 ¿La Suma Converge Aquí?'),
           latex: inside
             ? `|z| = ${num(rc)} \\in \\text{ROC} \\implies |X(${num(rc)})| = ${Number.isFinite(value) ? value.toFixed(3) : '\\infty'}`
             : (isEn
               ? `|z| = ${num(rc)} \\notin \\text{ROC} \\implies x[n]\\,r^{-n} \\text{ is not absolutely summable}`
-              : `|z| = ${num(rc)} \\notin \\text{ROC} \\implies x[n]\\,r^{-n} \\text{ não é absolutamente somável}`)
+              : tx(`|z| = ${num(rc)} \\notin \\text{ROC} \\implies x[n]\\,r^{-n} \\text{ não é absolutamente somável}`, `|z| = ${num(rc)} \\notin \\text{ROC} \\implies x[n]\\,r^{-n} \\text{ no es absolutamente sumable}`))
         },
         {
-          label: isEn ? '3.3 Surface Reading:' : '3.3 Leitura da Superfície:',
+          label: isEn ? '3.3 Surface Reading:' : tx('3.3 Leitura da Superfície:', '3.3 Lectura de la Superficie:'),
           latex: isEn
             ? '\\text{poles: } |X| \\to \\infty, \\quad \\text{zeros: } |X| = 0'
-            : '\\text{polos: } |X| \\to \\infty, \\quad \\text{zeros: } |X| = 0'
+            : tx('\\text{polos: } |X| \\to \\infty, \\quad \\text{zeros: } |X| = 0', '\\text{polos: } |X| \\to \\infty, \\quad \\text{ceros: } |X| = 0')
         },
         {
-          label: isEn ? '3.4 One Turn Around the Circle = 2π (periodic cut):' : '3.4 Uma Volta no Círculo = 2π (corte periódico):',
+          label: isEn ? '3.4 One Turn Around the Circle = 2π (periodic cut):' : tx('3.4 Uma Volta no Círculo = 2π (corte periódico):', '3.4 Una Vuelta al Círculo = 2π (corte periódico):'),
           latex: 'X(r\\,e^{j(\\Omega + 2\\pi)}) = X(r\\,e^{j\\Omega})'
         }
       ];
@@ -413,42 +414,42 @@ const notebook = {
       : (c.stability === 'marginal'
         ? (isEn
           ? '\\text{Pole on the unit circle} \\implies \\text{the DTFT exists only with impulses } \\delta(\\Omega - \\Omega_0)'
-          : '\\text{Polo sobre o círculo unitário} \\implies \\text{a DTFT só existe com impulsos } \\delta(\\Omega - \\Omega_0)')
+          : tx('\\text{Polo sobre o círculo unitário} \\implies \\text{a DTFT só existe com impulsos } \\delta(\\Omega - \\Omega_0)', '\\text{Polo sobre el círculo unitario} \\implies \\text{la DTFT solo existe con impulsos } \\delta(\\Omega - \\Omega_0)'))
         : (isEn
           ? '|z| = 1 \\notin \\text{ROC} \\implies \\text{the DTFT does not exist}'
-          : '|z| = 1 \\notin \\text{ROC} \\implies \\text{a DTFT não existe}'));
-    const stab = STABILITY_TEXT[c.stability][isEn ? 'en' : 'pt'];
+          : tx('|z| = 1 \\notin \\text{ROC} \\implies \\text{a DTFT não existe}', '|z| = 1 \\notin \\text{ROC} \\implies \\text{la DTFT no existe}')));
+    const stab = STABILITY_TEXT[c.stability][langKey()];
     const sumAbs = '\\sum_{n=-\\infty}^{+\\infty} |h[n]|';
     const stabLine = c.stability === 'stable'
       ? `|z| = 1 \\in \\text{ROC} \\implies ${sumAbs} < \\infty \\implies \\textbf{${stab}}`
       : c.stability === 'marginal'
       ? (isEn
         ? `\\text{Pole on the unit circle} \\implies ${sumAbs} = \\infty \\implies \\textbf{${stab}} \\text{ (not BIBO)}`
-        : `\\text{Polo sobre o círculo unitário} \\implies ${sumAbs} = \\infty \\implies \\textbf{${stab}} \\text{ (não é BIBO)}`)
+        : tx(`\\text{Polo sobre o círculo unitário} \\implies ${sumAbs} = \\infty \\implies \\textbf{${stab}} \\text{ (não é BIBO)}`, `\\text{Polo sobre el círculo unitario} \\implies ${sumAbs} = \\infty \\implies \\textbf{${stab}} \\text{ (no es BIBO)}`))
       : `|z| = 1 \\notin \\text{ROC} \\implies ${sumAbs} = \\infty \\implies \\textbf{${stab}}`;
     return [
       {
-        label: isEn ? '4.1 Bridge to the DTFT:' : '4.1 Ponte com a DTFT:',
+        label: isEn ? '4.1 Bridge to the DTFT:' : tx('4.1 Ponte com a DTFT:', '4.1 Puente con la DTFT:'),
         latex: dtftLine
       },
       {
-        label: isEn ? '4.2 BIBO Stability of a System with h[n] = x[n]:' : '4.2 Estabilidade BIBO de um Sistema com h[n] = x[n]:',
+        label: isEn ? '4.2 BIBO Stability of a System with h[n] = x[n]:' : tx('4.2 Estabilidade BIBO de um Sistema com h[n] = x[n]:', '4.2 Estabilidad BIBO de un Sistema con h[n] = x[n]:'),
         latex: stabLine
       },
       {
-        label: isEn ? '4.3 Causal Systems Shortcut:' : '4.3 Atalho para Sistemas Causais:',
+        label: isEn ? '4.3 Causal Systems Shortcut:' : tx('4.3 Atalho para Sistemas Causais:', '4.3 Atajo para Sistemas Causales:'),
         latex: isEn
           ? '\\text{Causal and stable} \\iff |p_k| < 1 \\;\\; \\forall k'
-          : '\\text{Causal e estável} \\iff |p_k| < 1 \\;\\; \\forall k'
+          : tx('\\text{Causal e estável} \\iff |p_k| < 1 \\;\\; \\forall k', '\\text{Causal y estable} \\iff |p_k| < 1 \\;\\; \\forall k')
       },
       {
         label: isEn
           ? '4.4 Bridge to Laplace (jω axis ↔ unit circle):'
-          : '4.4 Ponte com Laplace (eixo jω ↔ círculo unitário):',
+          : tx('4.4 Ponte com Laplace (eixo jω ↔ círculo unitário):', '4.4 Puente con Laplace (eje jω ↔ círculo unitario):'),
         latex: 'z = e^{sT}: \\quad \\operatorname{Re}\\{s\\} < 0 \\iff |z| < 1'
       },
       {
-        label: isEn ? '4.5 Operational Properties:' : '4.5 Propriedades Operacionais:',
+        label: isEn ? '4.5 Operational Properties:' : tx('4.5 Propriedades Operacionais:', '4.5 Propiedades Operacionales:'),
         latex: '\\mathcal{Z}\\{x[n - k]\\} = z^{-k}X(z), \\quad \\mathcal{Z}\\{a^n x[n]\\} = X\\!\\left(\\tfrac{z}{a}\\right), \\quad \\mathcal{Z}\\{x * h\\} = X(z)H(z)'
       }
     ];
@@ -457,7 +458,7 @@ const notebook = {
   table(container, isEn) {
     const header = document.createElement('div');
     header.className = 'grid grid-cols-3 gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[10px] font-bold text-sec uppercase tracking-wider mb-1';
-    [isEn ? 'Sequence x[n]' : 'Sequência x[n]', 'X(z)', 'ROC'].forEach((text, i) => {
+    [isEn ? 'Sequence x[n]' : tx('Sequência x[n]', 'Secuencia x[n]'), 'X(z)', 'ROC'].forEach((text, i) => {
       const span = document.createElement('span');
       span.textContent = text;
       if (i === 2) span.className = 'text-right';
@@ -539,11 +540,11 @@ function renderGallery(gallery, isEn, refresh) {
     head.className = 'flex items-center justify-between gap-1';
     const title = document.createElement('span');
     title.className = 'text-[11px] font-bold truncate text-primary';
-    title.textContent = isEn ? preset.titleEn : preset.title;
+    title.textContent = loc(preset, 'title');
     const badge = document.createElement('span');
     badge.className = 'text-[9px] font-mono-code font-semibold';
     badge.style.color = 'var(--c-conv)';
-    badge.textContent = CAUSALITY_TEXT[data.causality][isEn ? 'en' : 'pt'];
+    badge.textContent = CAUSALITY_TEXT[data.causality][langKey()];
     head.append(title, badge);
 
     const math = document.createElement('div');

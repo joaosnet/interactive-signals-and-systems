@@ -188,6 +188,7 @@ Module features:
 - **Zen Focus Mode (`Z`)**: Minimizes panels to leave 100% of the screen dedicated to the 3D stage.
 - **Bilingual System**: English and Brazilian Portuguese interface switching with persistent preferences via `localStorage`.
 - **Notebook in Focus**: The "Open notebook" button moves the derivation out of the panel and onto the stage area, as a ruled sheet where each line is handwritten with the pen following the stroke. Changing steps turns the page; moving the slider updates the numbers in place.
+- **Three Languages**: Portuguese, English and Spanish, across the interface, the notebooks and the examples. The language button cycles through them and the choice is saved; `#lang=es` in the URL opens straight in Spanish.
 
 ---
 
