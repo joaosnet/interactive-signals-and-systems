@@ -1225,8 +1225,11 @@ export function renderCTFTScene3D(dt = 0.016) {
   // Preenchimento de área sob x(t)
   const timeArea = buildCurveAreaPolygon(timePts);
   if (timeArea.length > 2) {
-    draw3DPolygon(timeArea, 'rgba(56, 189, 248, 0.16)', null, 0);
+    draw3DPolygon(timeArea, pal.x1Fill, null, 0);
   }
+
+  // Modo foco: só x(t) fica em destaque; o restante da cena esmaece (como na série de Fourier)
+  if (isFocusActive) ctx3d.globalAlpha = 0.28;
 
   // 2.1 Sonda de Frequência Ativa (Passos 1 a 3): Produto x(t)*cos(w*t) no plano intermediário z = 2.2
   const W_SPAN = 16.0;
@@ -1254,7 +1257,7 @@ export function renderCTFTScene3D(dt = 0.016) {
   // Preenchimento sob o espectro de magnitude
   const magArea = buildCurveAreaPolygon(magPts);
   if (magArea.length > 2) {
-    draw3DPolygon(magArea, 'rgba(16, 185, 129, 0.18)', null, 0);
+    draw3DPolygon(magArea, pal.convFill, null, 0);
   }
 
   // 3.1 Espectro Contínuo de Fase ∠X(w) (escala [-pi, pi] -> [-0.88, 0.88] em z = Z_MAX - 0.75)
