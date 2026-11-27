@@ -7,10 +7,12 @@ const initialLang = (function () {
     const hash = window.location.hash || '';
     if (hash.includes('lang=pt')) return 'pt';
     if (hash.includes('lang=en')) return 'en';
+    if (hash.includes('lang=es')) return 'es';
     const saved = localStorage.getItem('conv3d_lang_pref');
-    if (saved === 'pt' || saved === 'en') return saved;
+    if (saved === 'pt' || saved === 'en' || saved === 'es') return saved;
     const nav = (navigator.languages && navigator.languages[0]) || navigator.language || '';
-    return nav.toLowerCase().startsWith('pt') ? 'pt' : 'en';
+    const code = nav.toLowerCase();
+    return code.startsWith('pt') ? 'pt' : (code.startsWith('es') ? 'es' : 'en');
   } catch (e) {
     return 'pt';
   }

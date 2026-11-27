@@ -44,7 +44,7 @@ const u = (n) => (n >= 0 ? 1 : 0); // degrau discreto: u[0] = 1
  */
 export const Z_PRESETS = {
   delta: {
-    title: 'Impulso Unitário', titleEn: 'Unit Impulse',
+    title: 'Impulso Unitário', titleEn: 'Unit Impulse', titleEs: 'Impulso Unitario',
     params: {},
     build: () => ({
       causality: 'finite',
@@ -56,7 +56,7 @@ export const Z_PRESETS = {
     })
   },
   step: {
-    title: 'Degrau Unitário', titleEn: 'Unit Step',
+    title: 'Degrau Unitário', titleEn: 'Unit Step', titleEs: 'Escalón Unitario',
     params: {},
     build: () => ({
       causality: 'causal',
@@ -68,7 +68,7 @@ export const Z_PRESETS = {
     })
   },
   exp: {
-    title: 'Exponencial Causal', titleEn: 'Causal Exponential',
+    title: 'Exponencial Causal', titleEn: 'Causal Exponential', titleEs: 'Exponencial Causal',
     params: { a: { min: -1.5, max: 1.5, def: 0.8 } },
     build: ({ a }) => {
       // a = 0: a^n u[n] degenera em δ[n] (polo e zero se cancelam na origem)
@@ -93,7 +93,7 @@ export const Z_PRESETS = {
     }
   },
   anticausal: {
-    title: 'Exponencial Anticausal', titleEn: 'Anticausal Exponential',
+    title: 'Exponencial Anticausal', titleEn: 'Anticausal Exponential', titleEs: 'Exponencial Anticausal',
     params: { a: { min: 0.3, max: 1.8, def: 0.8 } },
     build: ({ a }) => ({
       causality: 'anticausal',
@@ -105,7 +105,7 @@ export const Z_PRESETS = {
     })
   },
   bilateral: {
-    title: 'Exponencial Bilateral', titleEn: 'Two-Sided Exponential',
+    title: 'Exponencial Bilateral', titleEn: 'Two-Sided Exponential', titleEs: 'Exponencial Bilateral',
     params: { a: { min: 0.5, max: 0.95, def: 0.6 } },
     build: ({ a }) => ({
       causality: 'bilateral',
@@ -118,7 +118,7 @@ export const Z_PRESETS = {
     })
   },
   ramp: {
-    title: 'Rampa', titleEn: 'Ramp',
+    title: 'Rampa', titleEn: 'Ramp', titleEs: 'Rampa',
     params: {},
     build: () => ({
       causality: 'causal',
@@ -130,22 +130,22 @@ export const Z_PRESETS = {
     })
   },
   cos: {
-    title: 'Cosseno Causal', titleEn: 'Causal Cosine',
+    title: 'Cosseno Causal', titleEn: 'Causal Cosine', titleEs: 'Coseno Causal',
     params: { w0: { min: 0.2, max: 2.9, def: 0.8 } },
     build: ({ w0 }) => sinusoid({ r: 1, w0, kind: 'cos' })
   },
   sin: {
-    title: 'Seno Causal', titleEn: 'Causal Sine',
+    title: 'Seno Causal', titleEn: 'Causal Sine', titleEs: 'Seno Causal',
     params: { w0: { min: 0.2, max: 2.9, def: 0.8 } },
     build: ({ w0 }) => sinusoid({ r: 1, w0, kind: 'sin' })
   },
   dampedcos: {
-    title: 'Cosseno Amortecido', titleEn: 'Damped Cosine',
+    title: 'Cosseno Amortecido', titleEn: 'Damped Cosine', titleEs: 'Coseno Amortiguado',
     params: { a: { min: 0.3, max: 1.5, def: 0.8 }, w0: { min: 0.2, max: 2.9, def: 0.8 } },
     build: ({ a, w0 }) => sinusoid({ r: a, w0, kind: 'cos' })
   },
   dampedsin: {
-    title: 'Seno Amortecido', titleEn: 'Damped Sine',
+    title: 'Seno Amortecido', titleEn: 'Damped Sine', titleEs: 'Seno Amortiguado',
     params: { a: { min: 0.3, max: 1.5, def: 0.8 }, w0: { min: 0.2, max: 2.9, def: 0.8 } },
     build: ({ a, w0 }) => sinusoid({ r: a, w0, kind: 'sin' })
   }

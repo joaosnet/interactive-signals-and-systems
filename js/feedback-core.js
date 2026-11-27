@@ -29,10 +29,10 @@ const URL_MESSAGE_MAX = 3000;
 
 /** Tipos de relato: cada um aponta para um formulário de issue em .github/ISSUE_TEMPLATE. */
 export const FEEDBACK_TYPES = {
-  bug: { template: 'bug.yml', label: 'bug', prefix: '[Bug]', pt: 'Algo não funciona', en: 'Something is broken' },
-  content: { template: 'conteudo.yml', label: 'conteudo', prefix: '[Conteúdo]', pt: 'Erro na matemática ou no texto', en: 'Mistake in the math or text' },
-  idea: { template: 'sugestao.yml', label: 'enhancement', prefix: '[Sugestão]', pt: 'Sugestão ou pedido', en: 'Suggestion or request' },
-  question: { template: 'sugestao.yml', label: 'question', prefix: '[Dúvida]', pt: 'Dúvida', en: 'Question' }
+  bug: { template: 'bug.yml', label: 'bug', prefix: '[Bug]', pt: 'Algo não funciona', en: 'Something is broken', es: 'Algo no funciona' },
+  content: { template: 'conteudo.yml', label: 'conteudo', prefix: '[Conteúdo]', pt: 'Erro na matemática ou no texto', en: 'Mistake in the math or text', es: 'Error en la matemática o en el texto' },
+  idea: { template: 'sugestao.yml', label: 'enhancement', prefix: '[Sugestão]', pt: 'Sugestão ou pedido', en: 'Suggestion or request', es: 'Sugerencia o pedido' },
+  question: { template: 'sugestao.yml', label: 'question', prefix: '[Dúvida]', pt: 'Dúvida', en: 'Question', es: 'Duda' }
 };
 
 /** Arquivo de cada módulo (o id nem sempre é o nome do arquivo). */

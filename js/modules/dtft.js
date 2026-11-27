@@ -15,6 +15,7 @@ import { renderMath } from '../math-engine.js';
 import { DTFT_PRESETS, calculateDTFTData } from '../dtft-engine.js';
 import { registerModule } from './registry.js';
 import { renderSequenceEditor } from './seq-editor.js';
+import { langKey, loc, tx } from '../lang.js';
 
 // ---- Geometria do palco -----------------------------------------------------
 const X_HALF = 4.5;
@@ -69,12 +70,12 @@ function complexLatex(v) {
 }
 
 const FILTER_TEXT = {
-  lowpass: { pt: 'passa-baixas', en: 'low-pass' },
-  highpass: { pt: 'passa-altas', en: 'high-pass' },
-  allpass: { pt: 'passa-tudo', en: 'all-pass' },
-  impulses: { pt: 'impulsos', en: 'impulses' }
+  lowpass: { pt: 'passa-baixas', en: 'low-pass', es: 'pasa-bajos' },
+  highpass: { pt: 'passa-altas', en: 'high-pass', es: 'pasa-altos' },
+  allpass: { pt: 'passa-tudo', en: 'all-pass', es: 'pasa-todo' },
+  impulses: { pt: 'impulsos', en: 'impulses', es: 'impulsos' }
 };
-const filterLabel = (d, isEn) => FILTER_TEXT[d.filterType || 'impulses'][isEn ? 'en' : 'pt'];
+const filterLabel = (d, isEn) => FILTER_TEXT[d.filterType || 'impulses'][langKey()];
 
 /** A sequência cabe inteira na soma parcial de N termos de cada lado? */
 function isExactAt(d, N) {
@@ -298,8 +299,8 @@ function renderScene(scene, dt) {
 const notebook = {
   metric(isEn) {
     const d = calc();
-    if (state.step === 1) return { label: isEn ? 'Spectrum' : 'Espectro', latex: isEn ? '\\text{continuous in } \\Omega' : '\\text{contínuo em } \\Omega' };
-    if (state.step === 2) return { label: isEn ? 'Terms in the sum' : 'Termos na soma', latex: `2N + 1 = ${2 * state.dtftN + 1}` };
+    if (state.step === 1) return { label: isEn ? 'Spectrum' : 'Espectro', latex: isEn ? '\\text{continuous in } \\Omega' : tx('\\text{contínuo em } \\Omega', '\\text{continuo en } \\Omega') };
+    if (state.step === 2) return { label: isEn ? 'Terms in the sum' : tx('Termos na soma', 'Términos en la suma'), latex: `2N + 1 = ${2 * state.dtftN + 1}` };
     if (state.step === 3) return { label: isEn ? 'Period' : 'Período', latex: '2\\pi' };
     if (d.isImpulsive) return { label: isEn ? 'Spectrum' : 'Espectro', latex: isEn ? '\\text{impulses}' : '\\text{impulsos}' };
     return { label: isEn ? 'Probe' : 'Sonda', latex: `|X(e^{j${num(state.dtftOmega)}})| = ${num(d.mag(state.dtftOmega), 3)}` };
@@ -313,14 +314,14 @@ const notebook = {
     if (state.step === 1) {
       return [
         {
-          label: isEn ? '1.1 Analysis (DTFT):' : '1.1 Análise (DTFT):',
+          label: isEn ? '1.1 Analysis (DTFT):' : tx('1.1 Análise (DTFT):', '1.1 Análisis (DTFT):'),
           latex: 'X(e^{j\\Omega}) = \\sum_{n=-\\infty}^{+\\infty} x[n]\\,e^{-j\\Omega n}'
         },
         {
-          label: isEn ? '1.2 Synthesis (inverse DTFT):' : '1.2 Síntese (DTFT inversa):',
+          label: isEn ? '1.2 Synthesis (inverse DTFT):' : tx('1.2 Síntese (DTFT inversa):', '1.2 Síntesis (DTFT inversa):'),
           latex: 'x[n] = \\frac{1}{2\\pi}\\int_{2\\pi} X(e^{j\\Omega})\\,e^{j\\Omega n}\\,d\\Omega'
         },
-        { label: isEn ? '1.3 Sequence:' : '1.3 Sequência:', latex: `x[n] = ${d.latexTime}` },
+        { label: isEn ? '1.3 Sequence:' : tx('1.3 Sequência:', '1.3 Secuencia:'), latex: `x[n] = ${d.latexTime}` },
         { label: isEn ? '1.4 Transform Pair:' : '1.4 Par de Transformada:', latex: `X(e^{j\\Omega}) = ${d.latexX}` }
       ];
     }
@@ -332,15 +333,15 @@ const notebook = {
       if (isExactAt(d, N)) {
         verdict = isEn
           ? '\\text{the whole sequence is inside} \\implies X_N = X \\text{ exactly}'
-          : '\\text{a sequência inteira já entrou} \\implies X_N = X \\text{ exata}';
+          : tx('\\text{a sequência inteira já entrou} \\implies X_N = X \\text{ exata}', '\\text{la secuencia entera ya entró} \\implies X_N = X \\text{ exacta}');
       } else if (d.isImpulsive) {
         verdict = isEn
           ? '\\text{not summable: the peaks grow with } N \\to \\text{impulses}'
-          : '\\text{não é somável: os picos crescem com } N \\to \\text{impulsos}';
+          : tx('\\text{não é somável: os picos crescem com } N \\to \\text{impulsos}', '\\text{no es sumable: los picos crecen con } N \\to \\text{impulsos}');
       } else if (d.slowDecay) {
         verdict = isEn
           ? '\\text{Gibbs: the} \\approx 9\\% \\text{ overshoot never goes away}'
-          : '\\text{Gibbs: o sobressinal de} \\approx 9\\% \\text{ nunca desaparece}';
+          : tx('\\text{Gibbs: o sobressinal de} \\approx 9\\% \\text{ nunca desaparece}', '\\text{Gibbs: el sobreimpulso de} \\approx 9\\% \\text{ nunca desaparece}');
       } else {
         verdict = isEn
           ? '\\sum |x[n]| < \\infty \\implies X_N \\to X \\text{ uniformly}'
@@ -348,12 +349,12 @@ const notebook = {
       }
       return [
         {
-          label: isEn ? `2.1 Partial Sum with N = ${N}:` : `2.1 Soma Parcial com N = ${N}:`,
+          label: isEn ? `2.1 Partial Sum with N = ${N}:` : tx(`2.1 Soma Parcial com N = ${N}:`, `2.1 Suma Parcial con N = ${N}:`),
           latex: `X_{${N}}(\\Omega) = \\sum_{n=-${N}}^{${N}} x[n]\\,e^{-j\\Omega n}`
         },
-        { label: isEn ? '2.2 Does It Converge?' : '2.2 Converge?', latex: verdict },
+        { label: isEn ? '2.2 Does It Converge?' : tx('2.2 Converge?', '2.2 ¿Converge?'), latex: verdict },
         {
-          label: isEn ? `2.3 Value at Ω = ${num(refW)}:` : `2.3 Valor em Ω = ${num(refW)}:`,
+          label: isEn ? `2.3 Value at Ω = ${num(refW)}:` : tx(`2.3 Valor em Ω = ${num(refW)}:`, `2.3 Valor en Ω = ${num(refW)}:`),
           latex: d.isImpulsive
             ? `X_{${N}}(${num(refW)}) = ${num(part.re, 3)} \\approx N + \\tfrac{1}{2}`
             : `X_{${N}}(0) = ${num(part.re, 3)} \\quad \\text{vs.} \\quad X(e^{j0}) = ${num(d.evalX(0).re, 3)}`
@@ -364,21 +365,21 @@ const notebook = {
     if (state.step === 3) {
       return [
         {
-          label: isEn ? '3.1 The Spectrum Repeats Every 2π:' : '3.1 O Espectro se Repete a Cada 2π:',
+          label: isEn ? '3.1 The Spectrum Repeats Every 2π:' : tx('3.1 O Espectro se Repete a Cada 2π:', '3.1 El Espectro se Repite Cada 2π:'),
           latex: 'e^{-j(\\Omega + 2\\pi)n} = e^{-j\\Omega n} \\implies X(e^{j(\\Omega + 2\\pi)}) = X(e^{j\\Omega})'
         },
         {
-          label: isEn ? '3.2 One Period is Enough (Ω = π is the fastest oscillation):' : '3.2 Basta um Período (Ω = π é a oscilação mais rápida):',
+          label: isEn ? '3.2 One Period is Enough (Ω = π is the fastest oscillation):' : tx('3.2 Basta um Período (Ω = π é a oscilação mais rápida):', '3.2 Basta un Período (Ω = π es la oscilación más rápida):'),
           latex: '-\\pi < \\Omega \\le \\pi, \\qquad e^{j\\pi n} = (-1)^n'
         },
         {
           label: isEn ? '3.3 Parseval:' : '3.3 Parseval:',
           latex: Number.isFinite(d.energy)
             ? `\\sum_n |x[n]|^2 = \\frac{1}{2\\pi}\\int_{2\\pi} |X(e^{j\\Omega})|^2\\,d\\Omega = ${num(d.energy, 3)}`
-            : (isEn ? '\\sum_n |x[n]|^2 = \\infty \\quad (\\text{power signal})' : '\\sum_n |x[n]|^2 = \\infty \\quad (\\text{sinal de potência})')
+            : (isEn ? '\\sum_n |x[n]|^2 = \\infty \\quad (\\text{power signal})' : tx('\\sum_n |x[n]|^2 = \\infty \\quad (\\text{sinal de potência})', '\\sum_n |x[n]|^2 = \\infty \\quad (\\text{señal de potencia})'))
         },
         {
-          label: isEn ? '3.4 Bridge to the Z-Transform (unit circle):' : '3.4 Ponte com a Transformada Z (círculo unitário):',
+          label: isEn ? '3.4 Bridge to the Z-Transform (unit circle):' : tx('3.4 Ponte com a Transformada Z (círculo unitário):', '3.4 Puente con la Transformada Z (círculo unitario):'),
           latex: 'X(e^{j\\Omega}) = X(z)\\big|_{z = e^{j\\Omega}}'
         }
       ];
@@ -389,13 +390,13 @@ const notebook = {
       return [
         { label: isEn ? '4.1 Spectrum:' : '4.1 Espectro:', latex: `X(e^{j\\Omega}) = ${d.latexX}` },
         {
-          label: isEn ? '4.2 Reading:' : '4.2 Leitura:',
+          label: isEn ? '4.2 Reading:' : tx('4.2 Leitura:', '4.2 Lectura:'),
           latex: isEn
             ? '\\text{all the content sits at } \\Omega = \\pm\\Omega_0 \\;(+ 2\\pi k)'
-            : '\\text{todo o conteúdo está em } \\Omega = \\pm\\Omega_0 \\;(+ 2\\pi k)'
+            : tx('\\text{todo o conteúdo está em } \\Omega = \\pm\\Omega_0 \\;(+ 2\\pi k)', '\\text{todo el contenido está en } \\Omega = \\pm\\Omega_0 \\;(+ 2\\pi k)')
         },
         {
-          label: isEn ? '4.3 Properties:' : '4.3 Propriedades:',
+          label: isEn ? '4.3 Properties:' : tx('4.3 Propriedades:', '4.3 Propiedades:'),
           latex: 'x[n - n_0] \\leftrightarrow e^{-j\\Omega n_0}X(e^{j\\Omega}), \\qquad x * h \\leftrightarrow X \\cdot H'
         }
       ];
@@ -405,11 +406,11 @@ const notebook = {
     const gain = d.mag(w);
     return [
       {
-        label: isEn ? `4.1 Spectrum at Ω = ${num(w)} rad:` : `4.1 Espectro em Ω = ${num(w)} rad:`,
+        label: isEn ? `4.1 Spectrum at Ω = ${num(w)} rad:` : tx(`4.1 Espectro em Ω = ${num(w)} rad:`, `4.1 Espectro en Ω = ${num(w)} rad:`),
         latex: `X(e^{j${num(w)}}) = ${complexLatex(v)}`
       },
       {
-        label: isEn ? '4.2 Magnitude and Phase:' : '4.2 Magnitude e Fase:',
+        label: isEn ? '4.2 Magnitude and Phase:' : tx('4.2 Magnitude e Fase:', '4.2 Magnitud y Fase:'),
         latex: `|X| = ${num(gain, 3)}, \\qquad \\angle X = ${Number.isNaN(ph) ? (isEn ? '\\text{undefined}' : '\\text{indefinida}') : `${num(ph, 3)}\\ \\text{rad}`}`
       },
       {
@@ -417,11 +418,11 @@ const notebook = {
         latex: `\\cos(${num(w)}n) \\;\\longrightarrow\\; ${num(gain, 3)}\\cos(${num(w)}n ${Number.isNaN(ph) || Math.abs(ph) < 5e-3 ? '' : `${ph < 0 ? '-' : '+'} ${num(Math.abs(ph))}`})`
       },
       {
-        label: isEn ? '4.4 Filter Type (gain at Ω = 0 vs. Ω = π):' : '4.4 Tipo de Filtro (ganho em Ω = 0 vs. Ω = π):',
+        label: isEn ? '4.4 Filter Type (gain at Ω = 0 vs. Ω = π):' : tx('4.4 Tipo de Filtro (ganho em Ω = 0 vs. Ω = π):', '4.4 Tipo de Filtro (ganancia en Ω = 0 vs. Ω = π):'),
         latex: `|X(e^{j0})| = ${num(d.mag(0), 3)}, \\quad |X(e^{j\\pi})| = ${num(d.mag(Math.PI), 3)} \\implies \\textbf{${filterLabel(d, isEn)}}`
       },
       {
-        label: isEn ? '4.5 Properties:' : '4.5 Propriedades:',
+        label: isEn ? '4.5 Properties:' : tx('4.5 Propriedades:', '4.5 Propiedades:'),
         latex: 'x[n - n_0] \\leftrightarrow e^{-j\\Omega n_0}X(e^{j\\Omega}), \\qquad x * h \\leftrightarrow X \\cdot H'
       }
     ];
@@ -430,7 +431,7 @@ const notebook = {
   table(container, isEn) {
     const header = document.createElement('div');
     header.className = 'grid grid-cols-2 gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[10px] font-bold text-sec uppercase tracking-wider mb-1';
-    [isEn ? 'Sequence x[n]' : 'Sequência x[n]', 'X(e^jΩ)'].forEach((text, i) => {
+    [isEn ? 'Sequence x[n]' : tx('Sequência x[n]', 'Secuencia x[n]'), 'X(e^jΩ)'].forEach((text, i) => {
       const span = document.createElement('span');
       span.textContent = text;
       if (i === 1) span.className = 'text-right';
@@ -464,7 +465,7 @@ const notebook = {
 function renderGallery(gallery, isEn, refresh) {
   renderSequenceEditor(gallery, {
     isEn,
-    title: isEn ? 'Type your own x[n]' : 'Digite o seu x[n]',
+    title: isEn ? 'Type your own x[n]' : tx('Digite o seu x[n]', 'Escribe tu x[n]'),
     active: state.dtftPresetKey === 'custom',
     fields: [
       { id: 'x', label: 'x[n]:', values: state.dtftCustom.values, start: state.dtftCustom.start, hasStart: true, maxLen: 21, startMin: -10, startMax: 10 }
@@ -492,7 +493,7 @@ function renderGallery(gallery, isEn, refresh) {
     head.className = 'flex items-center justify-between gap-1';
     const title = document.createElement('span');
     title.className = 'text-[11px] font-bold truncate text-primary';
-    title.textContent = isEn ? preset.titleEn : preset.title;
+    title.textContent = loc(preset, 'title');
     const badge = document.createElement('span');
     badge.className = 'text-[9px] font-mono-code font-semibold shrink-0';
     badge.style.color = 'var(--c-conv)';

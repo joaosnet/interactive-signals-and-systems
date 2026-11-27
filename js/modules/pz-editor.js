@@ -11,6 +11,7 @@
 // ============================================================================
 
 import { expandConj, rocText } from '../pz-engine.js';
+import { langKey } from '../lang.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const SIZE = 220;                       // lado do mini-plano, em unidades do viewBox
@@ -64,6 +65,29 @@ const TEXT = {
       empty: 'Add at least one pole or one zero.',
       narrow: 'The chosen ring is too narrow: move the poles apart or pick another ROC.'
     }
+  },
+  es: {
+    title: { s: 'Arma tu X(s) con polos y ceros', z: 'Arma tu X(z) con polos y ceros' },
+    active: 'en uso',
+    tools: { move: 'Mover', pole: '+ Polo', zero: '+ Cero', erase: 'Borrar' },
+    toolHint: {
+      move: 'Arrastra un polo (×) o un cero (○). Con el teclado: Tab hasta él y usa las flechas.',
+      pole: 'Haz clic en el plano para poner un polo. Fuera del eje real, el conjugado entra con él.',
+      zero: 'Haz clic en el plano para poner un cero. Fuera del eje real, el conjugado entra con él.',
+      erase: 'Haz clic en un polo o un cero para borrarlo.'
+    },
+    roc: 'ROC:', gain: 'Ganancia K:', reset: 'Empezar de nuevo',
+    plane: { s: 'Plano s: haz clic para añadir, arrastra para mover', z: 'Plano z: haz clic para añadir, arrastra para mover' },
+    pole: 'Polo', zero: 'Cero', at: 'en',
+    poles: 'Polos', zeros: 'Ceros', none: 'ninguno',
+    full: `Como máximo ${MAX_ITEMS} de cada tipo (los conjugados no cuentan).`,
+    errors: {
+      nopole: 'Añade al menos un polo.',
+      improper: 'En Laplace el número de ceros debe ser menor que el de polos.',
+      repeated: 'Dos polos están en el mismo lugar: separa uno del otro.',
+      empty: 'Añade al menos un polo o un cero.',
+      narrow: 'El anillo elegido es demasiado estrecho: separa los polos o elige otra ROC.'
+    }
   }
 };
 
@@ -100,7 +124,7 @@ const snap = (v) => Math.round(v / SNAP) * SNAP;
  *   resultado: { ok, error?, regions, rocIndex }
  */
 export function renderPZEditor(gallery, { kind, isEn, active, draft, onChange }) {
-  const t = TEXT[isEn ? 'en' : 'pt'];
+  const t = TEXT[langKey()];
   const R = RANGE[kind];
   const toX = (re) => ((re + R) / (2 * R)) * SIZE;
   const toY = (im) => ((R - im) / (2 * R)) * SIZE;

@@ -6,6 +6,7 @@
 // ============================================================================
 
 import { parseSequence, parseStart, formatSequence } from '../seq-parse.js';
+import { langKey } from '../lang.js';
 
 const TEXT = {
   pt: {
@@ -35,6 +36,20 @@ const TEXT = {
       range: (r) => `"${r.item}" is over 1000 in magnitude.`,
       zero: 'The sequence cannot be all zeros.'
     }
+  },
+  es: {
+    apply: 'Usar esta secuencia',
+    applyMany: 'Usar estas secuencias',
+    start: 'empieza en n =',
+    hint: 'Separa los valores con coma o espacio. Se aceptan fracciones como 1/3. Para decimales con coma, separa con punto y coma: 0,5; 1,5.',
+    active: 'en uso',
+    errors: {
+      empty: 'Escribe al menos un valor.',
+      long: (r) => `Como máximo ${r.max} valores.`,
+      invalid: (r) => `"${r.item}" no es un número.`,
+      range: (r) => `"${r.item}" supera 1000 en módulo.`,
+      zero: 'La secuencia no puede ser toda nula.'
+    }
   }
 };
 
@@ -55,7 +70,7 @@ function el(tag, attrs = {}, children = []) {
  *                   onApply(result) }   result[id] = { values, start }
  */
 export function renderSequenceEditor(gallery, { isEn, title, active, fields, onApply }) {
-  const t = TEXT[isEn ? 'en' : 'pt'];
+  const t = TEXT[langKey()];
   const status = el('p', { class: 'seq-editor-status', role: 'status', 'aria-live': 'polite' });
   const inputs = {};
 

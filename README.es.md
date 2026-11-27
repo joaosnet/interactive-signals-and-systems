@@ -188,6 +188,7 @@ Recursos del módulo:
 - **Modo Zen (`Z`)**: Oculta paneles laterales para dedicar el 100% de la pantalla al escenario 3D.
 - **Soporte Multilingüe**: Interfaz con conmutación en tiempo real y almacenamiento de preferencias locales (`localStorage`).
 - **Cuaderno en Foco**: El botón "Abrir cuaderno" saca la deducción del panel y la pone en el lugar del escenario, como una hoja rayada en la que cada línea se escribe a mano, con el bolígrafo siguiendo el trazo. Cambiar de paso es una página nueva; mover el deslizador actualiza los números en el lugar.
+- **Tres Idiomas**: Portugués, inglés y español, en la interfaz, los cuadernos y los ejemplos. El botón de idioma recorre los tres y la elección queda guardada; `#lang=es` en la URL abre directamente en español.
 
 ---
 

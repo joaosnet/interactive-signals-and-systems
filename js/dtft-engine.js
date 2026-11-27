@@ -38,7 +38,7 @@ function dirichlet(omega, L) {
  */
 export const DTFT_PRESETS = {
   rect: {
-    title: 'Pulso Retangular', titleEn: 'Rectangular Pulse',
+    title: 'Pulso Retangular', titleEn: 'Rectangular Pulse', titleEs: 'Pulso Rectangular',
     param: { symbol: 'M', min: 1, max: 8, def: 2, step: 1 },
     build: (M) => ({
       fnSeq: (n) => (Math.abs(n) <= M ? 1 : 0),
@@ -49,7 +49,7 @@ export const DTFT_PRESETS = {
     })
   },
   exp: {
-    title: 'Exponencial Causal', titleEn: 'Causal Exponential',
+    title: 'Exponencial Causal', titleEn: 'Causal Exponential', titleEs: 'Exponencial Causal',
     param: { symbol: 'a', min: -0.9, max: 0.9, def: 0.7, step: 0.05 },
     build: (a) => ({
       fnSeq: (n) => (n >= 0 ? a ** n : 0),
@@ -68,7 +68,7 @@ export const DTFT_PRESETS = {
     })
   },
   bilateral: {
-    title: 'Exponencial Bilateral', titleEn: 'Two-Sided Exponential',
+    title: 'Exponencial Bilateral', titleEn: 'Two-Sided Exponential', titleEs: 'Exponencial Bilateral',
     param: { symbol: 'a', min: 0.1, max: 0.9, def: 0.6, step: 0.05 },
     build: (a) => ({
       fnSeq: (n) => a ** Math.abs(n),
@@ -79,7 +79,7 @@ export const DTFT_PRESETS = {
     })
   },
   sinc: {
-    title: 'Passa-Baixas Ideal', titleEn: 'Ideal Low-Pass',
+    title: 'Passa-Baixas Ideal', titleEn: 'Ideal Low-Pass', titleEs: 'Pasa-Bajos Ideal',
     param: { symbol: '\\Omega_c', symbolText: 'Ωc', min: 0.3, max: 2.8, def: 1.0, step: 0.05 },
     build: (wc) => ({
       fnSeq: (n) => (n === 0 ? wc / Math.PI : Math.sin(wc * n) / (Math.PI * n)),
@@ -94,7 +94,7 @@ export const DTFT_PRESETS = {
     })
   },
   cos: {
-    title: 'Cosseno', titleEn: 'Cosine',
+    title: 'Cosseno', titleEn: 'Cosine', titleEs: 'Coseno',
     param: { symbol: '\\Omega_0', symbolText: 'Ω₀', min: 0.3, max: 2.8, def: 1.0, step: 0.05 },
     build: (w0) => ({
       fnSeq: (n) => Math.cos(w0 * n),
@@ -106,7 +106,7 @@ export const DTFT_PRESETS = {
     })
   },
   movavg: {
-    title: 'Média Móvel', titleEn: 'Moving Average',
+    title: 'Média Móvel', titleEn: 'Moving Average', titleEs: 'Media Móvil',
     param: { symbol: 'M', min: 2, max: 8, def: 3, step: 1 },
     build: (M) => ({
       fnSeq: (n) => (n >= 0 && n < M ? 1 / M : 0),
@@ -122,7 +122,7 @@ export const DTFT_PRESETS = {
     })
   },
   diff: {
-    title: 'Primeira Diferença', titleEn: 'First Difference',
+    title: 'Primeira Diferença', titleEn: 'First Difference', titleEs: 'Primera Diferencia',
     param: null,
     build: () => ({
       fnSeq: (n) => (n === 0 ? 1 : (n === 1 ? -1 : 0)),
@@ -133,7 +133,7 @@ export const DTFT_PRESETS = {
     })
   },
   delta: {
-    title: 'Impulso Unitário', titleEn: 'Unit Impulse',
+    title: 'Impulso Unitário', titleEn: 'Unit Impulse', titleEs: 'Impulso Unitario',
     param: null,
     build: () => ({
       fnSeq: (n) => (n === 0 ? 1 : 0),

@@ -60,38 +60,38 @@ export const DCONV_SIGNALS = {
 /** Exemplos: cada um é um par (x, h) com uma ideia para ensinar. */
 export const DCONV_PRESETS = {
   rect_rect: {
-    title: 'Retângulo * Retângulo', titleEn: 'Rectangle * Rectangle',
-    idea: 'vira um triângulo', ideaEn: 'becomes a triangle',
+    title: 'Retângulo * Retângulo', titleEn: 'Rectangle * Rectangle', titleEs: 'Rectángulo * Rectángulo',
+    idea: 'vira um triângulo', ideaEn: 'becomes a triangle', ideaEs: 'se vuelve un triángulo',
     x: 'rect3', h: 'rect3'
   },
   rect_exp: {
-    title: 'Retângulo * Exponencial', titleEn: 'Rectangle * Exponential',
-    idea: 'carga e descarga', ideaEn: 'charge and discharge',
+    title: 'Retângulo * Exponencial', titleEn: 'Rectangle * Exponential', titleEs: 'Rectángulo * Exponencial',
+    idea: 'carga e descarga', ideaEn: 'charge and discharge', ideaEs: 'carga y descarga',
     x: 'rect5', h: 'exp07'
   },
   identity: {
-    title: 'Impulso (identidade)', titleEn: 'Impulse (identity)',
+    title: 'Impulso (identidade)', titleEn: 'Impulse (identity)', titleEs: 'Impulso (identidad)',
     idea: 'x * δ = x', ideaEn: 'x * δ = x',
     x: 'ramp4', h: 'delta'
   },
   delay: {
-    title: 'Atraso', titleEn: 'Delay',
+    title: 'Atraso', titleEn: 'Delay', titleEs: 'Retardo',
     idea: 'x * δ[n−2] = x[n−2]', ideaEn: 'x * δ[n−2] = x[n−2]',
     x: 'ramp4', h: 'delay2'
   },
   average: {
-    title: 'Média Móvel', titleEn: 'Moving Average',
-    idea: 'suaviza o sinal', ideaEn: 'smooths the signal',
+    title: 'Média Móvel', titleEn: 'Moving Average', titleEs: 'Media Móvil',
+    idea: 'suaviza o sinal', ideaEn: 'smooths the signal', ideaEs: 'suaviza la señal',
     x: 'noisy', h: 'avg3'
   },
   difference: {
-    title: 'Primeira Diferença', titleEn: 'First Difference',
-    idea: 'detecta as bordas', ideaEn: 'detects the edges',
+    title: 'Primeira Diferença', titleEn: 'First Difference', titleEs: 'Primera Diferencia',
+    idea: 'detecta as bordas', ideaEn: 'detects the edges', ideaEs: 'detecta los bordes',
     x: 'rect5', h: 'diff'
   },
   echo: {
-    title: 'Eco', titleEn: 'Echo',
-    idea: 'cópia atrasada e atenuada', ideaEn: 'delayed, attenuated copy',
+    title: 'Eco', titleEn: 'Echo', titleEs: 'Eco',
+    idea: 'cópia atrasada e atenuada', ideaEn: 'delayed, attenuated copy', ideaEs: 'copia retardada y atenuada',
     x: 'ramp4', h: 'echo'
   }
 };

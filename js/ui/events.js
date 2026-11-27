@@ -14,6 +14,7 @@ import { setFontScale, toggleHighContrast, toggleReduceMotion, applyTheme, toggl
 import { applyLanguage } from './language.js';
 import { syncInputsWithPreset, hudState, setHUDExpressionLive, updateParametricHUDPreview, syncVirtualKeyboardOffset, setHUDInputMode, openMathKeyboard, hideMathKeyboard, openSignalHUD, closeSignalHUD, applySignalHUD, pinSignalHUD } from './hud.js';
 import { setupA11yBarScroll, setupMathLiveVirtualKeyboard, wireAnchoredPopover, setupToolbarRovingTabindex, setupMobileSheetGestures } from './widgets.js';
+import { nextLang } from '../lang.js';
 
 export function initUIEventListeners() {
   // 1. Segmented Control Switcher
@@ -198,7 +199,7 @@ export function initUIEventListeners() {
   const langBtn = document.getElementById('btn-lang-toggle');
   if (langBtn) {
     langBtn.addEventListener('click', () => {
-      applyLanguage(state.lang === 'pt' ? 'en' : 'pt');
+      applyLanguage(nextLang());
     });
   }
   document.querySelectorAll('.lang-opt-btn').forEach(btn => {

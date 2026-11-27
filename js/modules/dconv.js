@@ -15,6 +15,7 @@ import { renderMath } from '../math-engine.js';
 import { DCONV_PRESETS, calculateDConvData, seqAt } from '../dconv-engine.js';
 import { registerModule } from './registry.js';
 import { renderSequenceEditor } from './seq-editor.js';
+import { loc, tx } from '../lang.js';
 
 // ---- Geometria do palco -----------------------------------------------------
 const X_HALF = 4.5;     // o eixo k ocupa x ∈ [-4.5, 4.5]
@@ -185,11 +186,11 @@ const notebook = {
   metric(isEn) {
     const d = calc();
     const n = state.dconvN;
-    if (state.step === 1) return { label: isEn ? 'Convolution sum' : 'Soma de convolução', latex: 'y[n] = x[n] * h[n]' };
+    if (state.step === 1) return { label: isEn ? 'Convolution sum' : tx('Soma de convolução', 'Suma de convolución'), latex: 'y[n] = x[n] * h[n]' };
     if (state.step === 2) {
-      return { label: isEn ? 'Length of y[n]' : 'Comprimento de y[n]', latex: d.infinite ? '\\infty' : `${d.lengthX} + ${d.lengthH} - 1 = ${d.lengthY}` };
+      return { label: isEn ? 'Length of y[n]' : tx('Comprimento de y[n]', 'Longitud de y[n]'), latex: d.infinite ? '\\infty' : `${d.lengthX} + ${d.lengthH} - 1 = ${d.lengthY}` };
     }
-    return { label: isEn ? 'Current sample' : 'Amostra atual', latex: `y[${n}] = ${num(d.yAt(n))}` };
+    return { label: isEn ? 'Current sample' : tx('Amostra atual', 'Muestra actual'), latex: `y[${n}] = ${num(d.yAt(n))}` };
   },
 
   lines(isEn) {
@@ -199,17 +200,17 @@ const notebook = {
     if (state.step === 1) {
       return [
         {
-          label: isEn ? '1.1 Convolution Sum Definition:' : '1.1 Definição da Soma de Convolução:',
+          label: isEn ? '1.1 Convolution Sum Definition:' : tx('1.1 Definição da Soma de Convolução:', '1.1 Definición de la Suma de Convolución:'),
           latex: 'y[n] = x[n] * h[n] = \\sum_{k=-\\infty}^{+\\infty} x[k]\\,h[n-k]'
         },
-        { label: isEn ? '1.2 Input Sequence:' : '1.2 Sequência de Entrada:', latex: `x[n] = ${d.latexX}` },
-        { label: isEn ? '1.3 Impulse Response:' : '1.3 Resposta ao Impulso:', latex: `h[n] = ${d.latexH}` },
+        { label: isEn ? '1.2 Input Sequence:' : tx('1.2 Sequência de Entrada:', '1.2 Secuencia de Entrada:'), latex: `x[n] = ${d.latexX}` },
+        { label: isEn ? '1.3 Impulse Response:' : tx('1.3 Resposta ao Impulso:', '1.3 Respuesta al Impulso:'), latex: `h[n] = ${d.latexH}` },
         {
-          label: isEn ? '1.4 Change of Variable n → k (n becomes a fixed parameter):' : '1.4 Troca de Variável n → k (n vira um parâmetro fixo):',
+          label: isEn ? '1.4 Change of Variable n → k (n becomes a fixed parameter):' : tx('1.4 Troca de Variável n → k (n vira um parâmetro fixo):', '1.4 Cambio de Variable n → k (n pasa a ser un parámetro fijo):'),
           latex: 'x[n] \\to x[k], \\qquad h[n] \\to h[k]'
         },
         {
-          label: isEn ? `1.5 Sample Under the Slider (k = ${state.dconvK}):` : `1.5 Amostra Sob o Slider (k = ${state.dconvK}):`,
+          label: isEn ? `1.5 Sample Under the Slider (k = ${state.dconvK}):` : tx(`1.5 Amostra Sob o Slider (k = ${state.dconvK}):`, `1.5 Muestra Bajo el Deslizador (k = ${state.dconvK}):`),
           latex: `x[${state.dconvK}] = ${num(seqAt(d.x, state.dconvK))}, \\qquad h[${state.dconvK}] = ${num(seqAt(d.h, state.dconvK))}`
         }
       ];
@@ -218,27 +219,27 @@ const notebook = {
     if (state.step === 2) {
       return [
         {
-          label: isEn ? '2.1 Time Reversal of h:' : '2.1 Reflexão de h no Tempo:',
+          label: isEn ? '2.1 Time Reversal of h:' : tx('2.1 Reflexão de h no Tempo:', '2.1 Reflexión de h en el Tiempo:'),
           latex: 'h[k] \\;\\longrightarrow\\; h[-k]'
         },
         {
-          label: isEn ? '2.2 Support of h[−k]:' : '2.2 Suporte de h[−k]:',
+          label: isEn ? '2.2 Support of h[−k]:' : tx('2.2 Suporte de h[−k]:', '2.2 Soporte de h[−k]:'),
           latex: d.h.infinite
             ? `k \\le ${-d.h.start}`
             : `${-(d.h.start + d.lengthH - 1)} \\le k \\le ${-d.h.start}`
         },
         {
-          label: isEn ? '2.3 Where y[n] Can Be Nonzero:' : '2.3 Onde y[n] Pode Ser Não Nulo:',
+          label: isEn ? '2.3 Where y[n] Can Be Nonzero:' : tx('2.3 Onde y[n] Pode Ser Não Nulo:', '2.3 Dónde y[n] Puede Ser No Nulo:'),
           latex: d.infinite
             ? `n \\ge ${d.x.start} + ${paren(d.h.start)} = ${d.yStart}`
             : `${d.x.start} + ${paren(d.h.start)} \\le n \\le ${d.xEnd} + ${paren(d.hEnd)} \\implies ${d.yStart} \\le n \\le ${d.yEnd}`
         },
         {
-          label: isEn ? '2.4 Length Rule (finite sequences):' : '2.4 Regra do Comprimento (sequências finitas):',
+          label: isEn ? '2.4 Length Rule (finite sequences):' : tx('2.4 Regra do Comprimento (sequências finitas):', '2.4 Regla de la Longitud (secuencias finitas):'),
           latex: 'L_y = L_x + L_h - 1'
         },
         {
-          label: isEn ? `2.5 Sample Under the Slider (k = ${state.dconvK}):` : `2.5 Amostra Sob o Slider (k = ${state.dconvK}):`,
+          label: isEn ? `2.5 Sample Under the Slider (k = ${state.dconvK}):` : tx(`2.5 Amostra Sob o Slider (k = ${state.dconvK}):`, `2.5 Muestra Bajo el Deslizador (k = ${state.dconvK}):`),
           latex: `h[-k]\\big|_{k = ${state.dconvK}} = h[${-state.dconvK}] = ${num(seqAt(d.h, -state.dconvK))}`
         }
       ];
@@ -248,17 +249,17 @@ const notebook = {
       const range = d.overlapRange(n);
       return [
         {
-          label: isEn ? `3.1 Shift by n = ${n}:` : `3.1 Deslocamento de n = ${n}:`,
-          latex: `h[-k] \\;\\longrightarrow\\; h[${n} - k] \\quad (${isEn ? '\\text{origin of } h \\text{ at } k' : '\\text{origem de } h \\text{ em } k'} = ${n})`
+          label: isEn ? `3.1 Shift by n = ${n}:` : tx(`3.1 Deslocamento de n = ${n}:`, `3.1 Desplazamiento de n = ${n}:`),
+          latex: `h[-k] \\;\\longrightarrow\\; h[${n} - k] \\quad (${isEn ? '\\text{origin of } h \\text{ at } k' : tx('\\text{origem de } h \\text{ em } k', '\\text{origen de } h \\text{ en } k')} = ${n})`
         },
         {
-          label: isEn ? '3.2 Overlap with x[k]:' : '3.2 Sobreposição com x[k]:',
+          label: isEn ? '3.2 Overlap with x[k]:' : tx('3.2 Sobreposição com x[k]:', '3.2 Solapamiento con x[k]:'),
           latex: range
             ? `${range.lo} \\le k \\le ${range.hi}`
-            : (isEn ? '\\text{no overlap} \\implies y[n] = 0' : '\\text{sem sobreposição} \\implies y[n] = 0')
+            : (isEn ? '\\text{no overlap} \\implies y[n] = 0' : tx('\\text{sem sobreposição} \\implies y[n] = 0', '\\text{sin solapamiento} \\implies y[n] = 0'))
         },
         {
-          label: isEn ? '3.3 Multiply Sample by Sample and Add:' : '3.3 Multiplicar Amostra a Amostra e Somar:',
+          label: isEn ? '3.3 Multiply Sample by Sample and Add:' : tx('3.3 Multiplicar Amostra a Amostra e Somar:', '3.3 Multiplicar Muestra a Muestra y Sumar:'),
           latex: sumLatex(d, n)
         }
       ];
@@ -271,15 +272,15 @@ const notebook = {
         latex: `y[n] = ${d.latexY}${d.infinite ? '\\;\\ldots' : ''}`
       },
       {
-        label: isEn ? '4.2 Check: Sum of y = (Sum of x)·(Sum of h):' : '4.2 Conferência: Soma de y = (Soma de x)·(Soma de h):',
+        label: isEn ? '4.2 Check: Sum of y = (Sum of x)·(Sum of h):' : tx('4.2 Conferência: Soma de y = (Soma de x)·(Soma de h):', '4.2 Comprobación: Suma de y = (Suma de x)·(Suma de h):'),
         latex: `\\sum_n y[n] = ${paren(d.sumX)} \\cdot ${paren(d.sumH)} = ${num(d.sumY)}`
       },
       {
-        label: isEn ? '4.3 Properties:' : '4.3 Propriedades:',
+        label: isEn ? '4.3 Properties:' : tx('4.3 Propriedades:', '4.3 Propiedades:'),
         latex: 'x * h = h * x, \\qquad x[n] * \\delta[n - n_0] = x[n - n_0]'
       },
       {
-        label: isEn ? '4.4 Bridge to the Z-Transform (polynomial product):' : '4.4 Ponte com a Transformada Z (produto de polinômios):',
+        label: isEn ? '4.4 Bridge to the Z-Transform (polynomial product):' : tx('4.4 Ponte com a Transformada Z (produto de polinômios):', '4.4 Puente con la Transformada Z (producto de polinomios):'),
         latex: 'y[n] = x[n] * h[n] \\;\\longleftrightarrow\\; Y(z) = X(z)\\,H(z)'
       }
     ];
@@ -289,7 +290,7 @@ const notebook = {
     const d = calc();
     const header = document.createElement('div');
     header.className = 'grid grid-cols-3 gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[10px] font-bold text-sec uppercase tracking-wider mb-1';
-    ['n', isEn ? 'Overlap in k' : 'Sobreposição em k', 'y[n]'].forEach((text, i) => {
+    ['n', isEn ? 'Overlap in k' : tx('Sobreposição em k', 'Solapamiento en k'), 'y[n]'].forEach((text, i) => {
       const span = document.createElement('span');
       span.textContent = text;
       if (i === 2) span.className = 'text-right';
@@ -327,7 +328,7 @@ const notebook = {
 function renderGallery(gallery, isEn, refresh) {
   renderSequenceEditor(gallery, {
     isEn,
-    title: isEn ? 'Type your own x[n] and h[n]' : 'Digite o seu x[n] e o seu h[n]',
+    title: isEn ? 'Type your own x[n] and h[n]' : tx('Digite o seu x[n] e o seu h[n]', 'Escribe tu x[n] y tu h[n]'),
     active: state.dconvPresetKey === 'custom',
     fields: [
       { id: 'x', label: 'x[n]:', values: state.dconvCustom.x.values, start: state.dconvCustom.x.start, hasStart: true, maxLen: 12, startMin: -6, startMax: 6 },
@@ -352,11 +353,11 @@ function renderGallery(gallery, isEn, refresh) {
 
     const title = document.createElement('span');
     title.className = 'text-[11px] font-bold truncate text-primary';
-    title.textContent = isEn ? preset.titleEn : preset.title;
+    title.textContent = loc(preset, 'title');
     const idea = document.createElement('span');
     idea.className = 'text-[9px] font-semibold truncate';
     idea.style.color = 'var(--c-conv)';
-    idea.textContent = isEn ? preset.ideaEn : preset.idea;
+    idea.textContent = loc(preset, 'idea');
 
     const math = document.createElement('div');
     math.className = 'preset-math text-[10px] pt-0.5 truncate';

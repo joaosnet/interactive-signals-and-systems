@@ -20,6 +20,7 @@ import { updateAudioSynth } from './audio.js';
 import { listModules, getModule, activeModule } from './modules/index.js';
 import { recomputeCTFT } from './modules/ctft.js';
 import { syncInputsWithPreset, setActiveMathField, updateHUDTitle, updateParametricHUDPreview, closeSignalHUD } from './ui/hud.js';
+import { tx } from './lang.js';
 
 export * from './ui/preferences.js';
 export * from './ui/language.js';
@@ -215,8 +216,8 @@ export function applySliderSpec(dict = I18N[state.lang] || I18N.pt) {
 /** Dica do rodapé do palco: só fala em editar o sinal nos módulos que têm editor de fórmula. */
 export function stageHintText(isEn) {
   const hasEditor = (activeModule().hudTargets || []).length > 0;
-  if (hasEditor) return isEn ? 'Click a signal to edit • Drag: Orbit' : 'Clique no sinal para editar • Arraste: Orbitar';
-  return isEn ? 'Drag: Orbit • Examples and editor in the panel' : 'Arraste: Orbitar • Exemplos e editor no painel';
+  if (hasEditor) return isEn ? 'Click a signal to edit • Drag: Orbit' : tx('Clique no sinal para editar • Arraste: Orbitar', 'Haz clic en la señal para editar • Arrastra: Orbitar');
+  return isEn ? 'Drag: Orbit • Examples and editor in the panel' : tx('Arraste: Orbitar • Exemplos e editor no painel', 'Arrastra: Orbitar • Ejemplos y editor en el panel');
 }
 
 export function setStep(stepNum, restartAnim = true) {

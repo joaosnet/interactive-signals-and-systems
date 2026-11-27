@@ -8,6 +8,7 @@
 import { state } from './state.js';
 import { I18N } from './i18n.js';
 import { activeModule } from './modules/registry.js';
+import { langKey } from './lang.js';
 import {
   FEEDBACK_ENDPOINT, FEEDBACK_TYPES, MESSAGE_MAX, MESSAGE_MIN, NAME_MAX, CONTRIBUTING_URL, TEXTS_SOURCE_PATH,
   buildContext, buildIssueUrl, buildPayload, editUrl, moduleSourcePath, sendAnonymous, validateFeedback
@@ -93,10 +94,50 @@ const TEXT = {
     editTexts: 'Edit the site texts',
     editModule: 'Edit the current module',
     guide: 'Step-by-step guide'
+  },
+  es: {
+    open: 'Comentarios',
+    openTitle: 'Reportar un problema, sugerir o corregir',
+    title: 'Comentarios y contribución',
+    close: 'Cerrar',
+    intro: '¿Encontraste un error, tienes una duda o una idea? Escríbela aquí. Tu reporte se convierte en una tarea pública en el GitHub del proyecto.',
+    typeLegend: '¿De qué se trata?',
+    message: '¿Qué pasó o qué sugieres?',
+    messageHint: 'Si es un error: qué hiciste, qué esperabas y qué apareció.',
+    name: 'Tu nombre (opcional)',
+    namePlaceholder: 'Déjalo en blanco para enviar sin nombre',
+    context: 'Lo que se envía junto con tu reporte',
+    sendAnon: 'Enviar sin cuenta',
+    sendGithub: 'Abrir en GitHub',
+    githubHint: 'Abre el formulario ya completado. Necesita una cuenta de GitHub; allí lo revisas y lo confirmas.',
+    anonHint: 'No necesita cuenta. El texto es público.',
+    anonOff: 'El envío sin cuenta aún no está activado. Por ahora, usa "Abrir en GitHub".',
+    sending: 'Enviando...',
+    sent: '¡Recibido, gracias! Tu reporte se convirtió en la tarea',
+    sentNoLink: '¡Recibido, gracias!',
+    errors: {
+      short: `Escribe al menos ${MESSAGE_MIN} caracteres.`,
+      long: `El texto supera los ${MESSAGE_MAX} caracteres.`,
+      name: `El nombre supera los ${NAME_MAX} caracteres.`,
+      type: 'Elige el tipo de reporte.',
+      rate: 'Demasiados envíos en poco tiempo. Inténtalo de nuevo en unos minutos.',
+      network: 'Sin conexión con el servidor. Prueba "Abrir en GitHub".',
+      generic: 'No se pudo enviar ahora. Prueba "Abrir en GitHub".'
+    },
+    fixTitle: '¿Quieres corregirlo tú mismo?',
+    fixIntro: 'Se puede hacer desde el navegador, sin instalar nada y sin usar git:',
+    fixSteps: [
+      'Haz clic en uno de los botones de abajo y entra en GitHub (la cuenta es gratuita).',
+      'Edita el archivo en la propia página. GitHub crea por sí solo una copia tuya del proyecto.',
+      'Haz clic en "Commit changes" y luego en "Create pull request". El profesor lo revisa y lo publica.'
+    ],
+    editTexts: 'Editar los textos del sitio',
+    editModule: 'Editar el módulo actual',
+    guide: 'Guía paso a paso (en portugués)'
   }
 };
 
-const txt = () => TEXT[state.lang === 'en' ? 'en' : 'pt'];
+const txt = () => TEXT[langKey()];
 
 function el(tag, attrs = {}, children = []) {
   const node = document.createElement(tag);
@@ -142,7 +183,7 @@ function render(focusFix) {
   Object.entries(FEEDBACK_TYPES).forEach(([key, info], i) => {
     const input = el('input', { type: 'radio', name: 'feedback-type', value: key, id: `feedback-type-${key}` });
     if (i === 0) input.checked = true;
-    typeGroup.append(el('label', { for: input.id }, [input, el('span', { text: info[state.lang === 'en' ? 'en' : 'pt'] })]));
+    typeGroup.append(el('label', { for: input.id }, [input, el('span', { text: info[langKey()] })]));
   });
 
   const message = el('textarea', { id: 'feedback-message', rows: '5', maxlength: String(MESSAGE_MAX), required: '', 'aria-describedby': 'feedback-message-hint' });

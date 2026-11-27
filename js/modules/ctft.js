@@ -19,6 +19,7 @@ import { registerModule } from './registry.js';
 import { renderCTFTScene3D } from '../stage-3d.js';
 import { ctftNotebookLines, ctftNotebookMetric, ctftNotebookTable } from '../notebook.js';
 import { renderCTFTGallery } from '../ui.js';
+import { langKey, pick, tx } from '../lang.js';
 
 export function isCTFTDecayPreset(key = state.ctftPresetKey) {
   return key === 'exp' || key === 'bilateral_exp';
@@ -82,11 +83,11 @@ export function setCTFTMode(mode) {
 
 // ---- Seletor "Explorar" -----------------------------------------------------
 const MODE_TITLES = {
-  none: { pt: 'Transformada direta, sem propriedade aplicada', en: 'Forward transform, no property applied' },
-  shift: { pt: 'Deslocamento no tempo: x(t − t₀)', en: 'Time shift: x(t − t₀)' },
-  scale: { pt: 'Escala no tempo: x(at)', en: 'Time scaling: x(at)' },
-  mod: { pt: 'Modulação: x(t)·cos(ω₀t)', en: 'Modulation: x(t)·cos(ω₀t)' },
-  inverse: { pt: 'Transformada inversa limitada à banda |ω| ≤ W', en: 'Inverse transform limited to the band |ω| ≤ W' }
+  none: { pt: 'Transformada direta, sem propriedade aplicada', en: 'Forward transform, no property applied', es: 'Transformada directa, sin propiedad aplicada' },
+  shift: { pt: 'Deslocamento no tempo: x(t − t₀)', en: 'Time shift: x(t − t₀)', es: 'Desplazamiento en el tiempo: x(t − t₀)' },
+  scale: { pt: 'Escala no tempo: x(at)', en: 'Time scaling: x(at)', es: 'Escala en el tiempo: x(at)' },
+  mod: { pt: 'Modulação: x(t)·cos(ω₀t)', en: 'Modulation: x(t)·cos(ω₀t)', es: 'Modulación: x(t)·cos(ω₀t)' },
+  inverse: { pt: 'Transformada inversa limitada à banda |ω| ≤ W', en: 'Inverse transform limited to the band |ω| ≤ W', es: 'Transformada inversa limitada a la banda |ω| ≤ W' }
 };
 
 let modeUIBound = false;
@@ -108,7 +109,7 @@ function syncModeUI(force = false) {
   const key = `${state.ctftMode}|${suspended}|${state.lang}`;
   if (!force && key === modeUIKey) return;
   modeUIKey = key;
-  const lang = state.lang === 'en' ? 'en' : 'pt';
+  const lang = langKey();
   const label = document.getElementById('lbl-ctft-mode');
   if (label) label.textContent = lang === 'en' ? 'Explore:' : 'Explorar:';
   document.querySelectorAll('.ctft-mode-btn').forEach((btn) => {
@@ -144,22 +145,22 @@ export function ctftModeNotebookLines(isEn) {
     const pct = (100 * bandEnergyFraction(calc, W)).toFixed(1);
     return [
       {
-        label: isEn ? 'I.1 Synthesis (inverse transform):' : 'I.1 Síntese (transformada inversa):',
+        label: isEn ? 'I.1 Synthesis (inverse transform):' : tx('I.1 Síntese (transformada inversa):', 'I.1 Síntesis (transformada inversa):'),
         latex: 'x(t) = \\mathcal{F}^{-1}\\{X(\\omega)\\} = \\frac{1}{2\\pi}\\int_{-\\infty}^{+\\infty} X(\\omega)\\,e^{j\\omega t}\\,d\\omega'
       },
       {
-        label: isEn ? `I.2 Using Only the Band |ω| ≤ ${num(W)} rad/s:` : `I.2 Usando Só a Banda |ω| ≤ ${num(W)} rad/s:`,
+        label: isEn ? `I.2 Using Only the Band |ω| ≤ ${num(W)} rad/s:` : tx(`I.2 Usando Só a Banda |ω| ≤ ${num(W)} rad/s:`, `I.2 Usando Solo la Banda |ω| ≤ ${num(W)} rad/s:`),
         latex: `x_W(t) = \\frac{1}{2\\pi}\\int_{-${num(W)}}^{${num(W)}} X(\\omega)\\,e^{j\\omega t}\\,d\\omega`
       },
       {
-        label: isEn ? 'I.3 Energy Inside the Band (Parseval):' : 'I.3 Energia Dentro da Banda (Parseval):',
+        label: isEn ? 'I.3 Energy Inside the Band (Parseval):' : tx('I.3 Energia Dentro da Banda (Parseval):', 'I.3 Energía Dentro de la Banda (Parseval):'),
         latex: `\\frac{1}{2\\pi}\\int_{-W}^{W} |X(\\omega)|^2\\,d\\omega = ${pct}\\%\\ \\text{${isEn ? 'of' : 'de'}}\\ E_x`
       },
       {
-        label: isEn ? 'I.4 At a Jump of x(t):' : 'I.4 Num Salto de x(t):',
+        label: isEn ? 'I.4 At a Jump of x(t):' : tx('I.4 Num Salto de x(t):', 'I.4 En un Salto de x(t):'),
         latex: isEn
           ? '\\text{midpoint value and} \\approx 9\\% \\text{ overshoot (Gibbs), for any finite } W'
-          : '\\text{valor médio do salto e sobressinal de} \\approx 9\\% \\text{ (Gibbs), para qualquer } W \\text{ finito}'
+          : tx('\\text{valor médio do salto e sobressinal de} \\approx 9\\% \\text{ (Gibbs), para qualquer } W \\text{ finito}', '\\text{valor medio del salto y sobreimpulso de} \\approx 9\\% \\text{ (Gibbs), para cualquier } W \\text{ finito}')
       }
     ];
   }
@@ -168,32 +169,32 @@ export function ctftModeNotebookLines(isEn) {
   const effectText = {
     shift: isEn
       ? '|Y(\\omega)| = |X(\\omega)|, \\qquad \\angle Y = \\angle X - \\omega t_0 \\;(\\text{linear phase})'
-      : '|Y(\\omega)| = |X(\\omega)|, \\qquad \\angle Y = \\angle X - \\omega t_0 \\;(\\text{fase linear})',
+      : tx('|Y(\\omega)| = |X(\\omega)|, \\qquad \\angle Y = \\angle X - \\omega t_0 \\;(\\text{fase linear})', '|Y(\\omega)| = |X(\\omega)|, \\qquad \\angle Y = \\angle X - \\omega t_0 \\;(\\text{fase lineal})'),
     compress: isEn
       ? 'a > 1: \\text{ narrower in time} \\implies \\text{wider and lower in frequency}'
-      : 'a > 1: \\text{ mais estreito no tempo} \\implies \\text{mais largo e mais baixo na frequência}',
+      : tx('a > 1: \\text{ mais estreito no tempo} \\implies \\text{mais largo e mais baixo na frequência}', 'a > 1: \\text{ más estrecho en el tiempo} \\implies \\text{más ancho y más bajo en frecuencia}'),
     expand: isEn
       ? 'a < 1: \\text{ wider in time} \\implies \\text{narrower and taller in frequency}'
-      : 'a < 1: \\text{ mais largo no tempo} \\implies \\text{mais estreito e mais alto na frequência}',
+      : tx('a < 1: \\text{ mais largo no tempo} \\implies \\text{mais estreito e mais alto na frequência}', 'a < 1: \\text{ más ancho en el tiempo} \\implies \\text{más estrecho y más alto en frecuencia}'),
     same: 'a = 1: \\; y(t) = x(t)',
     reflect: isEn
       ? 'a < 0: \\text{ time reversal} \\implies Y(\\omega) \\text{ mirrored: } |Y| \\text{ scaled, phase negated}'
-      : 'a < 0: \\text{ reflexão no tempo} \\implies Y(\\omega) \\text{ espelhado: } |Y| \\text{ escalado, fase invertida}',
+      : tx('a < 0: \\text{ reflexão no tempo} \\implies Y(\\omega) \\text{ espelhado: } |Y| \\text{ escalado, fase invertida}', 'a < 0: \\text{ reflexión en el tiempo} \\implies Y(\\omega) \\text{ espejado: } |Y| \\text{ escalado, fase invertida}'),
     mod: isEn
       ? '\\text{two copies of } X \\text{ at } \\pm\\omega_0 \\text{ with half the height (AM)}'
-      : '\\text{duas cópias de } X \\text{ em } \\pm\\omega_0 \\text{ com metade da altura (AM)}'
+      : tx('\\text{duas cópias de } X \\text{ em } \\pm\\omega_0 \\text{ com metade da altura (AM)}', '\\text{dos copias de } X \\text{ en } \\pm\\omega_0 \\text{ con la mitad de la altura (AM)}')
   }[calc.effect];
   const title = {
-    shift: isEn ? 'P.1 Time-Shift Property:' : 'P.1 Propriedade do Deslocamento no Tempo:',
-    scale: isEn ? 'P.1 Time-Scaling Property:' : 'P.1 Propriedade da Escala no Tempo:',
-    mod: isEn ? 'P.1 Modulation Property:' : 'P.1 Propriedade da Modulação:'
+    shift: isEn ? 'P.1 Time-Shift Property:' : tx('P.1 Propriedade do Deslocamento no Tempo:', 'P.1 Propiedad del Desplazamiento en el Tiempo:'),
+    scale: isEn ? 'P.1 Time-Scaling Property:' : tx('P.1 Propriedade da Escala no Tempo:', 'P.1 Propiedad de la Escala en el Tiempo:'),
+    mod: isEn ? 'P.1 Modulation Property:' : tx('P.1 Propriedade da Modulação:', 'P.1 Propiedad de la Modulación:')
   }[mode];
   return [
     { label: title, latex: calc.ruleLatex },
-    { label: isEn ? 'P.2 This Case:' : 'P.2 Neste Caso:', latex: calc.caseLatex },
-    { label: isEn ? 'P.3 What Changes:' : 'P.3 O Que Muda:', latex: effectText },
+    { label: isEn ? 'P.2 This Case:' : tx('P.2 Neste Caso:', 'P.2 En Este Caso:'), latex: calc.caseLatex },
+    { label: isEn ? 'P.3 What Changes:' : tx('P.3 O Que Muda:', 'P.3 Qué Cambia:'), latex: effectText },
     {
-      label: isEn ? 'P.4 Energy and Area of y(t):' : 'P.4 Energia e Área de y(t):',
+      label: isEn ? 'P.4 Energy and Area of y(t):' : tx('P.4 Energia e Área de y(t):', 'P.4 Energía y Área de y(t):'),
       latex: `E_y = ${num(calc.energyTime, 3)}\\ (E_x = ${num(base.energyTime, 3)}), \\qquad Y(0) = ${num(calc.valX0, 3)}\\ (X(0) = ${num(base.valX0, 3)})`
     }
   ];
@@ -203,7 +204,7 @@ export function ctftModeNotebookLines(isEn) {
 export function renderCTFTPropertyTable(container, isEn) {
   const header = document.createElement('div');
   header.className = 'grid grid-cols-2 gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[10px] font-bold text-sec uppercase tracking-wider mt-2 mb-1';
-  [isEn ? 'Property' : 'Propriedade', isEn ? 'Pair' : 'Par'].forEach((text, i) => {
+  [isEn ? 'Property' : tx('Propriedade', 'Propiedad'), isEn ? 'Pair' : 'Par'].forEach((text, i) => {
     const span = document.createElement('span');
     span.textContent = text;
     if (i === 1) span.className = 'text-right';
@@ -212,15 +213,15 @@ export function renderCTFTPropertyTable(container, isEn) {
   container.appendChild(header);
 
   const rows = [
-    { mode: 'shift', pt: 'Deslocamento no tempo', en: 'Time shift', latex: 'x(t - t_0) \\leftrightarrow X(\\omega)e^{-j\\omega t_0}' },
-    { mode: 'scale', pt: 'Escala no tempo', en: 'Time scaling', latex: 'x(at) \\leftrightarrow \\tfrac{1}{|a|}X(\\tfrac{\\omega}{a})' },
-    { mode: 'mod', pt: 'Modulação', en: 'Modulation', latex: 'x(t)\\cos\\omega_0 t \\leftrightarrow \\tfrac{1}{2}[X(\\omega \\mp \\omega_0)]' },
-    { mode: 'inverse', pt: 'Transformada inversa', en: 'Inverse transform', latex: 'x(t) = \\tfrac{1}{2\\pi}\\int X(\\omega)e^{j\\omega t}d\\omega' },
-    { pt: 'Linearidade', en: 'Linearity', latex: 'a x_1 + b x_2 \\leftrightarrow aX_1 + bX_2' },
-    { pt: 'Dualidade', en: 'Duality', latex: 'X(t) \\leftrightarrow 2\\pi\\,x(-\\omega)' },
-    { pt: 'Convolução', en: 'Convolution', latex: 'x * h \\leftrightarrow X(\\omega)H(\\omega)' },
-    { pt: 'Derivada', en: 'Differentiation', latex: '\\tfrac{dx}{dt} \\leftrightarrow j\\omega X(\\omega)' },
-    { pt: 'Deslocamento em frequência', en: 'Frequency shift', latex: 'x(t)e^{j\\omega_0 t} \\leftrightarrow X(\\omega - \\omega_0)' }
+    { mode: 'shift', pt: 'Deslocamento no tempo', en: 'Time shift', es: 'Desplazamiento en el tiempo', latex: 'x(t - t_0) \\leftrightarrow X(\\omega)e^{-j\\omega t_0}' },
+    { mode: 'scale', pt: 'Escala no tempo', en: 'Time scaling', es: 'Escala en el tiempo', latex: 'x(at) \\leftrightarrow \\tfrac{1}{|a|}X(\\tfrac{\\omega}{a})' },
+    { mode: 'mod', pt: 'Modulação', en: 'Modulation', es: 'Modulación', latex: 'x(t)\\cos\\omega_0 t \\leftrightarrow \\tfrac{1}{2}[X(\\omega \\mp \\omega_0)]' },
+    { mode: 'inverse', pt: 'Transformada inversa', en: 'Inverse transform', es: 'Transformada inversa', latex: 'x(t) = \\tfrac{1}{2\\pi}\\int X(\\omega)e^{j\\omega t}d\\omega' },
+    { pt: 'Linearidade', en: 'Linearity', es: 'Linealidad', latex: 'a x_1 + b x_2 \\leftrightarrow aX_1 + bX_2' },
+    { pt: 'Dualidade', en: 'Duality', es: 'Dualidad', latex: 'X(t) \\leftrightarrow 2\\pi\\,x(-\\omega)' },
+    { pt: 'Convolução', en: 'Convolution', es: 'Convolución', latex: 'x * h \\leftrightarrow X(\\omega)H(\\omega)' },
+    { pt: 'Derivada', en: 'Differentiation', es: 'Derivada', latex: '\\tfrac{dx}{dt} \\leftrightarrow j\\omega X(\\omega)' },
+    { pt: 'Deslocamento em frequência', en: 'Frequency shift', es: 'Desplazamiento en frecuencia', latex: 'x(t)e^{j\\omega_0 t} \\leftrightarrow X(\\omega - \\omega_0)' }
   ];
   const suspended = state.step === 4 || state.ctftPresetKey === 'bridge';
   rows.forEach((row) => {
@@ -231,7 +232,7 @@ export function renderCTFTPropertyTable(container, isEn) {
     el.className = `${clickable ? 'region-row ui-control' : ''} w-full text-left px-2 py-1.5 rounded-lg grid grid-cols-2 items-center gap-2 ${isCurrent ? 'active font-semibold' : ''}`;
     const name = document.createElement('span');
     name.className = 'text-[10px] font-mono-code truncate';
-    name.textContent = `${clickable ? '▸ ' : ''}${isEn ? row.en : row.pt}`;
+    name.textContent = `${clickable ? '▸ ' : ''}${pick(row)}`;
     const math = document.createElement('span');
     math.className = 'text-[10px] truncate text-right';
     renderMath(math, row.latex, false);

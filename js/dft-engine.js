@@ -94,53 +94,53 @@ export function ifft(re, im) {
  */
 export const DFT_PRESETS = {
   cosbin: {
-    title: 'Cosseno no Bin', titleEn: 'Cosine on a Bin',
-    idea: 'duas linhas limpas', ideaEn: 'two clean lines',
+    title: 'Cosseno no Bin', titleEn: 'Cosine on a Bin', titleEs: 'Coseno en el Bin',
+    idea: 'duas linhas limpas', ideaEn: 'two clean lines', ideaEs: 'dos líneas limpias',
     fn: (n, N) => Math.cos((TWO_PI * 2 * n) / N),
     cycles: () => 2,
     latex: () => '\\cos\\!\\left(2\\pi \\cdot 2\\,\\tfrac{n}{N}\\right)'
   },
   leak: {
-    title: 'Cosseno Fora do Bin', titleEn: 'Off-Bin Cosine',
-    idea: 'vazamento espectral', ideaEn: 'spectral leakage',
+    title: 'Cosseno Fora do Bin', titleEn: 'Off-Bin Cosine', titleEs: 'Coseno Fuera del Bin',
+    idea: 'vazamento espectral', ideaEn: 'spectral leakage', ideaEs: 'fuga espectral',
     fn: (n, N) => Math.cos((TWO_PI * 2.5 * n) / N),
     cycles: () => 2.5,
     latex: () => '\\cos\\!\\left(2\\pi \\cdot 2.5\\,\\tfrac{n}{N}\\right)'
   },
   twotone: {
-    title: 'Dois Tons', titleEn: 'Two Tones',
-    idea: 'cada tom, um par de linhas', ideaEn: 'each tone, a pair of lines',
+    title: 'Dois Tons', titleEn: 'Two Tones', titleEs: 'Dos Tonos',
+    idea: 'cada tom, um par de linhas', ideaEn: 'each tone, a pair of lines', ideaEs: 'cada tono, un par de líneas',
     fn: (n, N) => Math.cos((TWO_PI * 1 * n) / N) + 0.5 * Math.cos((TWO_PI * 3 * n) / N),
     latex: () => '\\cos\\!\\left(2\\pi\\tfrac{n}{N}\\right) + 0.5\\cos\\!\\left(2\\pi \\cdot 3\\,\\tfrac{n}{N}\\right)'
   },
   rect: {
-    title: 'Pulso Retangular', titleEn: 'Rectangular Pulse',
-    idea: 'amostras do Dirichlet', ideaEn: 'samples of the Dirichlet kernel',
+    title: 'Pulso Retangular', titleEn: 'Rectangular Pulse', titleEs: 'Pulso Rectangular',
+    idea: 'amostras do Dirichlet', ideaEn: 'samples of the Dirichlet kernel', ideaEs: 'muestras del núcleo de Dirichlet',
     fn: (n, N) => (n < N / 4 ? 1 : 0),
     latex: () => 'u[n] - u[n - \\tfrac{N}{4}]'
   },
   impulse: {
-    title: 'Impulso', titleEn: 'Impulse',
-    idea: 'espectro plano', ideaEn: 'flat spectrum',
+    title: 'Impulso', titleEn: 'Impulse', titleEs: 'Impulso',
+    idea: 'espectro plano', ideaEn: 'flat spectrum', ideaEs: 'espectro plano',
     fn: (n) => (n === 0 ? 1 : 0),
     latex: () => '\\delta[n]'
   },
   alternating: {
-    title: 'Alternado (−1)ⁿ', titleEn: 'Alternating (−1)ⁿ',
-    idea: 'a frequência mais alta', ideaEn: 'the highest frequency',
+    title: 'Alternado (−1)ⁿ', titleEn: 'Alternating (−1)ⁿ', titleEs: 'Alternado (−1)ⁿ',
+    idea: 'a frequência mais alta', ideaEn: 'the highest frequency', ideaEs: 'la frecuencia más alta',
     fn: (n) => (n % 2 === 0 ? 1 : -1),
     cycles: (N) => N / 2,
     latex: () => '(-1)^{n}'
   },
   exp: {
-    title: 'Exponencial', titleEn: 'Exponential',
-    idea: 'passa-baixas amostrado', ideaEn: 'sampled low-pass',
+    title: 'Exponencial', titleEn: 'Exponential', titleEs: 'Exponencial',
+    idea: 'passa-baixas amostrado', ideaEn: 'sampled low-pass', ideaEs: 'pasa-bajos muestreado',
     fn: (n) => 0.8 ** n,
     latex: () => '0.8^{n}'
   },
   ramp: {
-    title: 'Rampa', titleEn: 'Ramp',
-    idea: 'dente de serra periódico', ideaEn: 'periodic sawtooth',
+    title: 'Rampa', titleEn: 'Ramp', titleEs: 'Rampa',
+    idea: 'dente de serra periódico', ideaEn: 'periodic sawtooth', ideaEs: 'diente de sierra periódico',
     fn: (n, N) => n / N,
     latex: () => '\\tfrac{n}{N}'
   }
@@ -152,14 +152,14 @@ export const DFT_PRESETS = {
  * estreito e os lóbulos laterais mais altos; Hann e Hamming trocam uma coisa pela outra.
  */
 export const DFT_WINDOWS = {
-  rect: { title: 'Retangular', titleEn: 'Rectangular', mainHalf: 1, fn: () => 1, latex: 'w[n] = 1' },
+  rect: { title: 'Retangular', titleEn: 'Rectangular', titleEs: 'Rectangular', mainHalf: 1, fn: () => 1, latex: 'w[n] = 1' },
   hann: {
-    title: 'Hann', titleEn: 'Hann', mainHalf: 2,
+    title: 'Hann', titleEn: 'Hann', titleEs: 'Hann', mainHalf: 2,
     fn: (n, N) => 0.5 - 0.5 * Math.cos((TWO_PI * n) / N),
     latex: 'w[n] = 0.5 - 0.5\\cos\\!\\left(\\tfrac{2\\pi n}{N}\\right)'
   },
   hamming: {
-    title: 'Hamming', titleEn: 'Hamming', mainHalf: 2,
+    title: 'Hamming', titleEn: 'Hamming', titleEs: 'Hamming', mainHalf: 2,
     fn: (n, N) => 0.54 - 0.46 * Math.cos((TWO_PI * n) / N),
     latex: 'w[n] = 0.54 - 0.46\\cos\\!\\left(\\tfrac{2\\pi n}{N}\\right)'
   }

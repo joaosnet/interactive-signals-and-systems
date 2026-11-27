@@ -11,13 +11,14 @@ import { activeModule } from '../modules/index.js';
 import { renderModuleSwitcher, stageHintText, updateStepLabels, renderPresetGallery } from '../ui.js';
 import { updateThemeCycleButtonUI } from './preferences.js';
 import { hudState, renderHUDOscilloscope, updateHUDTitle, updateParametricHUDPreview } from './hud.js';
+import { tx } from '../lang.js';
 
 export function applyLanguage(lang) {
   state.lang = lang;
   saveStatePreferences();
   const dict = I18N[lang] || I18N.pt;
   const isEn = lang === 'en';
-  document.documentElement.lang = isEn ? 'en' : 'pt-BR';
+  document.documentElement.lang = isEn ? 'en' : tx('pt-BR', 'es');
 
   document.title = dict.docTitle;
   const langBtnText = document.getElementById('lang-btn-text');
@@ -39,8 +40,8 @@ export function applyLanguage(lang) {
     'lbl-view-2d-time': dict.view2DTime,
     'lbl-view-2d-spec': dict.view2DSpec,
     'lbl-view-top': dict.viewTop,
-    'lbl-audio-btn': isEn ? 'Audio' : 'Áudio',
-    'lbl-layers-btn': isEn ? 'Layers' : 'Camadas',
+    'lbl-audio-btn': isEn ? 'Audio' : tx('Áudio', 'Audio'),
+    'lbl-layers-btn': isEn ? 'Layers' : tx('Camadas', 'Capas'),
     'lbl-layers-title': dict.layersTitle,
     'lbl-layer-waterfall': dict.layerWaterfall,
     'lbl-layer-spectrum': dict.layerSpectrum,
@@ -52,16 +53,16 @@ export function applyLanguage(lang) {
     'lbl-stage-hint': stageHintText(isEn),
     'lbl-github-contribute': isEn ? 'Contribute' : 'Contribuir',
     'lbl-customize-btn': isEn ? 'Customize' : 'Personalizar',
-    'zen-exit-btn': isEn ? '✕ Panel' : '✕ Painel',
-    'lbl-settings-title': isEn ? 'Customize & Settings' : 'Personalizar & Configurações',
+    'zen-exit-btn': isEn ? '✕ Panel' : tx('✕ Painel', '✕ Panel'),
+    'lbl-settings-title': isEn ? 'Customize & Settings' : tx('Personalizar & Configurações', 'Personalizar y Configuración'),
     'lbl-theme-label': isEn ? 'Visual Theme:' : 'Tema Visual:',
     'lbl-lang-label': isEn ? 'Language:' : 'Idioma:',
-    'lbl-theme-proj': isEn ? 'Projector' : 'Projetor',
-    'lbl-theme-dark': isEn ? 'Dark' : 'Escuro',
+    'lbl-theme-proj': isEn ? 'Projector' : tx('Projetor', 'Proyector'),
+    'lbl-theme-dark': isEn ? 'Dark' : tx('Escuro', 'Oscuro'),
     'lbl-theme-light': isEn ? 'Light' : 'Claro',
     'lbl-speed-label': dict.speedLabel,
     'lbl-shortcuts-title': dict.shortcutsTitle,
-    'lbl-sc-space': isEn ? 'Space:' : 'Espaço:',
+    'lbl-sc-space': isEn ? 'Space:' : tx('Espaço:', 'Espacio:'),
     'lbl-sc-tab': dict.shortcutTab,
     'lbl-sc-steps': dict.shortcutSteps,
     'lbl-sc-zen': dict.shortcutZen,
@@ -79,13 +80,13 @@ export function applyLanguage(lang) {
     'lbl-rewatch': dict.btnRewatch,
     'regions-title': dict[activeModule().i18n.regionsTitle],
     'gallery-title': dict.galleryTitle,
-    'gallery-subtitle': isEn ? 'Tap to load or create' : 'Toque para carregar ou criar',
+    'gallery-subtitle': isEn ? 'Tap to load or create' : tx('Toque para carregar ou criar', 'Toca para cargar o crear'),
     'lbl-seq-mode': dict.btnSeqMode,
     'lbl-play': state.isPlaying ? dict.btnPlayPause : dict.btnPlayPlay,
-    'filters-title': isEn ? 'Show in Panel:' : 'Mostrar no Painel:',
-    'filter-pill-notebook': isEn ? 'Steps' : 'Passo a Passo',
-    'filter-pill-regions': isEn ? 'Table' : 'Tabela',
-    'filter-pill-gallery': isEn ? 'Presets' : 'Exemplos',
+    'filters-title': isEn ? 'Show in Panel:' : tx('Mostrar no Painel:', 'Mostrar en el Panel:'),
+    'filter-pill-notebook': isEn ? 'Steps' : tx('Passo a Passo', 'Paso a Paso'),
+    'filter-pill-regions': isEn ? 'Table' : tx('Tabela', 'Tabla'),
+    'filter-pill-gallery': isEn ? 'Presets' : tx('Exemplos', 'Ejemplos'),
 
     // Floating Signal Focus HUD
     'hud-lbl-shape-rect': dict.hudShapeRect,
@@ -99,12 +100,12 @@ export function applyLanguage(lang) {
     'hud-lbl-slider-w': dict.hudSliderW,
     'hud-lbl-slider-t0': dict.hudSliderT0,
     'hud-lbl-slider-alpha': dict.hudSliderAlpha,
-    'hud-lbl-btn-pin': isEn ? '+ Save' : '+ Salvar',
-    'hud-key-clear': isEn ? 'Clear' : 'Limpar',
-    'hud-mode-replace': isEn ? '= Replace' : '= Substituir',
-    'hud-mode-add': isEn ? '+ Add' : '+ Somar',
-    'hud-mode-sub': isEn ? '− Subtract' : '− Subtrair',
-    'hud-btn-commit-block': isEn ? '+ Apply Block' : '+ Aplicar Bloco'
+    'hud-lbl-btn-pin': isEn ? '+ Save' : tx('+ Salvar', '+ Guardar'),
+    'hud-key-clear': isEn ? 'Clear' : tx('Limpar', 'Limpiar'),
+    'hud-mode-replace': isEn ? '= Replace' : tx('= Substituir', '= Sustituir'),
+    'hud-mode-add': isEn ? '+ Add' : tx('+ Somar', '+ Sumar'),
+    'hud-mode-sub': isEn ? '− Subtract' : tx('− Subtrair', '− Restar'),
+    'hud-btn-commit-block': isEn ? '+ Apply Block' : tx('+ Aplicar Bloco', '+ Aplicar Bloque')
   };
 
   Object.entries(elMap).forEach(([id, txt]) => {
@@ -124,7 +125,7 @@ export function applyLanguage(lang) {
   }
   const hudFreeIn = document.getElementById('hud-free-input');
   if (hudFreeIn) {
-    hudFreeIn.placeholder = isEn ? 'Ex: 2*rect(t/2)' : 'Ex: 2*rect(t/2)';
+    hudFreeIn.placeholder = isEn ? 'Ex: 2*rect(t/2)' : tx('Ex: 2*rect(t/2)', 'Ej.: 2*rect(t/2)');
   }
 
   updateHUDTitle();

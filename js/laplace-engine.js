@@ -39,7 +39,7 @@ const u = (t) => (Math.abs(t) < 1e-12 ? 0.5 : (t > 0 ? 1 : 0)); // convenção L
  */
 export const LAPLACE_PRESETS = {
   step: {
-    title: 'Degrau Unitário', titleEn: 'Unit Step',
+    title: 'Degrau Unitário', titleEn: 'Unit Step', titleEs: 'Escalón Unitario',
     params: {},
     build: () => ({
       causality: 'causal',
@@ -51,7 +51,7 @@ export const LAPLACE_PRESETS = {
     })
   },
   exp: {
-    title: 'Exponencial Causal', titleEn: 'Causal Exponential',
+    title: 'Exponencial Causal', titleEn: 'Causal Exponential', titleEs: 'Exponencial Causal',
     params: { a: { min: -1.5, max: 3, def: 1 } },
     build: ({ a }) => ({
       causality: 'causal',
@@ -63,7 +63,7 @@ export const LAPLACE_PRESETS = {
     })
   },
   anticausal: {
-    title: 'Exponencial Anticausal', titleEn: 'Anticausal Exponential',
+    title: 'Exponencial Anticausal', titleEn: 'Anticausal Exponential', titleEs: 'Exponencial Anticausal',
     params: { a: { min: -1.5, max: 3, def: 1 } },
     build: ({ a }) => ({
       causality: 'anticausal',
@@ -75,7 +75,7 @@ export const LAPLACE_PRESETS = {
     })
   },
   bilateral: {
-    title: 'Exponencial Bilateral', titleEn: 'Two-Sided Exponential',
+    title: 'Exponencial Bilateral', titleEn: 'Two-Sided Exponential', titleEs: 'Exponencial Bilateral',
     params: { a: { min: 0.3, max: 3, def: 1 } },
     build: ({ a }) => ({
       causality: 'bilateral',
@@ -87,7 +87,7 @@ export const LAPLACE_PRESETS = {
     })
   },
   ramp: {
-    title: 'Rampa', titleEn: 'Ramp',
+    title: 'Rampa', titleEn: 'Ramp', titleEs: 'Rampa',
     params: {},
     build: () => ({
       causality: 'causal',
@@ -99,7 +99,7 @@ export const LAPLACE_PRESETS = {
     })
   },
   cos: {
-    title: 'Cosseno Causal', titleEn: 'Causal Cosine',
+    title: 'Cosseno Causal', titleEn: 'Causal Cosine', titleEs: 'Coseno Causal',
     params: { w0: { min: 0.5, max: 5, def: 2 } },
     build: ({ w0 }) => ({
       causality: 'causal',
@@ -111,7 +111,7 @@ export const LAPLACE_PRESETS = {
     })
   },
   sin: {
-    title: 'Seno Causal', titleEn: 'Causal Sine',
+    title: 'Seno Causal', titleEn: 'Causal Sine', titleEs: 'Seno Causal',
     params: { w0: { min: 0.5, max: 5, def: 2 } },
     build: ({ w0 }) => ({
       causality: 'causal',
@@ -123,7 +123,7 @@ export const LAPLACE_PRESETS = {
     })
   },
   dampedsin: {
-    title: 'Seno Amortecido', titleEn: 'Damped Sine',
+    title: 'Seno Amortecido', titleEn: 'Damped Sine', titleEs: 'Seno Amortiguado',
     params: { a: { min: -1, max: 3, def: 0.5 }, w0: { min: 0.5, max: 5, def: 3 } },
     build: ({ a, w0 }) => ({
       causality: 'causal',
@@ -135,7 +135,7 @@ export const LAPLACE_PRESETS = {
     })
   },
   dampedcos: {
-    title: 'Cosseno Amortecido', titleEn: 'Damped Cosine',
+    title: 'Cosseno Amortecido', titleEn: 'Damped Cosine', titleEs: 'Coseno Amortiguado',
     params: { a: { min: -1, max: 3, def: 0.5 }, w0: { min: 0.5, max: 5, def: 3 } },
     build: ({ a, w0 }) => ({
       causality: 'causal',
