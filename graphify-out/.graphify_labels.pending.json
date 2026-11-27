@@ -4,12 +4,13 @@
   "2": "z.js",
   "3": "ui.js",
   "4": "ctft.js",
-  "5": "Sinais e Sistemas de Forma Interativa",
+  "5": "dft.js",
   "6": "manifest.json",
   "7": "math-engine.js",
   "8": "server.js",
   "9": "laplace.js",
   "10": "package.json",
   "11": "dtft.js",
-  "12": "dconv.js"
+  "12": "dconv.js",
+  "13": "Módulos Principales"
 }

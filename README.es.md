@@ -159,6 +159,22 @@ Recursos del módulo:
 
 ---
 
+### 8. DFT y FFT (`#dft`)
+
+La transformada que la computadora realmente calcula, finita en ambos dominios:
+
+$$X[k] = \sum_{n=0}^{N-1} x[n]\, e^{-j2\pi kn/N}, \qquad x[n] = \frac{1}{N}\sum_{k=0}^{N-1} X[k]\, e^{j2\pi kn/N}$$
+
+Recursos del módulo:
+- **Dos Carriles Alineados**: $N$ muestras de $x[n]$ al fondo y $N$ muestras de $|X[k]|$ al frente, con $N$ de 4 a 64.
+- **La DFT Muestrea la DTFT**: La envolvente continua aparece detrás de las muestras, mostrando que $X[k] = X(e^{j\Omega})$ en $\Omega = 2\pi k/N$ y que la resolución es $2\pi/N$.
+- **Fuga Espectral**: Un coseno con 2 ciclos en la ventana da dos líneas limpias; con 2,5 ciclos, la energía se reparte por todos los bins.
+- **Lectura de un Bin**: El deslizador elige $k$ y dibuja sobre $x[n]$ el coseno de esa frecuencia. El cuaderno muestra valor, fase, frecuencia y por qué la mitad superior corresponde a las frecuencias negativas.
+- **FFT con Diagrama de Mariposas**: En el paso 4 la red de mariposas conecta $x[n]$ (en orden de bits invertidos) con $X[k]$, y el cuaderno compara $N^2$ productos con $\frac{N}{2}\log_2 N$ mariposas, contadas durante la ejecución.
+- **Ocho Señales**: Coseno en el bin y fuera de él, dos tonos, pulso rectangular, impulso, alternado, exponencial y rampa.
+
+---
+
 ## Fundamentos Didácticos y de Interfaz
 
 - **Proyecciones de Cámara**: Cambio inmediato entre `3D Libre`, `2D Tiempo (Frontal)`, `2D Espectro (Lateral)` y `Vista Superior`.
@@ -176,7 +192,7 @@ Recursos del módulo:
 | :--- | :--- |
 | `Espacio` | Reproducir o pausar simulación |
 | `1`, `2`, `3`, `4` | Salto directo a los pasos 1 a 4 de Convolución |
-| `[` / `]` | Alternar módulo: Convolución $\to$ Convolución Discreta $\to$ Fourier $\to$ CTFT $\to$ DTFT $\to$ Laplace $\to$ Z |
+| `[` / `]` | Alternar módulo: Convolución $\to$ Convolución Discreta $\to$ Fourier $\to$ CTFT $\to$ DTFT $\to$ DFT $\to$ Laplace $\to$ Z |
 | `Z` | Alternar modo pantalla completa / Zen |
 | `M` | Activar o desactivar sintetizador Web Audio |
 | `←` / `→` | Ajuste fino del parámetro de tiempo $t$ o frecuencia $\omega$ |

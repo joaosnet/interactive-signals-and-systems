@@ -159,6 +159,22 @@ Recursos do módulo:
 
 ---
 
+### 8. DFT e FFT (`#dft`)
+
+A transformada que o computador de fato calcula, finita nos dois domínios:
+
+$$X[k] = \sum_{n=0}^{N-1} x[n]\, e^{-j2\pi kn/N}, \qquad x[n] = \frac{1}{N}\sum_{k=0}^{N-1} X[k]\, e^{j2\pi kn/N}$$
+
+Recursos do módulo:
+- **Dois Trilhos Alinhados**: $N$ hastes de $x[n]$ ao fundo e $N$ hastes de $|X[k]|$ na frente, com $N$ de 4 a 64.
+- **A DFT Amostra a DTFT**: A envoltória contínua aparece atrás das hastes, mostrando que $X[k] = X(e^{j\Omega})$ em $\Omega = 2\pi k/N$ e que a resolução é $2\pi/N$.
+- **Vazamento Espectral**: Um cosseno com 2 ciclos na janela dá duas linhas limpas; com 2,5 ciclos, a energia se espalha por todos os bins.
+- **Leitura de um Bin**: O slider escolhe $k$ e desenha sobre $x[n]$ o cosseno daquela frequência. O caderno mostra valor, fase, frequência e por que a metade superior corresponde às frequências negativas.
+- **FFT com Diagrama de Borboletas**: No passo 4 a rede de borboletas liga $x[n]$ (em ordem de bits invertidos) a $X[k]$, e o caderno compara $N^2$ produtos com $\frac{N}{2}\log_2 N$ borboletas, contadas na execução.
+- **Oito Sinais**: Cosseno no bin e fora dele, dois tons, pulso retangular, impulso, alternado, exponencial e rampa.
+
+---
+
 ## Fundamentos Didáticos e de Interface
 
 - **Projeções de Câmera**: Alternância imediata entre `3D Livre`, `2D Tempo (Frontal)`, `2D Espectro (Lateral)` e `Vista Superior`.
@@ -176,7 +192,7 @@ Recursos do módulo:
 | :--- | :--- |
 | `Espaço` | Reproduzir ou pausar o loop de simulação |
 | `1`, `2`, `3`, `4` | Salto direto para as etapas 1 a 4 da Convolução |
-| `[` / `]` | Alternar módulo: Convolução $\to$ Convolução Discreta $\to$ Fourier $\to$ CTFT $\to$ DTFT $\to$ Laplace $\to$ Z |
+| `[` / `]` | Alternar módulo: Convolução $\to$ Convolução Discreta $\to$ Fourier $\to$ CTFT $\to$ DTFT $\to$ DFT $\to$ Laplace $\to$ Z |
 | `Z` | Alternar tela cheia / Modo Zen |
 | `M` | Ligar ou desligar sintetizador de áudio Web Audio |
 | `←` / `→` | Ajuste incremental do parâmetro de tempo $t$ ou frequência $\omega$ |
