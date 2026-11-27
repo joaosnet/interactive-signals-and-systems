@@ -12,8 +12,6 @@ import { updateAudioSynth } from './audio.js';
 import { getModule } from './modules/registry.js';
 import { loc, tx } from './lang.js';
 
-let handwritingTimer = null;
-const PEN_SVG = `<span class="pen-nib"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg></span>`;
 
 function buildNotebookLinesFourier(calc) {
   const isEn = state.lang === 'en';
@@ -479,73 +477,7 @@ export function updateNotebookUI(animateHandwriting = false) {
     }
   }
 
-  // 2. Linhas do Caderno
-  const container = document.getElementById('notebook-lines');
-  if (container) {
-    const lines = computeNotebookLines(isEn);
-
-    if (!animateHandwriting && container.children.length === lines.length) {
-      lines.forEach((item, idx) => {
-        const row = container.children[idx];
-        const labelEl = row.querySelector('.hw-lbl');
-        const mathEl = row.querySelector('.hw-clip');
-        if (labelEl) labelEl.textContent = item.label;
-        if (mathEl) renderMath(mathEl, item.latex, false);
-      });
-    } else {
-      if (handwritingTimer) {
-        clearTimeout(handwritingTimer);
-        handwritingTimer = null;
-      }
-      container.innerHTML = '';
-      const useProgressiveWrite = Boolean(animateHandwriting && !state.a11yReduceMotion);
-
-      lines.forEach((item, idx) => {
-        const div = document.createElement('div');
-        div.className = useProgressiveWrite
-          ? 'handwriting-line py-1'
-          : 'handwriting-line written py-1 notebook-cascade-in';
-        if (!useProgressiveWrite) {
-          div.style.setProperty('--line-idx', String(idx));
-        }
-        div.innerHTML = `
-          <div class="hw-lbl text-[10px] font-medium text-mut mb-0.5">${item.label}</div>
-          <div class="flex items-center flex-wrap">
-            <span class="hw-clip"></span>
-            <span class="hw-pen-slot"></span>
-          </div>
-        `;
-        renderMath(div.querySelector('.hw-clip'), item.latex, false);
-        container.appendChild(div);
-      });
-
-      if (useProgressiveWrite && lines.length > 0) {
-        const rows = Array.from(container.children);
-        const revealStep = (stepIdx) => {
-          rows.forEach((row, i) => {
-            const slot = row.querySelector('.hw-pen-slot');
-            if (i < stepIdx) {
-              row.className = 'handwriting-line written py-1';
-              if (slot) slot.innerHTML = '';
-            } else if (i === stepIdx) {
-              row.className = 'handwriting-line writing-now py-1';
-              if (slot) slot.innerHTML = PEN_SVG;
-            } else {
-              row.className = 'handwriting-line py-1';
-              if (slot) slot.innerHTML = '';
-            }
-          });
-          if (stepIdx < rows.length) {
-            handwritingTimer = setTimeout(() => revealStep(stepIdx + 1), 240);
-          } else {
-            handwritingTimer = null;
-          }
-        };
-        revealStep(0);
-      }
-    }
-  }
-
+  // 2. A dedução em si é escrita na folha do caderno em foco, que ouve este aviso
   window.dispatchEvent(new CustomEvent('notebook-updated'));
 
   // 3. Tabela de Regiões / Espectro

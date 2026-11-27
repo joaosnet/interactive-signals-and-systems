@@ -641,6 +641,7 @@
 
         <!-- Seção 1: CADERNO ANALÍTICO PASSO A PASSO -->
         <section id="section-notebook" class="ui-card rounded-xl border p-2.5 space-y-2">
+          <!-- A dedução é escrita na folha do caderno em foco (js/notebook-sheet.js); aqui ficam a métrica e o botão -->
           <div class="flex items-center justify-between gap-2 border-b border-[var(--border-subtle)] pb-1.5">
             <div class="flex items-center gap-1.5">
               <svg aria-hidden="true" class="w-3.5 h-3.5 text-[var(--c-conv)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -650,16 +651,10 @@
               </svg>
               <h2 id="notebook-title" class="text-[11px] font-bold uppercase tracking-wider">Caderno de Resolução Passo a Passo</h2>
             </div>
-            <button id="btn-rewatch-write" type="button" class="ui-control px-2 py-0.5 rounded text-[10px] font-medium flex items-center gap-1" title="Repetir Escrita Manual">
-              <span id="lbl-rewatch">Reescrever</span>
-            </button>
           </div>
 
           <!-- Métricas Instantâneas do Passo -->
           <div id="live-step-metrics" class="rounded-lg px-2.5 py-1 text-[11px] border border-[var(--border-subtle)] bg-[var(--bg-panel)] flex flex-wrap items-center justify-between gap-2"></div>
-
-          <!-- Linhas Manuscritas Animadas (KaTeX) -->
-          <div id="notebook-lines" class="space-y-1 text-xs hw-math-content"></div>
         </section>
 
         <!-- Seção 2: TABELA DE INTERVALOS OU ESPECTRO HARMÔNICO -->

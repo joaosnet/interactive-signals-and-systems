@@ -507,6 +507,7 @@ export function initUIEventListeners() {
   }
 
   // Rewatch
+  // (botão antigo de reescrever o caderno do painel; a folha tem o próprio)
   document.getElementById('btn-rewatch-write')?.addEventListener('click', () => {
     updateNotebookUI(true);
   });

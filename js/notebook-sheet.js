@@ -19,9 +19,9 @@ import { langKey } from './lang.js';
 const RULE = 32;            // distância entre as pautas, em px (igual ao CSS)
 const PEN_SPEED = 520;      // px por segundo com que a "caneta" percorre a linha
 const TEXT = {
-  pt: { open: 'Abrir caderno', openTitle: 'Abrir o caderno em foco, como uma folha', close: 'Voltar ao palco', prev: 'Passo anterior', next: 'Próximo passo', rewrite: 'Escrever de novo', step: 'Passo', sheet: 'Caderno em foco' },
-  en: { open: 'Open notebook', openTitle: 'Open the notebook in focus, as a sheet of paper', close: 'Back to the stage', prev: 'Previous step', next: 'Next step', rewrite: 'Write again', step: 'Step', sheet: 'Notebook in focus' },
-  es: { open: 'Abrir cuaderno', openTitle: 'Abrir el cuaderno en foco, como una hoja', close: 'Volver al escenario', prev: 'Paso anterior', next: 'Paso siguiente', rewrite: 'Escribir de nuevo', step: 'Paso', sheet: 'Cuaderno en foco' }
+  pt: { shut: 'Fechar caderno', open: 'Abrir caderno', openTitle: 'Abrir o caderno em foco, como uma folha', close: 'Voltar ao palco', prev: 'Passo anterior', next: 'Próximo passo', rewrite: 'Escrever de novo', step: 'Passo', sheet: 'Caderno em foco' },
+  en: { shut: 'Close notebook', open: 'Open notebook', openTitle: 'Open the notebook in focus, as a sheet of paper', close: 'Back to the stage', prev: 'Previous step', next: 'Next step', rewrite: 'Write again', step: 'Step', sheet: 'Notebook in focus' },
+  es: { shut: 'Cerrar cuaderno', open: 'Abrir cuaderno', openTitle: 'Abrir el cuaderno en foco, como una hoja', close: 'Volver al escenario', prev: 'Paso anterior', next: 'Paso siguiente', rewrite: 'Escribir de nuevo', step: 'Paso', sheet: 'Cuaderno en foco' }
 };
 const txt = () => TEXT[langKey()];
 
@@ -55,8 +55,14 @@ function snapToRule(row) {
   row.style.minHeight = `${Math.max(1, Math.ceil((h - 1) / RULE)) * RULE}px`;
 }
 
+/**
+ * Identifica a "página". Os números dos títulos ficam de fora: vários títulos
+ * trazem o valor do slider ("3.1 Corte Vertical em σ = 0.52:"), que muda a cada
+ * quadro da animação. Com eles na chave, a folha recomeçava a escrita sem parar.
+ */
 function keyOf(snapshot) {
-  return [activeModule().id, state.step, state.lang, ...snapshot.lines.map((l) => l.label)].join('|');
+  const shape = snapshot.lines.map((l) => l.label.replace(/[-−]?\d+(?:[.,]\d+)?/g, '#'));
+  return [activeModule().id, state.step, state.lang, ...shape].join('|');
 }
 
 function headerText() {
@@ -69,9 +75,9 @@ function headerText() {
 }
 
 /** Escreve a página inteira, uma linha por vez, com a caneta acompanhando o traço. */
-async function writePage(snapshot) {
+async function writePage(snapshot, withPen = true) {
   const token = ++writeToken;
-  const animate = !state.a11yReduceMotion;
+  const animate = withPen && !state.a11yReduceMotion;
   const head = headerText();
   page.replaceChildren();
   page.scrollTop = 0;
@@ -85,6 +91,7 @@ async function writePage(snapshot) {
 
   const rows = snapshot.lines.map((line) => {
     const math = el('span', { class: 'sheet-math' });
+    math.dataset.latex = line.latex;
     renderMath(math, line.latex, false);
     const ink = el('div', { class: 'sheet-ink sheet-formula' }, [math]);
     const row = el('div', { class: `sheet-row sheet-line${animate ? ' is-pending' : ''}` }, [
@@ -125,8 +132,12 @@ async function writePage(snapshot) {
 function refreshPage(snapshot) {
   const rows = page.querySelectorAll('.sheet-line');
   snapshot.lines.forEach((line, i) => {
+    const label = rows[i]?.querySelector('.sheet-label');
     const math = rows[i]?.querySelector('.sheet-math');
-    if (!math || math.dataset.latex === line.latex) return;
+    if (!label || !math) return;
+    // O título também carrega valores (σ, n, τ): acompanha o slider sem reescrever a folha
+    if (label.textContent !== line.label) label.textContent = line.label;
+    if (math.dataset.latex === line.latex) return;
     math.dataset.latex = line.latex;
     renderMath(math, line.latex, false);
     snapToRule(rows[i]);
@@ -140,6 +151,9 @@ function sync(forceWrite = false) {
   if (forceWrite || key !== pageKey) {
     pageKey = key;
     writePage(snapshot);
+  } else if (page.querySelectorAll('.sheet-line').length !== snapshot.lines.length) {
+    // Mesma página com outra quantidade de linhas: remonta de uma vez, sem a caneta
+    writePage(snapshot, false);
   } else {
     refreshPage(snapshot);
   }
@@ -150,7 +164,7 @@ function sync(forceWrite = false) {
 function syncLabels() {
   const t = txt();
   if (openBtn) {
-    openBtn.querySelector('span').textContent = t.open;
+    openBtn.querySelector('span').textContent = state.notebookFocus ? t.shut : t.open;
     openBtn.title = t.openTitle;
   }
   if (!sheet) return;
@@ -166,8 +180,29 @@ function syncLabels() {
   sheet.querySelector('.sheet-close span').textContent = t.close;
 }
 
-export function setNotebookFocus(on) {
+const STORAGE_KEY = 'conv3d_notebook_focus';
+
+function remember(on) {
+  try {
+    localStorage.setItem(STORAGE_KEY, on ? '1' : '0');
+  } catch (e) { /* navegação privada: a escolha só vale nesta visita */ }
+}
+
+function remembered() {
+  try {
+    return localStorage.getItem(STORAGE_KEY) === '1';
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * @param on        abre ou fecha a folha
+ * @param options   { restore: true } ao reabrir sozinha na carga da página: não move o foco do teclado
+ */
+export function setNotebookFocus(on, { restore = false } = {}) {
   state.notebookFocus = Boolean(on);
+  if (!restore) remember(state.notebookFocus);
   document.body.classList.toggle('notebook-focus', state.notebookFocus);
   sheet.hidden = !state.notebookFocus;
   if (openBtn) openBtn.setAttribute('aria-pressed', String(state.notebookFocus));
@@ -175,17 +210,18 @@ export function setNotebookFocus(on) {
     syncLabels();
     pageKey = '';
     sync(true);
-    sheet.querySelector('.sheet-close').focus();
+    if (!restore) sheet.querySelector('.sheet-close').focus();
   } else {
     writeToken++;
+    syncLabels();
     openBtn?.focus();
   }
 }
 
 function init() {
   const host = document.getElementById('stage-wrapper');
-  const lines = document.getElementById('notebook-lines');
-  if (!host || !lines || sheet) return;
+  const panelSection = document.getElementById('section-notebook');
+  if (!host || !panelSection || sheet) return;
 
   page = el('div', { class: 'sheet-page', tabindex: '0' });
   const button = (cls, html) => el('button', { type: 'button', class: `sheet-btn ${cls}`, html });
@@ -210,17 +246,23 @@ function init() {
     }
   });
 
-  // Botão de abrir, no cabeçalho do caderno do painel
-  const rewatch = document.getElementById('btn-rewatch-write');
-  openBtn = el('button', { type: 'button', id: 'btn-notebook-focus', class: 'ui-control px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1', 'aria-pressed': 'false' }, [
+  // Botão de abrir: é por ele que se chega à dedução, que agora só existe na folha
+  openBtn = el('button', { type: 'button', id: 'btn-notebook-focus', class: 'notebook-open-btn ui-control', 'aria-pressed': 'false' }, [
     el('span', {})
   ]);
   openBtn.addEventListener('click', () => setNotebookFocus(!state.notebookFocus));
-  if (rewatch) rewatch.before(openBtn);
-  else lines.before(openBtn);
+  panelSection.append(openBtn);
   syncLabels();
 
+  let restored = false;
   window.addEventListener('notebook-updated', () => {
+    if (!restored) {
+      restored = true;
+      if (remembered() && !state.notebookFocus) {
+        setNotebookFocus(true, { restore: true });
+        return;
+      }
+    }
     syncLabels();
     sync(false);
   });

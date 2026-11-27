@@ -1242,7 +1242,12 @@ body.a11y-reduce-motion .animate-pulse { animation: none; }
 .sheet-btn:hover:not(:disabled) { background: var(--bg-hover); }
 .sheet-btn:focus-visible { outline: 2px solid var(--c-x1); outline-offset: 2px; }
 .sheet-btn:disabled { opacity: 0.4; }
-#btn-notebook-focus { border: 1px solid var(--c-conv); color: var(--c-conv); }
+.notebook-open-btn {
+  display: flex; align-items: center; justify-content: center; gap: 0.4rem; width: 100%;
+  min-height: 2.25rem; padding: 0.35rem 0.75rem; border-radius: 0.6rem;
+  border: 1px solid var(--c-conv); color: var(--c-conv); font-size: 0.75rem; font-weight: 700;
+}
+.notebook-open-btn::before { content: '✎'; font-size: 0.9rem; }
 #btn-notebook-focus[aria-pressed="true"] { background: var(--accent-bg); }
 /* No celular a folha ocupa a tela inteira, acima do painel de controles */
 @media (max-width: 767px) {
